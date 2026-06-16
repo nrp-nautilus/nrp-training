@@ -95,7 +95,7 @@ def write_landing(items):
     body = (
         '<header class="site-header">'
         '<a class="brand" href="https://nrp.ai">'
-        '<img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform"></a>'
+        '<img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform" width="163" height="30"></a>'
         '<span class="site-title">Trainings</span></header>'
         '<section class="hero">'
         '<div class="hero-inner">'
