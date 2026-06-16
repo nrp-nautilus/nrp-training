@@ -1,0 +1,93 @@
+# JupyterHub Helm values for NRP (cra-tutorial, Part 3).
+# Tested against the jupyterhub/jupyterhub chart v3.3.7 on NRP, deploying as the
+# workshop service account into an nrp-training-0XX namespace.
+#
+# The NON-OBVIOUS bits that make this work on NRP (don't remove them):
+#   * service.type: ClusterIP        -> NRP blocks LoadBalancer services
+#   * hub.resources / proxy.chp.resources with BOTH requests and limits
+#                                     -> NRP requires every container to set them
+#   * scheduling.userScheduler/userPlaceholder + prePuller disabled
+#                                     -> those need CLUSTER-scoped RBAC the
+#                                        namespace service account does not have
+#   * storageClass rook-ceph-block-east + region us-east (where training runs)
+
+hub:
+  config:
+    JupyterHub:
+      authenticator_class: dummy        # demo auth — anyone with the password gets in
+      admin_access: true
+      admin_users: ["admin"]
+    DummyAuthenticator:
+      password: "training123"           # <-- change me
+    Authenticator:
+      allowed_users: set()              # allow anyone to sign in (tutorial only)
+  service:
+    type: ClusterIP
+  db:
+    type: sqlite-pvc
+    pvc:
+      accessModes: [ReadWriteOnce]
+      storage: 1Gi
+      storageClassName: rook-ceph-block-east
+  resources:
+    limits:   {cpu: "2", memory: 1Gi}
+    requests: {cpu: 100m, memory: 512Mi}
+  networkPolicy:
+    enabled: false
+
+proxy:
+  service:
+    type: ClusterIP
+  chp:
+    resources:
+      limits:   {cpu: "2", memory: 1Gi}
+      requests: {cpu: 100m, memory: 512Mi}
+
+singleuser:
+  image:
+    name: quay.io/jupyter/scipy-notebook
+    tag: "2024-04-22"
+  defaultUrl: "/lab"
+  startTimeout: 600
+  cpu:    {limit: 3, guarantee: 1}
+  memory: {limit: 8G, guarantee: 2G}
+  cloudMetadata:
+    blockWithIptables: false
+  networkPolicy:
+    enabled: false
+  storage:
+    type: dynamic
+    capacity: 5Gi
+    homeMountPath: /home/jovyan
+    dynamic:
+      storageClass: rook-ceph-block-east
+      pvcNameTemplate: claim-{username}{servername}
+      volumeNameTemplate: volume-{username}{servername}
+      storageAccessModes: [ReadWriteOnce]
+  extraNodeAffinity:                     # keep pods near the east storage
+    required:
+      - matchExpressions:
+        - {key: topology.kubernetes.io/region, operator: In, values: ["us-east"]}
+  profileList:
+  - display_name: "Scipy (default)"
+    kubespawner_override: {image_spec: quay.io/jupyter/scipy-notebook:2024-04-22}
+    default: true
+  - display_name: "Datascience (Python, Julia, R)"
+    kubespawner_override: {image_spec: quay.io/jupyter/datascience-notebook:2024-04-22}
+  - display_name: "Tensorflow (GPU)"
+    kubespawner_override: {image_spec: quay.io/jupyter/tensorflow-notebook:cuda-2024-04-22}
+  - display_name: "Pytorch (GPU)"
+    kubespawner_override: {image_spec: quay.io/jupyter/pytorch-notebook:cuda12-2024-04-22}
+
+# These three blocks are what let a namespace-scoped service account deploy:
+scheduling:
+  userScheduler:   {enabled: false}
+  userPlaceholder: {enabled: false}
+prePuller:
+  hook:       {enabled: false}
+  continuous: {enabled: false}
+
+cull:                                    # auto-stop idle servers (required on NRP)
+  enabled: true
+  timeout: 3600
+  every: 600
