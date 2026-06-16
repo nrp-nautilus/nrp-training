@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Launch RCSI workspace in JupyterHub
-**[▶ Launch RCSI workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fcra-tutorial&branch=main&urlpath=lab%2Ftree%2Fcra-tutorial%2F)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab. A **CPU-only** session is all you need.
+**[▶ Launch RCSI workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Frcsi%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab. A **CPU-only** session is all you need.
 :::
 
 This tutorial runs on the
