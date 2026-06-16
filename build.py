@@ -49,6 +49,9 @@ EPISODE_DIR = ROOT / "episodes"
 SITE_DIR = ROOT / "site"
 CONFIG = ROOT / "config.yml"
 
+# Optional link back to a multi-lesson landing page (set by build_site.py).
+SITE_HOME_LINK = None
+
 CALLOUT_LABELS = {
     "objectives": "Objectives",
     "questions": "Questions",
@@ -174,6 +177,18 @@ def render_blocks(lines):
             out.append(f"<pre><code{cls}>{body}</code></pre>")
             continue
 
+        # raw HTML block: a line starting with an HTML tag passes through
+        # verbatim (un-escaped) until a blank line. Lets authors use
+        # <details>, <img align=...>, <br>, etc. Blank lines inside let
+        # interleaved Markdown (e.g. an image in a <details>) still render.
+        if re.match(r"^\s*</?[a-zA-Z][\w-]*", line):
+            raw = []
+            while i < n and lines[i].strip():
+                raw.append(lines[i])
+                i += 1
+            out.append("\n".join(raw))
+            continue
+
         # heading
         m = re.match(r"^(#{1,6})\s+(.*)$", line)
         if m:
@@ -212,10 +227,38 @@ def render_blocks(lines):
             out.append(f"<{tag}>{lis}</{tag}>")
             continue
 
-        # paragraph: gather until blank line / block start
+        # GFM pipe table: a header row followed by a |---|---| separator
+        if "|" in line and i + 1 < n and re.match(
+                r"^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$",
+                lines[i + 1]):
+            def _cells(row):
+                row = row.strip()
+                if row.startswith("|"):
+                    row = row[1:]
+                if row.endswith("|"):
+                    row = row[:-1]
+                return [c.strip() for c in row.split("|")]
+            headers = _cells(line)
+            i += 2  # consume header + separator
+            rows = []
+            while i < n and lines[i].strip() and "|" in lines[i]:
+                rows.append(_cells(lines[i]))
+                i += 1
+            thead = "".join(f"<th>{inline(html.escape(h))}</th>" for h in headers)
+            trows = []
+            for r in rows:
+                tds = "".join(f"<td>{inline(html.escape(c))}</td>" for c in r)
+                trows.append(f"<tr>{tds}</tr>")
+            out.append('<table class="md-table"><thead><tr>' + thead +
+                       "</tr></thead><tbody>" + "".join(trows) +
+                       "</tbody></table>")
+            continue
+
+        # paragraph: gather until blank line / block start (incl. a line that
+        # begins an HTML block, so raw HTML isn't swallowed and escaped).
         para = []
         while i < n and lines[i].strip() and not re.match(
-            r"^(#{1,6}\s|```|>|\s*([-*+]|\d+\.)\s|(---|\*\*\*|___)\s*$)",
+            r"^(#{1,6}\s|```|>|\s*([-*+]|\d+\.)\s|(---|\*\*\*|___)\s*$|\s*</?[a-zA-Z])",
             lines[i],
         ):
             para.append(lines[i].strip())
@@ -321,8 +364,12 @@ def page(title, lesson_title, body, nav_html):
 
 
 def build_nav(lesson_title, episodes, active=None):
-    items = ['<a class="nav-home" href="index.html">Home &amp; Schedule</a>',
-             "<ol class=\"nav-list\">"]
+    items = []
+    if SITE_HOME_LINK:
+        items.append(
+            f'<a class="nav-all" href="{SITE_HOME_LINK}">&larr; All trainings</a>')
+    items += ['<a class="nav-home" href="index.html">Home &amp; Schedule</a>',
+              "<ol class=\"nav-list\">"]
     for ep in episodes:
         cls = ' class="active"' if ep["slug"] == active else ""
         items.append(
@@ -510,10 +557,12 @@ img { max-width: 100%; }
 .callout-solution { border-left-color: var(--solution); }
 .callout-keypoints { border-left-color: var(--keypoints); }
 .callout-callout, .callout-discussion, .callout-prereq { border-left-color: var(--note); }
-.schedule { border-collapse: collapse; width: 100%; }
-.schedule th, .schedule td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; }
-.schedule thead { background: var(--panel); }
+.schedule, .md-table { border-collapse: collapse; width: 100%; margin: 1em 0; }
+.schedule th, .schedule td,
+.md-table th, .md-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
+.schedule thead, .md-table thead { background: var(--panel); }
 .schedule tr.finish { font-weight: 600; background: var(--panel); }
+.nav-all { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 10px; }
 .hint { color: var(--muted); font-size: .9rem; }
 .pager { display: flex; justify-content: space-between; margin-top: 36px;
   padding-top: 16px; border-top: 1px solid var(--border); }

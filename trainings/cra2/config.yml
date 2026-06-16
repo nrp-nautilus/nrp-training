@@ -1,0 +1,10 @@
+title: CRA2 — AI Unlocked + JupyterHub
+subtitle: Inference, agentic workflows, accelerators, and deploying JupyterHub with Helm
+length: 2 hours
+order: 20
+published: true
+episodes:
+  - 1_intro
+  - 2_inference
+  - 3_agentic
+  - 4_jupyterhub_helm

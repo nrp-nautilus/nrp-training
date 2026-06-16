@@ -4,7 +4,41 @@ A minimal, Carpentries-style lesson builder. Write episodes in Markdown, run one
 Python script, get a navigable static website. **No dependencies** — pure Python
 standard library (3.8+). No pip, Node, or pandoc.
 
-## Quick start
+## Hosting many trainings (NRP)
+
+This repo hosts several trainings at once, each in its own folder under
+`trainings/`, with a shared landing page:
+
+```
+trainings/<name>/config.yml      # title, subtitle, length, order, episodes
+trainings/<name>/episodes/*.md    # the lesson pages
+trainings/<name>/images/          # optional assets
+```
+
+```bash
+python3 build_site.py            # build EVERY training into site/, + a landing page
+python3 build_site.py --serve    # build all, then serve at http://localhost:8000
+```
+
+`site/index.html` is the landing page (one card per training); each training
+builds into `site/<name>/`.
+
+- **Add a training** — create `trainings/<name>/` with a `config.yml` and an
+  `episodes/` folder, then rebuild.
+- **Take a training off** — delete its folder, or set `published: false` in its
+  `config.yml`.
+- **Order on the landing page** — set `order:` (lower = first) in each
+  `config.yml`; `length:` renders as a badge on the card.
+
+The current trainings are **`rcsi`** (1 hour) and **`cra2`** (2 hours). Their
+in-page **"Launch in JupyterHub"** buttons are nbgitpuller links that target
+`https://jh-training.nrp-nautilus.io` (the materials site is hosted separately
+on `training.nrp-nautilus.io`).
+
+## Quick start (single lesson)
+
+The original single-lesson mode still works from the repo root (`episodes/` +
+`config.yml`):
 
 ```bash
 python3 build.py            # build the site into site/
