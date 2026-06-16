@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open a JupyterHub terminal
-**[▶ Open a JupyterHub terminal](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Fcra2%2Fworkspace)** — opens JupyterLab on jh-training.nrp-nautilus.io; use a Terminal for the `opencode` steps below.
+**[▶ Open a JupyterHub terminal](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra2&targetpath=cra2&urlpath=lab%2Ftree%2Fcra2)** — opens JupyterLab on jh-training.nrp-nautilus.io; use a Terminal for the `opencode` steps below.
 :::
 
 **Time:** 01:05-01:30

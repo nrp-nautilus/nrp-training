@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open this notebook in JupyterHub
-**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Fcra2%2Fworkspace%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
+**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra2&targetpath=cra2&urlpath=lab%2Ftree%2Fcra2%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
 :::
 
 This notebook is the hands-on portion of the AI Unlocked workshop. Everything
@@ -132,6 +132,7 @@ training session it's already exported for you as `OPENAI_API_KEY`.
 |---|---|---|
 | `qwen3` | 397B | frontier reasoning, largest context |
 | `gpt-oss` | 120B | agentic tool-calling / code |
+| `gemma-small-e4b` | 4B | **default here** — fast chat + multimodal (vision) |
 | `gemma` | 31B | general chat, multimodal |
 | `kimi`, `glm-5`, `minimax-m2` | 230B–1T | coding (under evaluation) |
 | `qwen3-embedding` | 8B | embeddings only (not chat) |
@@ -186,13 +187,14 @@ for m in sorted(models.data, key=lambda x: x.id):
 
 ```python
 # A tiny helper we'll reuse across this notebook. The default model is
-# `minimax-m2` (fast on NRP, and a good default). It's a *reasoning* model: it
-# streams a private chain-of-thought into a separate `reasoning` field and only
-# fills `content` once it concludes — so we default `max_tokens` high enough
+# `gemma-small-e4b` (Gemma 3n E4B — fast on NRP and multimodal). The helper also
+# handles *reasoning* models like `minimax-m2` (you'll try one below): they
+# stream a private chain-of-thought into a separate `reasoning` field and only
+# fill `content` once they conclude — so we default `max_tokens` high enough
 # (1200) to leave room for both the thinking and the final answer. If a call
 # still runs out of tokens mid-thought, we surface that reasoning rather than
 # returning nothing.
-def chat(prompt, model="minimax-m2", system=None, max_tokens=1200, llm=None):
+def chat(prompt, model="gemma-small-e4b", system=None, max_tokens=1200, llm=None):
     msgs = []
     if system:
         msgs.append({"role": "system", "content": system})
@@ -261,7 +263,7 @@ is exactly the empty-answer case the `chat()` helper guards against.
 
 ```python
 # Switch to a smaller model — same code, just change the `model` arg.
-print(chat("Explain Kubernetes namespaces in two sentences.", model="gemma-small"))
+print(chat("Explain Kubernetes namespaces in two sentences.", model="gemma-small-e4b"))
 
 # Now a reasoning model. We give it room (max_tokens=800) so it finishes
 # thinking AND produces a final answer — with too few tokens the whole budget

@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open the Helm notebook in JupyterHub
-**[▶ Open the Helm notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Fcra2%2Fworkspace%2F4_jupyterhub_helm.ipynb)** — opens the runnable Helm notebook (in this repo) live on jh-training.nrp-nautilus.io.
+**[▶ Open the Helm notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra2&targetpath=cra2&urlpath=lab%2Ftree%2Fcra2%2F4_jupyterhub_helm.ipynb)** — opens the runnable Helm notebook (in this repo) live on jh-training.nrp-nautilus.io.
 :::
 
 In Part 2 you **used** NRP's managed AI. Now you'll **deploy your own**

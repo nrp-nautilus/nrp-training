@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open this notebook in JupyterHub
-**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Frcsi%2Fworkspace%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
+**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
 :::
 
 The hands-on portion: call NRP's **managed LLMs** from Python, watch them do some
@@ -79,13 +79,14 @@ for m in sorted(models.data, key=lambda x: x.id):
 
 ```python
 # A tiny helper we'll reuse across this notebook. The default model is
-# `minimax-m2` (fast on NRP, and a good default). It's a *reasoning* model: it
-# streams a private chain-of-thought into a separate `reasoning` field and only
-# fills `content` once it concludes — so we default `max_tokens` high enough
+# `gemma-small-e4b` (Gemma 3n E4B — fast on NRP and multimodal). The helper also
+# handles *reasoning* models like `minimax-m2` (you'll try one below): they
+# stream a private chain-of-thought into a separate `reasoning` field and only
+# fill `content` once they conclude — so we default `max_tokens` high enough
 # (1200) to leave room for both the thinking and the final answer. If a call
 # still runs out of tokens mid-thought, we surface that reasoning rather than
 # returning nothing.
-def chat(prompt, model="minimax-m2", system=None, max_tokens=1200, llm=None):
+def chat(prompt, model="gemma-small-e4b", system=None, max_tokens=1200, llm=None):
     msgs = []
     if system:
         msgs.append({"role": "system", "content": system})
@@ -141,7 +142,7 @@ ROLES = {
 }
 for role, system in ROLES.items():
     print(f"=== {role} ===")
-    print(chat(QUESTION, system=system, model="gemma-small"), "\n")
+    print(chat(QUESTION, system=system, model="gemma-small-e4b"), "\n")
 ```
 
 ## 4. 💬 Have a conversation
@@ -164,7 +165,7 @@ SYSTEMS = {
         "answers, flag uncertainty, and suggest where to learn more.",
 }
 ROLE  = "Teaching assistant"   # <- change to any key above
-MODEL = "gemma-small"          # <- or minimax-m2, gpt-oss, qwen3, gemma
+MODEL = "gemma-small-e4b"          # <- or minimax-m2, gpt-oss, qwen3, gemma
 
 history = []
 print(f"Chatting as: {ROLE} ({MODEL}).  Type 'quit' to stop, 'reset' to clear.\n")
@@ -228,8 +229,8 @@ plt.tight_layout(); plt.show()
 
 ## 6. 🖼️ Multimodal — send an image
 
-Vision models (`gemma-small`, `gemma`, `qwen3`) accept images. We show one inline and ask
-`gemma-small` to describe it. Swap `IMG_URL` for any image.
+Vision models (`gemma-small-e4b`, `gemma`, `qwen3`) accept images. We show one inline and ask
+`gemma-small-e4b` to describe it. Swap `IMG_URL` for any image.
 
 ```python
 import base64, requests
@@ -240,12 +241,12 @@ raw = requests.get(IMG_URL, timeout=20).content
 display(Image(data=raw))                              # show it inline
 
 b64 = base64.b64encode(raw).decode()
-r = client.chat.completions.create(model="gemma-small", max_tokens=200, messages=[
+r = client.chat.completions.create(model="gemma-small-e4b", max_tokens=200, messages=[
     {"role": "user", "content": [
         {"type": "text", "text": "Describe this image — what's in it, and the mood?"},
         {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
     ]}])
-print("gemma-small sees:\n", r.choices[0].message.content)
+print("gemma-small-e4b sees:\n", r.choices[0].message.content)
 ```
 
 ## 7. 📚 RAG — answer from NRP's own docs
