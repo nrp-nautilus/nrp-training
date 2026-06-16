@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open this notebook in JupyterHub
-**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fcra-tutorial&branch=main&urlpath=lab%2Ftree%2Fcra-tutorial%2F3_jupyterhub.ipynb)** — opens `3_jupyterhub.ipynb` live on jh-training.nrp-nautilus.io.
+**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Frcsi%2Fworkspace%2F3_jupyterhub.ipynb)** — opens `3_jupyterhub.ipynb` live on jh-training.nrp-nautilus.io.
 :::
 
 In Part 2 you **used** NRP's managed AI. Now you'll **deploy your own**

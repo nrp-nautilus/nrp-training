@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Launch CRA2 workspace in JupyterHub
-**[▶ Launch CRA2 workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fai-unlocked-tutorial&branch=main&urlpath=lab%2Ftree%2Fai-unlocked-tutorial%2F)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab on the training GPU nodes.
+**[▶ Launch CRA2 workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Fcra2%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab on the training GPU nodes.
 :::
 
 **Time:** 00:00-00:35
@@ -82,7 +82,7 @@ The core mental model is:
 
 Useful links for the live session:
 
-- [Launch AI Unlocked Tutorial Workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fai-unlocked-tutorial&branch=main&urlpath=lab%2Ftree%2Fai-unlocked-tutorial%2F)
+- [Launch CRA2 Workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Fcra2%2Fworkspace)
 - [NRP live resource view](https://nrp.ai/viz/resources/)
 - [NRP namespaces view](https://nrp.ai/viz/namespaces/)
 - [NRP support and Matrix chat](https://nrp.ai/contact/)

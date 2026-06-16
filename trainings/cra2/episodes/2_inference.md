@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open this notebook in JupyterHub
-**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fai-unlocked-tutorial&branch=main&urlpath=lab%2Ftree%2Fai-unlocked-tutorial%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
+**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=main&urlpath=lab%2Ftree%2Fnrp-training%2Ftrainings%2Fcra2%2Fworkspace%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
 :::
 
 This notebook is the hands-on portion of the AI Unlocked workshop. Everything
