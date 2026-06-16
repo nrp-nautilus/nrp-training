@@ -26,6 +26,17 @@ import build  # reuse the single-lesson generator
 ROOT = Path(__file__).resolve().parent
 TRAININGS = ROOT / "trainings"
 SITE = ROOT / "site"
+ASSETS = ROOT / "assets"            # shared NRP brand assets (logo, favicon)
+
+
+def copy_assets(dst):
+    """Copy shared brand assets next to a page's style.css so logo/favicon
+    resolve relatively at any URL depth (landing at site/, lessons at site/<name>/)."""
+    dst.mkdir(parents=True, exist_ok=True)
+    for f in ("nrp-logo.webp", "nrp-tiny.png"):
+        src = ASSETS / f
+        if src.exists():
+            shutil.copy2(src, dst / f)
 
 
 def discover():
@@ -68,6 +79,7 @@ def build_one(item):
         if dst.exists():
             shutil.rmtree(dst)
         shutil.copytree(images, dst)
+    copy_assets(out)
 
 
 def write_landing(items):
@@ -82,39 +94,60 @@ def write_landing(items):
         )
     body = (
         '<header class="site-header">'
-        '<span class="site-title">NRP Trainings</span></header>'
-        '<main class="landing">'
+        '<a class="brand" href="https://nrp.ai">'
+        '<img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform"></a>'
+        '<span class="site-title">Trainings</span></header>'
+        '<section class="hero">'
+        '<div class="hero-inner">'
         '<h1>NRP Trainings</h1>'
-        '<p class="subtitle">Hands-on training modules for the '
-        'National Research Platform.</p>'
+        '<p class="hero-sub">Hands-on training modules for the '
+        'National Research Platform &mdash; run real workloads on shared GPUs, '
+        'launch each lesson straight into JupyterHub.</p>'
+        '</div></section>'
+        '<main class="landing">'
         '<div class="cards">' + "".join(cards) + '</div>'
         '</main>'
         '<footer class="site-footer">'
-        'Built with a bare-bones lesson generator.</footer>'
+        'National Research Platform &middot; '
+        '<a href="https://nrp.ai">nrp.ai</a></footer>'
     )
     doc = (
         '<!DOCTYPE html>\n<html lang="en">\n<head>\n'
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>NRP Trainings</title>\n'
+        '<link rel="icon" href="nrp-tiny.png">\n'
+        '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+        '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
+        '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
+        'family=Inter:wght@400;500;600;700;800&display=swap">\n'
         '<link rel="stylesheet" href="style.css">\n</head>\n'
         f'<body>\n{body}\n</body>\n</html>\n'
     )
     SITE.mkdir(exist_ok=True)
     (SITE / "index.html").write_text(doc, encoding="utf-8")
     (SITE / "style.css").write_text(build.STYLE + LANDING_CSS, encoding="utf-8")
+    copy_assets(SITE)
 
 
 LANDING_CSS = """
-.landing { max-width: 980px; margin: 0 auto; padding: 32px 24px; }
-.landing > .subtitle { margin-top: -6px; }
+.hero { background:
+    radial-gradient(1100px 400px at 15% -10%, rgb(1 97 239 / 35%), transparent 60%),
+    linear-gradient(160deg, #0a1230 0%, var(--navy) 70%);
+  color: #fff; padding: 64px 24px 72px; }
+.hero-inner { max-width: 980px; margin: 0 auto; }
+.hero h1 { color: #fff; font-size: 2.6rem; line-height: 1.1; margin: 0 0 14px;
+  letter-spacing: -.02em; }
+.hero-sub { color: rgb(229 236 246 / 82%); font-size: 1.18rem; max-width: 640px; margin: 0; }
+.landing { max-width: 980px; margin: 0 auto; padding: 0 24px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 18px; margin-top: 22px; }
-.card { display: block; border: 1px solid var(--border); border-radius: 12px;
-  padding: 20px 22px; background: var(--panel); color: var(--fg); }
+  gap: 20px; margin-top: -34px; margin-bottom: 40px; }
+.card { display: block; border: 1px solid var(--border); border-radius: 16px;
+  padding: 22px 24px; background: #fff; color: var(--fg);
+  box-shadow: 0 6px 20px rgb(3 6 32 / 8%); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
 .card:hover { text-decoration: none; border-color: var(--accent);
-  box-shadow: 0 2px 14px rgba(0,0,0,.07); }
-.card h2 { margin: 0 0 8px; font-size: 1.15rem; line-height: 1.3; }
+  transform: translateY(-3px); box-shadow: 0 12px 30px rgb(1 97 239 / 16%); }
+.card h2 { margin: 0 0 8px; font-size: 1.2rem; line-height: 1.3; color: var(--navy); }
 .card p { margin: 0; color: var(--muted); }
 .card-len { font-size: .72rem; color: var(--accent); font-weight: 700;
   background: var(--accent-weak); border-radius: 999px; padding: 2px 10px;

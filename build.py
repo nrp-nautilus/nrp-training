@@ -345,10 +345,15 @@ def page(title, lesson_title, body, nav_html):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)} &mdash; {html.escape(lesson_title)}</title>
+<link rel="icon" href="nrp-tiny.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <header class="site-header">
+  <a class="brand" href="https://nrp.ai"><img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform"></a>
   <a class="site-title" href="index.html">{html.escape(lesson_title)}</a>
 </header>
 <div class="layout">
@@ -513,44 +518,60 @@ def serve():
 
 
 STYLE = """\
+/* NRP theme: matches gitlab.nrp-nautilus.io/prp/nrp-site (AstroWind, Inter,
+   primary #0161ef / secondary #0154cf / accent #6d28d9, navy #030620). */
 :root {
-  --fg: #1b1b1b; --muted: #6b7280; --bg: #ffffff; --panel: #f6f8fa;
-  --border: #e2e8f0; --accent: #1f6feb; --accent-weak: #ddeaff;
-  --obj: #1f6feb; --challenge: #b45309; --solution: #0f766e;
-  --keypoints: #6d28d9; --note: #475569;
+  --fg: #101010; --muted: rgba(16,16,16,.66); --bg: #ffffff; --panel: #f6f8fa;
+  --border: #e5e9f0; --accent: #0161ef; --accent-2: #0154cf; --accent-weak: #e7f0ff;
+  --obj: #0161ef; --challenge: #b45309; --solution: #0f766e;
+  --keypoints: #6d28d9; --note: #475569; --navy: #030620;
   --max: 820px; --sidebar: 260px;
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--fg); background: var(--bg);
-  font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  font: 16px/1.7 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased; }
+h1, h2, h3, h4 { font-weight: 700; letter-spacing: -.012em; color: var(--navy); }
 a { color: var(--accent); text-decoration: none; }
-a:hover { text-decoration: underline; }
-.site-header { background: var(--fg); padding: 14px 24px; }
-.site-title { color: #fff; font-weight: 700; font-size: 1.1rem; }
-.site-title:hover { text-decoration: none; opacity: .85; }
-.layout { display: flex; gap: 32px; max-width: 1180px; margin: 0 auto; padding: 24px; align-items: flex-start; }
-.sidebar { width: var(--sidebar); flex: 0 0 var(--sidebar); position: sticky; top: 24px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: .94rem; }
+a:hover { color: var(--accent-2); text-decoration: underline; }
+::selection { background: lavender; }
+.site-header { display: flex; align-items: center; gap: 16px; background: #fff;
+  padding: 11px 28px; border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 12px rgb(140 152 164 / 10%); position: sticky; top: 0; z-index: 20; }
+.brand { display: flex; align-items: center; line-height: 0; }
+.brand-logo { height: 30px; width: auto; display: block; }
+.site-title { color: var(--fg); font-weight: 700; font-size: 1.0rem;
+  padding-left: 16px; border-left: 1px solid var(--border); }
+.site-title:hover { text-decoration: none; color: var(--accent); }
+.layout { display: flex; gap: 32px; max-width: 1180px; margin: 0 auto; padding: 28px 24px; align-items: flex-start; }
+.sidebar { width: var(--sidebar); flex: 0 0 var(--sidebar); position: sticky; top: 80px;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; font-size: .94rem; }
 .sidebar .nav-home { display: block; font-weight: 600; margin-bottom: 10px; }
 .nav-list { margin: 0; padding-left: 1.2em; }
 .nav-list li { margin: 6px 0; }
-.nav-list li.active > a { font-weight: 700; }
+.nav-list li.active > a { font-weight: 700; color: var(--accent); }
 .content { flex: 1 1 auto; min-width: 0; max-width: var(--max); }
 .content h1 { margin-top: 0; line-height: 1.2; }
 .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: -8px; }
 .ep-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
-pre { background: var(--panel); border: 1px solid var(--border); border-radius: 8px;
+pre { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
   padding: 14px 16px; overflow: auto; }
 code { background: var(--panel); padding: .1em .35em; border-radius: 4px;
   font-size: .9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
 pre code { background: none; padding: 0; }
-blockquote { margin: 1em 0; padding: .2em 1em; border-left: 4px solid var(--border); color: var(--muted); }
+blockquote { margin: 1em 0; padding: .2em 1em; border-left: 4px solid var(--accent-weak); color: var(--muted); }
 img { max-width: 100%; }
-.callout { border: 1px solid var(--border); border-left-width: 5px; border-radius: 8px;
+.callout { border: 1px solid var(--border); border-left-width: 5px; border-radius: 10px;
   margin: 1.2em 0; background: var(--bg); overflow: hidden; }
 .callout-title { font-weight: 700; padding: 8px 16px; background: var(--panel); }
 .callout-body { padding: 4px 16px; }
 .callout-body > :first-child { margin-top: .4em; }
+/* Launch buttons: bold markdown links inside callouts render as NRP pill buttons. */
+.callout-body strong a { display: inline-block; background: var(--accent); color: #fff;
+  font-weight: 600; padding: 9px 18px; border-radius: 999px; text-decoration: none;
+  box-shadow: 0 1px 6px rgb(1 97 239 / 30%); transition: background .15s ease, transform .1s ease; }
+.callout-body strong a:hover { background: var(--accent-2); color: #fff; text-decoration: none;
+  transform: translateY(-1px); }
 .callout-objectives { border-left-color: var(--obj); }
 .callout-objectives > .callout-title { background: var(--accent-weak); }
 .callout-challenge { border-left-color: var(--challenge); }
