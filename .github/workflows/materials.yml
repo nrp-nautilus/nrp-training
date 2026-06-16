@@ -1,0 +1,53 @@
+name: Publish per-training materials branches
+
+# Keeps a lean `materials/<name>` branch for each training in sync with that
+# training's workspace on main. Each branch's ROOT is the contents of
+# trainings/<name>/workspace/, so an nbgitpuller link pointed at the branch
+# pulls ONLY that training's notebooks (not the whole repo).
+#
+# Authors never touch these branches: edit the notebook on main and this runs.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "trainings/*/workspace/**"
+  workflow_dispatch:        # allows a manual run (e.g. to seed the branches)
+
+permissions:
+  contents: write           # lets the default token push the materials branches
+
+concurrency:
+  group: materials
+  cancel-in-progress: false
+
+jobs:
+  split:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0    # git subtree split needs the full history
+
+      - name: Configure git identity
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Split each training workspace into materials/<name>
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          for ws in trainings/*/workspace; do
+            [ -d "$ws" ] || continue
+            name="$(basename "$(dirname "$ws")")"
+            branch="materials/$name"
+            echo "==> $ws  ->  $branch"
+            # subtree split is deterministic: when the workspace is unchanged
+            # it reproduces the same commits, so the push below is a no-op.
+            git branch -D "split-$name" 2>/dev/null || true
+            git subtree split --prefix="$ws" -b "split-$name"
+            git push --force origin "split-$name:$branch"
+            git branch -D "split-$name"
+          done
