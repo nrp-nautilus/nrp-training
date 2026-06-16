@@ -1,0 +1,8 @@
+# Lesson metadata. Edit these values for your lesson.
+title: NRP Training Lesson
+subtitle: A bare-bones, Carpentries-style lesson
+# Order episodes here by filename (without the .md extension).
+# Anything in episodes/ not listed will be appended alphabetically.
+episodes:
+  - 01-introduction
+  - 02-first-steps

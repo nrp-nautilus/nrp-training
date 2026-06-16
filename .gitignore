@@ -1,0 +1,7 @@
+# Generated site — CI rebuilds it on every push, so don't commit it.
+/site/
+
+# Python cruft
+__pycache__/
+*.pyc
+.DS_Store
