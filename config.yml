@@ -1,0 +1,9 @@
+title: RCSI — Hands-on AI on NRP
+subtitle: Managed LLM, RAG, and deploying your own JupyterHub with Helm
+length: 1 hour
+order: 10
+published: true
+episodes:
+  - 1_intro
+  - 2_inference
+  - 3_jupyterhub
