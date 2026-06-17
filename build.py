@@ -1,8 +1,5 @@
 #!/usr/bin/env python3
-"""Bare-bones, Carpentries-style lesson site generator.
-
-Pure standard library: no pip, no Node, no pandoc required.
-
+"""
 Usage:
     python3 build.py            # build site/ from episodes/ and config.yml
     python3 build.py --serve    # build, then serve at http://localhost:8000
