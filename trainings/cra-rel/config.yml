@@ -1,5 +1,5 @@
-title: CRA2 — AI Unlocked + JupyterHub
-subtitle: Inference, agentic workflows, accelerators, and deploying JupyterHub with Helm
+title: CRA-REL — JupyterAI + Deploying JupyterHub on NRP
+subtitle: Inference, agentic workflows, and deploying JupyterHub with Helm on NRP
 length: 2 hours
 order: 20
 published: true
