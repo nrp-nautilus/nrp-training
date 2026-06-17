@@ -318,7 +318,7 @@ print(ask(QUESTION))
 
 **What to notice.** Everything — chat, embeddings, vision, RAG — came from
 NRP's managed endpoint with the same `openai` client. No GPU, no model downloads.
-In **Part 3** you'll reuse this exact RAG pattern over the JupyterHub docs.
+In **Part 3** you'll point an agentic coding CLI at this same managed endpoint.
 
 ## Takeaways
 
@@ -327,5 +327,5 @@ In **Part 3** you'll reuse this exact RAG pattern over the JupyterHub docs.
 - Managed LLMs are the lowest-friction path for classrooms: no GPU, no model ops.
 - RAG = embed your docs, retrieve the closest chunks, answer from context.
 
-**Next:** [`3_jupyterhub.ipynb`](3_jupyterhub.ipynb) — deploy your own JupyterHub
-with Helm, and RAG the JupyterHub docs.
+**Next:** [Agentic Workflows](3_agentic.html) — point an agentic coding CLI at
+NRP's managed LLM and have it build a program from scratch.
