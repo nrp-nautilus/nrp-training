@@ -4,13 +4,13 @@ teaching: 25
 exercises: 0
 ---
 
-::: callout Launch CRA2 workspace in JupyterHub
-**[▶ Launch CRA2 workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra2&targetpath=cra2&urlpath=lab%2Ftree%2Fcra2)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab on the training GPU nodes.
+::: callout Launch the workspace in JupyterHub
+**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab on the training GPU nodes.
 :::
 
 **Time:** 00:00-00:35
 
-This section gets everyone into the AI Unlocked training environment, confirms that the JupyterHub terminal has `kubectl` access, and shows how accelerator requests appear both in the NRP portal and in Kubernetes manifests.
+This section gets everyone into the NAIRR Pilot Classroom training environment, confirms that the JupyterHub terminal has `kubectl` access, and shows how accelerator requests appear both in the NRP portal and in Kubernetes manifests.
 
 Run all commands from a JupyterHub terminal. Command blocks are formatted for copy/paste into that terminal.
 
@@ -19,7 +19,7 @@ Run all commands from a JupyterHub terminal. Command blocks are formatted for co
 | Topic | Outcome |
 | --- | --- |
 | NRP overview | Understand where JupyterHub, Kubernetes, GPUs, and Qualcomm Cloud AI 100 SoCs fit. |
-| Access with CILogon | Log into the training JupyterHub and open the AI Unlocked tutorial workspace. |
+| Access with CILogon | Log into the training JupyterHub and open the tutorial workspace. |
 | Resource portal | Inspect available hardware, quotas, and allocation paths. |
 | Kubernetes resource requests | Launch a small GPU request on the workshop reservation and clean it up. |
 
@@ -82,7 +82,7 @@ The core mental model is:
 
 Useful links for the live session:
 
-- [Launch CRA2 Workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra2&targetpath=cra2&urlpath=lab%2Ftree%2Fcra2)
+- [Launch the workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)
 - [NRP live resource view](https://nrp.ai/viz/resources/)
 - [NRP namespaces view](https://nrp.ai/viz/namespaces/)
 - [NRP support and Matrix chat](https://nrp.ai/contact/)
@@ -161,7 +161,7 @@ Use the JupyterLab launcher to open:
 Confirm that the prepared environment is ready:
 
 ```bash
-cd ~/ai-unlocked-tutorial
+cd ~/cra-rel
 kubectl version --client
 kubectl auth whoami
 kubectl config current-context
@@ -204,7 +204,7 @@ kubectl get resourcequota -n nrp-training-k8s
 kubectl describe resourcequota -n nrp-training-k8s
 ```
 
-Nautilus also enforces admission policies. A common classroom failure is a pod that omits CPU or memory requests and limits. The AI Unlocked example manifests set requests and limits explicitly, usually with `requests == limits`, so they pass the cluster policy.
+Nautilus also enforces admission policies. A common classroom failure is a pod that omits CPU or memory requests and limits. The training example manifests set requests and limits explicitly, usually with `requests == limits`, so they pass the cluster policy.
 
 ## Hardware Resource Keys
 
@@ -232,7 +232,7 @@ Some GPUs also use product-specific resource keys such as `nvidia.com/a100` or s
 
 ## Workshop Reservation Pattern
 
-For AI Unlocked, NRP has a reserved pool of training nodes. The manifests use:
+For this training, NRP has a reserved pool of training nodes. The manifests use:
 
 - label: `nrp-training=true`
 - taint: `nautilus.io/reservation=nrp:NoSchedule`
@@ -286,7 +286,7 @@ resources:
 Create a per-user copy of the manifest, replace `<username>`, and launch the pod:
 
 ```bash
-cd ~/ai-unlocked-tutorial
+cd ~/cra-rel
 cp yamls/gpu-pod.yaml /tmp/gpu-pod-${TUTORIAL_USER}.yaml
 sed -i "s/<username>/${TUTORIAL_USER}/g" /tmp/gpu-pod-${TUTORIAL_USER}.yaml
 kubectl apply -n nrp-training-k8s -f /tmp/gpu-pod-${TUTORIAL_USER}.yaml
@@ -318,7 +318,7 @@ kubectl delete -n nrp-training-k8s -f /tmp/gpu-pod-${TUTORIAL_USER}.yaml --ignor
 At this point participants should have:
 
 - logged into the training JupyterHub through CILogon
-- opened the AI Unlocked workspace
+- opened the training workspace
 - confirmed `kubectl` access
 - inspected the NRP resource view
 - launched and deleted a small GPU request
