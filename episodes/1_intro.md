@@ -25,11 +25,10 @@ research, teaching, and outreach.
    - **1400+ GPUs**
    - **30+ FPGAs**
 
-![NRP](images/dash-us.png)
 <details>
   <summary>Click to reveal more</summary>
 
-![NRP](images/dash-full.png)
+![NRP](../images/dash-full.png)
 </details>
 
 
