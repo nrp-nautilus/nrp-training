@@ -93,7 +93,7 @@ See what got created — you should see a **hub** pod and a **proxy** pod
 reach `Running` (user pods appear on demand when someone logs in):
 
 ```python
-kubectl get pods,svc -n "$NAMESPACE"
+kubectl get pods,pvc,svc -n "$NAMESPACE"
 ```
 
 ## 5. Make it reachable at a URL
