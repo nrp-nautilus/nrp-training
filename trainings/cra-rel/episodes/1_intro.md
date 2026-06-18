@@ -35,6 +35,13 @@ The core mental model is:
 4. **YAML manifests** describe the compute resources a workload needs.
 5. **Device plugins** expose accelerators such as NVIDIA GPUs and Qualcomm Cloud AI 100 SoCs to Kubernetes.
 
+### NAIRR Classroom Provider
+- Provides a Jupyter platform for your classroom
+- Access to NRP Resources (CPU, A10 GPU, storage, LLMs,...)
+![NAIRR1](images/NAIRR_Classroom_1.png)
+---
+![NAIRR2](images/NAIRR_Classroom_2.png)
+
 ### Capabilities
 
 - **Storage:** CephFS, CVMFS, S3
@@ -44,9 +51,9 @@ The core mental model is:
 
 ### Scale
 
-- **500+ nodes**
-- **1500+ GPUs**
-- **50+ FPGAs**
+- **~500 nodes**
+- **~1400 GPUs**
+- **~30 FPGAs**
 
 <style>
 .image-row {
@@ -77,15 +84,19 @@ The core mental model is:
 
 <div class="image-row">
   <img src="images/dash.png" alt="Dashboard image">
-  <img src="images/kcluster.png" alt="Kubernetes cluster image">
 </div>
+<details>
+  <summary>Click to reveal more</summary>
+
+![NRP](images/dash-full.png)
+</details>
 
 Useful links for the live session:
 
 - [Launch the workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)
 - [NRP live resource view](https://nrp.ai/viz/resources/)
 - [NRP namespaces view](https://nrp.ai/viz/namespaces/)
-- [NRP support and Matrix chat](https://nrp.ai/contact/)
+- [NRP support chat](https://nrp.ai/contact/)
 
 ## Kubernetes basics (quick intro)
 Kubernetes is a system for running applications on a cluster by managing **workloads** (things you want to run) and keeping them in the desired state.
@@ -107,6 +118,7 @@ Workloads are the resource types you use to run containers on the cluster.
 - **Deployment**: manages long-running services and keeps them available (including rolling updates)
 
 Rule of thumb:
+- Use a **Pod** for small tasks/debugging; remember to remove when finished. 
 - Use a **Job** when the work should finish.
 - Use a **Deployment** when the work should keep running.
   
@@ -116,6 +128,9 @@ Rule of thumb:
 - **Persistent volume claims** (PVCs) are used to claim long term storage.
 - Kubernetes nodes are typically not accessed directly by users. Instead, users define their workloads in **YAML files** and submit them to the cluster using kubectl, which can be run from any machine that has it installed, such as a local computer.
 
+::: callout Important
+ In Kubernetes, you do not need to ssh to the compute nodes themselves. 
+:::
 
 ### Docker and containers
 Docker is a tool for building and running **containers**.
@@ -204,11 +219,11 @@ kubectl get resourcequota -n nrp-training-k8s
 kubectl describe resourcequota -n nrp-training-k8s
 ```
 
-Nautilus also enforces admission policies. A common classroom failure is a pod that omits CPU or memory requests and limits. The training example manifests set requests and limits explicitly, usually with `requests == limits`, so they pass the cluster policy.
+Nautilus also enforces **admission policies**. A common classroom failure is a pod that omits CPU or memory requests and limits. The training example manifests set requests and limits explicitly, usually with `requests == limits`, so they pass the cluster policy.
 
 ## Hardware Resource Keys
 
-For NVIDIA GPUs, the most common Kubernetes resource key is:
+For NVIDIA GPUs, the most common Kubernetes **resource key** is `nvidia.com/gpu`:
 
 ```yaml
 resources:
