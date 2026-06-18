@@ -2,7 +2,7 @@
 """
 Usage:
     python3 build.py            # build site/ from episodes/ and config.yml
-    python3 build.py --serve    # build, then serve at http://localhost:8000
+    python3 build.py --serve    # build, then serve starting at http://localhost:8000
 
 Authoring model
 ---------------
@@ -503,15 +503,28 @@ def build():
         print(f"  - {ep['slug']}.html  ({ep['title']})")
 
 
-def serve():
+def serve(port=8000):
+    from functools import partial
+    import errno
     import http.server
-    import os
     import socketserver
-    os.chdir(SITE_DIR)
-    port = 8000
-    with socketserver.TCPServer(("", port), http.server.SimpleHTTPRequestHandler) as httpd:
-        print(f"Serving {SITE_DIR} at http://localhost:{port}  (Ctrl-C to stop)")
-        httpd.serve_forever()
+
+    class ReusableTCPServer(socketserver.TCPServer):
+        allow_reuse_address = True
+
+    handler = partial(http.server.SimpleHTTPRequestHandler, directory=str(SITE_DIR))
+    for candidate in range(port, port + 100):
+        try:
+            httpd = ReusableTCPServer(("", candidate), handler)
+        except OSError as exc:
+            if exc.errno == errno.EADDRINUSE:
+                continue
+            raise
+        with httpd:
+            print(f"Serving {SITE_DIR} at http://localhost:{candidate}  (Ctrl-C to stop)")
+            httpd.serve_forever()
+        return
+    raise OSError(f"No available port found in range {port}-{port + 99}")
 
 
 STYLE = """\

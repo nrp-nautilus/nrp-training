@@ -14,7 +14,7 @@ Add a training   -> drop a new dir under trainings/ and rebuild.
 Take one off      -> delete its dir, or set `published: false` in its config.yml.
 
     python3 build_site.py                   # build everything into site/
-    python3 build_site.py --serve           # build, then serve on :8000
+    python3 build_site.py --serve           # build, then serve starting on :8000
     python3 build_site.py --serve --watch   # rebuild + auto-refresh on edits
 """
 import html
