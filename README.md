@@ -31,7 +31,7 @@ builds into `site/<name>/`.
 - **Order on the landing page** — set `order:` (lower = first) in each
   `config.yml`; `length:` renders as a badge on the card.
 
-The current trainings are **`rcsi`** (1 hour) and **`cra2`** (2 hours). Their
+The current trainings are **`rcsi`** (1 hour) and **`cra-rel`** (2 hours). Their
 in-page **"Launch in JupyterHub"** buttons are nbgitpuller links that target
 `https://jh-training.nrp-nautilus.io` (the materials site is hosted separately
 on `training.nrp-nautilus.io`).

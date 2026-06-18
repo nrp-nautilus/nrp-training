@@ -1,14 +1,4 @@
----
-title: Agentic Workflows
-teaching: 25
-exercises: 0
----
-
-::: callout Open a JupyterHub terminal
-**[▶ Open a JupyterHub terminal](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)** — opens JupyterLab on jh-training.nrp-nautilus.io; use a Terminal for the `opencode` steps below.
-:::
-
-**Time:** 01:05-01:30
+# Agentic Workflows
 
 This section points an agentic coding CLI at the NRP managed LLM and has it
 write a small program from scratch. The CLI we use is
@@ -18,18 +8,10 @@ key teaching point is portability: anything that speaks an OpenAI-compatible
 base URL works against NRP, so the agentic workflow you already use locally
 runs unchanged against NRP's managed inference.
 
-Run all commands from a JupyterHub terminal. Command blocks are formatted for
-copy/paste into that terminal.
+Run all commands from a **JupyterHub terminal** (File → New → Terminal).
+Command blocks are formatted for copy/paste into that terminal.
 
-## Schedule
-
-| Time | Topic | Outcome |
-| --- | --- | --- |
-| 01:05-01:10 | Setup | Install `opencode` and point it at the NRP managed LLM. |
-| 01:10-01:25 | Build a chess game | Drive `opencode` through a small but real coding task. |
-| 01:25-01:30 | Discussion and Q&A | Implementation strategies for under-resourced classrooms. |
-
-## 01:05-01:10 — Setup
+## Setup
 
 Install `opencode` into the JupyterHub session. The installer drops the
 binary in `~/.opencode/bin/` — no `sudo` needed.
@@ -72,7 +54,7 @@ JSON
 `gpt-oss` is the default model here because it tends to do well on code; you
 can switch in-session with `Ctrl+P → Switch models`.
 
-## 01:10-01:25 — Build a chess game
+## Build a chess game
 
 Create a clean project directory and launch the agent:
 
@@ -116,7 +98,7 @@ same prompt against `qwen3` (the largest context window) or `minimax-m2`
 (strong general-purpose reasoning) — same agent, same prompt, different
 inference backend.
 
-## 01:25-01:30 — Discussion and Q&A
+## Discussion and Q&A
 
 Key teaching points:
 
