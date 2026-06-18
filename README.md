@@ -18,6 +18,7 @@ trainings/<name>/images/          # optional assets
 ```bash
 python3 build_site.py            # build EVERY training into site/, + a landing page
 python3 build_site.py --serve    # build all, then serve at http://localhost:8000
+python3 build_site.py --serve --watch  # rebuild and auto-refresh the browser on edits
 ```
 
 `site/index.html` is the landing page (one card per training); each training

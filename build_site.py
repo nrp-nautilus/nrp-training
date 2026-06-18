@@ -13,12 +13,15 @@ landing page at site/index.html links them all.
 Add a training   -> drop a new dir under trainings/ and rebuild.
 Take one off      -> delete its dir, or set `published: false` in its config.yml.
 
-    python3 build_site.py            # build everything into site/
-    python3 build_site.py --serve    # build, then serve on :8000
+    python3 build_site.py                   # build everything into site/
+    python3 build_site.py --serve           # build, then serve on :8000
+    python3 build_site.py --serve --watch   # rebuild + auto-refresh on edits
 """
 import html
 import shutil
 import sys
+import threading
+import time
 from pathlib import Path
 
 import build  # reuse the single-lesson generator
@@ -27,6 +30,35 @@ ROOT = Path(__file__).resolve().parent
 TRAININGS = ROOT / "trainings"
 SITE = ROOT / "site"
 ASSETS = ROOT / "assets"            # shared NRP brand assets (logo, favicon)
+WATCH_POLL_SECONDS = 0.6
+LIVE_RELOAD_FILE = "__reload"
+
+LIVE_RELOAD_SNIPPET = """
+<script>
+(() => {
+  const reloadUrl = "/__reload";
+  let seen = null;
+
+  async function checkForReload() {
+    try {
+      const response = await fetch(`${reloadUrl}?t=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) return;
+      const version = await response.text();
+      if (seen === null) {
+        seen = version;
+      } else if (version !== seen) {
+        location.reload();
+      }
+    } catch (error) {
+      // The server may briefly miss during a rebuild. Try again on the next tick.
+    }
+  }
+
+  setInterval(checkForReload, 700);
+  checkForReload();
+})();
+</script>
+"""
 
 
 def copy_assets(dst):
@@ -130,6 +162,75 @@ def write_landing(items):
     copy_assets(SITE)
 
 
+def inject_live_reload():
+    for page in SITE.rglob("*.html"):
+        text = page.read_text(encoding="utf-8")
+        if LIVE_RELOAD_FILE in text:
+            continue
+        if "</body>" in text:
+            text = text.replace("</body>", LIVE_RELOAD_SNIPPET + "\n</body>", 1)
+        else:
+            text += LIVE_RELOAD_SNIPPET
+        page.write_text(text, encoding="utf-8")
+
+
+def write_reload_version():
+    (SITE / LIVE_RELOAD_FILE).write_text(str(time.time_ns()), encoding="utf-8")
+
+
+def build_all(live_reload=False):
+    if SITE.exists():
+        shutil.rmtree(SITE)
+    items = discover()
+    if not items:
+        sys.exit("No published trainings found under trainings/")
+    for it in items:
+        print(f"==> {it['name']}")
+        build_one(it)
+    write_landing(items)
+    if live_reload:
+        inject_live_reload()
+        write_reload_version()
+    print(f"\nLanding page + {len(items)} training(s) -> {SITE}/")
+    for it in items:
+        print(f"  - {it['name']}/  ({it['title']})")
+
+
+def source_fingerprint():
+    paths = [ROOT / "build.py", ROOT / "build_site.py"]
+    for watched_dir in (TRAININGS, ASSETS):
+        if watched_dir.exists():
+            paths.extend(p for p in watched_dir.rglob("*") if p.is_file())
+
+    stats = []
+    for path in paths:
+        if not path.exists():
+            continue
+        stat = path.stat()
+        stats.append((str(path.relative_to(ROOT)), stat.st_mtime_ns, stat.st_size))
+    return tuple(sorted(stats))
+
+
+def watch_and_rebuild():
+    fingerprint = source_fingerprint()
+    watched = "trainings/, assets/, build.py, build_site.py"
+    print(f"Watching {watched} for changes")
+    while True:
+        time.sleep(WATCH_POLL_SECONDS)
+        current = source_fingerprint()
+        if current == fingerprint:
+            continue
+
+        fingerprint = current
+        print("\nChange detected; rebuilding...")
+        try:
+            build_all(live_reload=True)
+        except Exception as exc:
+            print(f"Build failed: {exc}", file=sys.stderr)
+        else:
+            fingerprint = source_fingerprint()
+
+
 LANDING_CSS = """
 .hero { background:
     radial-gradient(1100px 400px at 15% -10%, rgb(1 97 239 / 35%), transparent 60%),
@@ -156,19 +257,18 @@ LANDING_CSS = """
 
 
 def main():
-    if SITE.exists():
-        shutil.rmtree(SITE)
-    items = discover()
-    if not items:
-        sys.exit("No published trainings found under trainings/")
-    for it in items:
-        print(f"==> {it['name']}")
-        build_one(it)
-    write_landing(items)
-    print(f"\nLanding page + {len(items)} training(s) -> {SITE}/")
-    for it in items:
-        print(f"  - {it['name']}/  ({it['title']})")
-    if "--serve" in sys.argv:
+    unknown = [arg for arg in sys.argv[1:] if arg not in ("--serve", "--watch")]
+    if unknown:
+        sys.exit(f"Unknown option(s): {', '.join(unknown)}")
+
+    live_reload = "--watch" in sys.argv
+    serve = "--serve" in sys.argv or live_reload
+
+    build_all(live_reload=live_reload)
+    if live_reload:
+        thread = threading.Thread(target=watch_and_rebuild, daemon=True)
+        thread.start()
+    if serve:
         build.SITE_DIR = SITE
         build.serve()
 
