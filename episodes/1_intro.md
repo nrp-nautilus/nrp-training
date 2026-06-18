@@ -8,7 +8,7 @@ exercises: 0
 **[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab on the training GPU nodes.
 :::
 
-**Time:** 00:00-00:35
+**Time:** 00:00-00:25
 
 This section gets everyone into the NAIRR Pilot Classroom training environment, confirms that the JupyterHub terminal has `kubectl` access, and shows how accelerator requests appear both in the NRP portal and in Kubernetes manifests.
 
@@ -31,7 +31,7 @@ The core mental model is:
 
 1. **CILogon** authenticates users through institutional identity providers.
 2. **JupyterHub** gives each participant a browser-based JupyterLab workspace and terminal.
-3. **Kubernetes namespaces** isolate class or project workloads.
+3. **Kubernetes** useris interact with the cluster directly via commnd line tools.
 4. **YAML manifests** describe the compute resources a workload needs.
 5. **Device plugins** expose accelerators such as NVIDIA GPUs and Qualcomm Cloud AI 100 SoCs to Kubernetes.
 
@@ -121,7 +121,17 @@ Rule of thumb:
 - Use a **Pod** for small tasks/debugging; remember to remove when finished. 
 - Use a **Job** when the work should finish.
 - Use a **Deployment** when the work should keep running.
+
+### Namespaces
+**Namespaces** are what Kubernetes uses to group users. Certain resources are namespace scoped, meaning they can only be accessed by members of that namespace, not everyone on the cluster. Every namespace has two types of members **admins** and **users**. Admins have elevated priviliges including adding and removing members, as well as creating additional namespaces. 
+
+::: callout Important
+ Admins are also charged with ensuring the other members of the namespace follow cluster policies.  
+:::
   
+Today, we are using two namespaces, `nrp-training` and `nrp-training-k8s`
+- `nrp-training` is where all of our jupyterhub servers are runnnig.
+- `nrp-training-k8s` is where we will be sending our tutorial pods/jobs.
 
 ### Keep in mind
 - pods are **ephemeral**. Once a pod is terminated all data is deleted.
@@ -131,6 +141,8 @@ Rule of thumb:
 ::: callout Important
  In Kubernetes, you do not need to ssh to the compute nodes themselves. 
 :::
+
+
 
 ### Docker and containers
 Docker is a tool for building and running **containers**.
