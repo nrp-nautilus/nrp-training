@@ -5,10 +5,10 @@ exercises: 0
 ---
 
 ::: callout Open this notebook in JupyterHub
-**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra2&targetpath=cra2&urlpath=lab%2Ftree%2Fcra2%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
+**[▶ Open this notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel%2F2_inference.ipynb)** — opens `2_inference.ipynb` live on jh-training.nrp-nautilus.io.
 :::
 
-This notebook is the hands-on portion of the AI Unlocked workshop. Everything
+This notebook is the hands-on portion of the NAIRR Pilot Classroom training. Everything
 runs **inside this JupyterHub session** — there are no separate pods to launch
 and no YAML to apply. (We keep the YAML equivalents around as collapsible
 reveals so you can see what the same workflow would look like as a Kubernetes
