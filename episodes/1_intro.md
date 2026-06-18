@@ -129,10 +129,10 @@ Rule of thumb:
  Admins are also charged with ensuring the other members of the namespace follow cluster policies.  
 :::
   
-Today, we are using two namespaces, `nrp-training` and `nrp-training-k8s`
-- `nrp-training` is where all of our jupyterhub servers are runnnig.
+Today, we are using three namespaces, `nrp-training`, `nrp-training-k8s`
+- `nrp-training`, and `nrp-training-xxx` is where all of our JupyterHub servers are runnnig.
 - `nrp-training-k8s` is where we will be sending our tutorial pods/jobs.
-
+- `nrp-training-xxx` each of you will be assigned a number to replace the `xxx`, we will use this in the last exercise to deploy custom JupyterHub.
 ### Keep in mind
 - pods are **ephemeral**. Once a pod is terminated all data is deleted.
 - **Persistent volume claims** (PVCs) are used to claim long term storage.
