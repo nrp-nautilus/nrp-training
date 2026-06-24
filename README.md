@@ -26,6 +26,9 @@ builds into `site/<name>/`.
 
 - **Add a training** — create `trainings/<name>/` with a `config.yml` and an
   `episodes/` folder, then rebuild.
+- **Scaffold a training** — run `python3 new_training.py <name>` to create the
+  expected `config.yml`, `episodes/`, `workspace/`, `workspace/yamls/`, and
+  `images/` structure with starter files.
 - **Take a training off** — delete its folder, or set `published: false` in its
   `config.yml`.
 - **Order on the landing page** — set `order:` (lower = first) in each
