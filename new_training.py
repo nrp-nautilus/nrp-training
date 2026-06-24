@@ -9,6 +9,7 @@ Examples:
 import argparse
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 
@@ -32,6 +33,15 @@ def clean_scalar(value):
     return " ".join(str(value).split())
 
 
+def validate_date(value):
+    if not value:
+        return
+    try:
+        date.fromisoformat(value)
+    except ValueError as exc:
+        raise ValueError("date must use YYYY-MM-DD format") from exc
+
+
 def config_template(args):
     title = clean_scalar(args.title or slug_title(args.name))
     subtitle = clean_scalar(args.subtitle)
@@ -39,9 +49,10 @@ def config_template(args):
     materials_branch = clean_scalar(args.materials_branch or f"materials/{args.name}")
     published = "false" if args.unpublished else "true"
     subtitle_line = f"subtitle: {subtitle}\n" if subtitle else ""
+    date_line = f"date: {args.date}\n" if args.date else "# date: YYYY-MM-DD\n"
     return f"""title: {title}
 {subtitle_line}length: {length}
-order: {args.order}
+{date_line}# Undated trainings appear first on the landing page.
 published: {published}
 materials_branch: {materials_branch}
 lessons:
@@ -106,6 +117,7 @@ def write_file(path, content, created, skipped):
 
 def create_training(args):
     validate_name(args.name)
+    validate_date(args.date)
 
     trainings_dir = args.trainings_dir.resolve()
     target = trainings_dir / args.name
@@ -163,7 +175,10 @@ def parse_args(argv):
     parser.add_argument("--title", help="training title; defaults to a title-cased name")
     parser.add_argument("--subtitle", default="", help="landing-page subtitle")
     parser.add_argument("--length", default="TBD", help='landing-page length badge, e.g. "2 hours"')
-    parser.add_argument("--order", type=int, default=999, help="landing-page order; lower appears first")
+    parser.add_argument(
+        "--date",
+        help="tutorial date in YYYY-MM-DD format; undated trainings appear first",
+    )
     parser.add_argument(
         "--materials-branch",
         help='Git branch for post-training code/resources; defaults to "materials/<name>"',

@@ -10,7 +10,7 @@ This repo hosts several trainings at once, each in its own folder under
 `trainings/`, with a shared landing page:
 
 ```
-trainings/<name>/config.yml      # title, subtitle, length, order, lessons
+trainings/<name>/config.yml      # title, subtitle, date, length, lessons
 trainings/<name>/lessons/*.md     # the lesson pages
 trainings/<name>/images/          # optional assets
 ```
@@ -31,8 +31,9 @@ builds into `site/<name>/`.
   `images/` structure with starter files.
 - **Take a training off** — delete its folder, or set `published: false` in its
   `config.yml`.
-- **Order on the landing page** — set `order:` (lower = first) in each
-  `config.yml`; `length:` renders as a badge on the card.
+- **Order on the landing page** — trainings without `date:` appear first.
+  Dated trainings use `date: YYYY-MM-DD` and appear newest-first. `length:`
+  renders as a badge on the card.
 - **Link post-training resources** — set `materials_branch: materials/<name>` in
   `config.yml`; the training home page links to that GitHub branch.
 

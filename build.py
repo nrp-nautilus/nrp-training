@@ -583,11 +583,13 @@ THEME_INIT_SCRIPT = """\
 <script>
 (() => {
   const storageKey = "nrpLessonTheme";
+  const themes = ["light", "dark", "warm-dark", "presenter"];
+  const normalizeTheme = (theme) => themes.includes(theme) ? theme : "light";
   try {
     const saved = window.localStorage.getItem(storageKey);
     const prefersDark = window.matchMedia &&
       window.matchMedia("(prefers-color-scheme: dark)").matches;
-    const theme = saved || (prefersDark ? "dark" : "light");
+    const theme = normalizeTheme(saved || (prefersDark ? "dark" : "light"));
     document.documentElement.dataset.theme = theme;
   } catch (error) {
     document.documentElement.dataset.theme = "light";
@@ -605,6 +607,8 @@ PAGE_SCRIPT = """\
   const nav = document.getElementById("lesson-nav");
   const navToggle = document.querySelector("[data-nav-toggle]");
   const themeToggle = document.querySelector("[data-theme-toggle]");
+  const themes = ["light", "dark", "warm-dark", "presenter"];
+  const normalizeTheme = (theme) => themes.includes(theme) ? theme : "light";
 
   function setHidden(hidden) {
     document.body.classList.toggle("nav-hidden", hidden);
@@ -621,8 +625,8 @@ PAGE_SCRIPT = """\
   }
 
   function setTheme(theme) {
-    const nextTheme = theme === "dark" ? "dark" : "light";
-    const isDark = nextTheme === "dark";
+    const nextTheme = normalizeTheme(theme);
+    const isDark = nextTheme === "dark" || nextTheme === "warm-dark";
     document.documentElement.dataset.theme = nextTheme;
     if (themeToggle) {
       themeToggle.innerHTML = isDark ? "&#9728;" : "&#9790;";
@@ -654,8 +658,9 @@ PAGE_SCRIPT = """\
   setTheme(document.documentElement.dataset.theme || "light");
   if (themeToggle) {
     themeToggle.addEventListener("click", () => {
-      const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
-      setTheme(current === "dark" ? "light" : "dark");
+      const current = normalizeTheme(document.documentElement.dataset.theme);
+      const isDark = current === "dark" || current === "warm-dark";
+      setTheme(isDark ? "light" : "dark");
     });
   }
 })();

@@ -3,7 +3,7 @@
 
 Layout
 ------
-    trainings/<name>/config.yml     # title, subtitle, length, order, lessons
+    trainings/<name>/config.yml     # title, subtitle, date, length, lessons
     trainings/<name>/lessons/*.md   # the lesson pages
     trainings/<name>/images/        # optional assets
 
@@ -22,6 +22,7 @@ import shutil
 import sys
 import threading
 import time
+from datetime import date
 from pathlib import Path
 
 import build  # reuse the single-lesson generator
@@ -60,6 +61,11 @@ LIVE_RELOAD_SNIPPET = """
 </script>
 """
 
+MONTHS = (
+    "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+)
+
 
 def copy_assets(dst):
     """Copy shared brand assets next to a page's style.css so logo/favicon
@@ -69,6 +75,23 @@ def copy_assets(dst):
         src = ASSETS / f
         if src.exists():
             shutil.copy2(src, dst / f)
+
+
+def parse_training_date(value):
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        return date.fromisoformat(raw)
+    except ValueError:
+        print(f"  (ignoring invalid date: {raw}; expected YYYY-MM-DD)")
+        return None
+
+
+def format_training_date(value):
+    if value is None:
+        return ""
+    return f"{MONTHS[value.month - 1]} {value.day}, {value.year}"
 
 
 def discover():
@@ -83,15 +106,22 @@ def discover():
         if str(cfg.get("published", "true")).lower() == "false":
             print(f"  (skipping {d.name}: published: false)")
             continue
+        training_date = parse_training_date(cfg.get("date"))
         items.append({
             "name": d.name,
             "dir": d,
             "title": cfg.get("title", d.name),
             "subtitle": cfg.get("subtitle", ""),
             "length": cfg.get("length", ""),
-            "order": int(cfg.get("order", 999) or 999),
+            "date": training_date,
+            "date_label": format_training_date(training_date),
         })
-    items.sort(key=lambda x: (x["order"], x["title"]))
+    def sort_key(item):
+        if item["date"] is None:
+            return (0, item["title"])
+        return (1, -item["date"].toordinal(), item["title"])
+
+    items.sort(key=sort_key)
     return items
 
 
@@ -118,11 +148,15 @@ def build_one(item):
 def write_landing(items):
     cards = []
     for it in items:
-        badge = (f'<span class="card-len">{html.escape(it["length"])}</span>'
-                 if it["length"] else "")
+        badges = []
+        if it["date_label"]:
+            badges.append(f'<span class="card-date">{html.escape(it["date_label"])}</span>')
+        if it["length"]:
+            badges.append(f'<span class="card-len">{html.escape(it["length"])}</span>')
+        badge = " " + " ".join(badges) if badges else ""
         cards.append(
             f'<a class="card" href="{it["name"]}/index.html">'
-            f'<h2>{html.escape(it["title"])} {badge}</h2>'
+            f'<h2>{html.escape(it["title"])}{badge}</h2>'
             f'<p>{html.escape(it["subtitle"])}</p></a>'
         )
     body = (
@@ -283,9 +317,10 @@ LANDING_CSS = """
   transform: translateY(-3px); box-shadow: 0 12px 30px rgb(1 97 239 / 16%); }
 .card h2 { margin: 0 0 8px; font-size: 1.2rem; line-height: 1.3; color: var(--navy); }
 .card p { margin: 0; color: var(--muted); }
-.card-len { font-size: .72rem; color: var(--accent); font-weight: 700;
+.card-len, .card-date { font-size: .72rem; color: var(--accent); font-weight: 700;
   background: var(--accent-weak); border-radius: 999px; padding: 2px 10px;
   vertical-align: middle; white-space: nowrap; }
+.card-date { color: var(--fg); background: var(--panel); border: 1px solid var(--border); }
 """
 
 
