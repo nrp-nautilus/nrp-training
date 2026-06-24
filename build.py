@@ -884,6 +884,77 @@ PAGE_SCRIPT = """\
     }
   }
 
+  function copyText(text) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(text);
+    }
+
+    return new Promise((resolve, reject) => {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.top = "-1000px";
+      textarea.style.left = "-1000px";
+      document.body.appendChild(textarea);
+      textarea.select();
+
+      try {
+        if (document.execCommand("copy")) {
+          resolve();
+        } else {
+          reject(new Error("Copy command failed"));
+        }
+      } catch (error) {
+        reject(error);
+      } finally {
+        textarea.remove();
+      }
+    });
+  }
+
+  function initCodeCopyButtons() {
+    const copyIcon = '<span class="copy-icon" aria-hidden="true"></span>';
+    document.querySelectorAll("pre > code").forEach((code) => {
+      const pre = code.parentElement;
+      if (!pre || pre.querySelector("[data-copy-code]")) return;
+
+      const button = document.createElement("button");
+      button.className = "code-copy";
+      button.type = "button";
+      button.dataset.copyCode = "";
+      button.innerHTML = copyIcon;
+      button.setAttribute("aria-label", "Copy code");
+      button.setAttribute("title", "Copy code");
+
+      button.addEventListener("click", () => {
+        copyText(code.textContent).then(() => {
+          button.classList.add("is-copied");
+          button.innerHTML = "&#10003;";
+          button.setAttribute("aria-label", "Copied");
+          button.setAttribute("title", "Copied");
+          window.setTimeout(() => {
+            button.classList.remove("is-copied");
+            button.innerHTML = copyIcon;
+            button.setAttribute("aria-label", "Copy code");
+            button.setAttribute("title", "Copy code");
+          }, 1400);
+        }).catch(() => {
+          button.classList.add("is-copy-error");
+          button.setAttribute("aria-label", "Copy failed");
+          button.setAttribute("title", "Copy failed");
+          window.setTimeout(() => {
+            button.classList.remove("is-copy-error");
+            button.setAttribute("aria-label", "Copy code");
+            button.setAttribute("title", "Copy code");
+          }, 1400);
+        });
+      });
+
+      pre.appendChild(button);
+    });
+  }
+
   function setHidden(hidden) {
     document.body.classList.toggle("nav-hidden", hidden);
     if (navToggle) {
@@ -938,6 +1009,7 @@ PAGE_SCRIPT = """\
     });
   }
 
+  initCodeCopyButtons();
   initSlideshows();
 })();
 </script>
@@ -1043,10 +1115,27 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
 .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: -8px; }
 .lesson-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
 pre { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
-  padding: 14px 16px; overflow: auto; }
+  padding: 14px 48px 14px 16px; overflow: auto; position: relative; }
 code { background: var(--panel); padding: .1em .35em; border-radius: 4px;
   font-size: .9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
 pre code { background: none; padding: 0; }
+.code-copy { position: absolute; top: 8px; right: 8px; display: inline-flex;
+  align-items: center; justify-content: center; width: 30px; height: 30px;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+  color: var(--muted); cursor: pointer; font: inherit; font-size: .95rem;
+  line-height: 1; opacity: 0; transition: opacity .15s ease, color .15s ease,
+  background .15s ease, border-color .15s ease; }
+pre:hover .code-copy, pre:focus-within .code-copy { opacity: 1; }
+.code-copy:hover { color: var(--accent); border-color: var(--accent); }
+.code-copy:focus-visible { opacity: 1; outline: 2px solid var(--accent); outline-offset: 2px; }
+.code-copy.is-copied { color: var(--solution); border-color: var(--solution); opacity: 1; }
+.code-copy.is-copy-error { color: var(--challenge); border-color: var(--challenge); opacity: 1; }
+.copy-icon { position: relative; width: 15px; height: 15px; display: block; }
+.copy-icon::before,
+.copy-icon::after { content: ""; position: absolute; width: 10px; height: 10px;
+  border: 1.6px solid currentColor; border-radius: 2px; background: var(--surface); }
+.copy-icon::before { left: 1px; top: 1px; opacity: .62; }
+.copy-icon::after { left: 4px; top: 4px; }
 blockquote { margin: 1em 0; padding: .2em 1em; border-left: 4px solid var(--accent-weak); color: var(--muted); }
 img { max-width: 100%; }
 .callout { border: 1px solid var(--border); border-left-width: 5px; border-radius: 10px;
