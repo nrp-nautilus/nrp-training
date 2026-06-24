@@ -1,6 +1,7 @@
-title: Cms Hats
-length: TBD
+title: LPC HATS -- NRP as a Resource for USCMS
+length: 3 hours
 order: 999
 published: true
+materials_branch: materials/cms-hats
 lessons:
   - 1_intro
