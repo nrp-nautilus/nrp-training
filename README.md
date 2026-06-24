@@ -205,6 +205,16 @@ rendered as an image. On macOS, install it with `brew install poppler`.
 Headings, paragraphs, **bold**/*italic*, `inline code`, fenced code blocks,
 ordered/unordered lists, blockquotes, horizontal rules, links, images, callouts,
 and in-page slide decks.
+
+Fenced code blocks can include a language label. `bash`, `python`, `cpp` /
+`c++`, and `yaml` / `yml` get built-in syntax highlighting and a visible header:
+
+````markdown
+```bash
+kubectl get pods -n default
+```
+````
+
 It's a deliberate subset — enough to author lessons without a heavy toolchain.
 If you outgrow it, the lessons are plain Markdown and port cleanly to MkDocs,
 the Carpentries Workbench, or any other tool.

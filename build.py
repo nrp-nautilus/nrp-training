@@ -170,6 +170,246 @@ def inline(text):
     return text
 
 
+LANG_ALIASES = {
+    "bash": "bash",
+    "sh": "bash",
+    "shell": "bash",
+    "console": "bash",
+    "python": "python",
+    "py": "python",
+    "cpp": "cpp",
+    "c++": "cpp",
+    "cxx": "cpp",
+    "cc": "cpp",
+    "hpp": "cpp",
+    "yaml": "yaml",
+    "yml": "yaml",
+}
+
+LANG_LABELS = {
+    "bash": "Bash",
+    "python": "Python",
+    "cpp": "C++",
+    "yaml": "YAML",
+}
+
+BASH_BUILTINS = {
+    "awk", "cat", "cd", "chmod", "chown", "cp", "curl", "do", "done", "echo",
+    "else", "elif", "export", "fi", "for", "grep", "helm", "if", "in",
+    "install", "kubectl", "mkdir", "mv", "python", "python3", "rm", "sed",
+    "sudo", "tar", "then", "while",
+}
+
+PYTHON_KEYWORDS = {
+    "False", "None", "True", "and", "as", "assert", "async", "await", "break",
+    "class", "continue", "def", "del", "elif", "else", "except", "finally",
+    "for", "from", "global", "if", "import", "in", "is", "lambda", "nonlocal",
+    "not", "or", "pass", "raise", "return", "try", "while", "with", "yield",
+}
+
+PYTHON_BUILTINS = {
+    "dict", "enumerate", "float", "int", "len", "list", "max", "min", "open",
+    "print", "range", "set", "str", "sum", "tuple", "zip",
+}
+
+CPP_KEYWORDS = {
+    "alignas", "alignof", "auto", "bool", "break", "case", "catch", "char",
+    "class", "const", "constexpr", "continue", "default", "delete", "do",
+    "double", "else", "enum", "explicit", "extern", "false", "float", "for",
+    "friend", "if", "inline", "int", "long", "namespace", "new", "noexcept",
+    "nullptr", "private", "protected", "public", "return", "short", "signed",
+    "sizeof", "static", "struct", "switch", "template", "this", "throw",
+    "true", "try", "typedef", "typename", "union", "unsigned", "using",
+    "virtual", "void", "volatile", "while",
+}
+
+
+def normalize_code_language(lang):
+    raw = (lang or "").strip().lower()
+    return LANG_ALIASES.get(raw, raw)
+
+
+def code_language_label(raw_lang, lang):
+    if not raw_lang:
+        return ""
+    return LANG_LABELS.get(lang, raw_lang.strip())
+
+
+def tok(kind, text):
+    return f'<span class="tok-{kind}">{html.escape(text)}</span>'
+
+
+def highlight_words(text, *, keywords=None, builtins=None, extra=None):
+    keywords = keywords or set()
+    builtins = builtins or set()
+    parts = []
+    pos = 0
+    token_re = re.compile(r"\b\d+(?:\.\d+)?\b|\b[A-Za-z_][A-Za-z0-9_]*\b")
+    for match in token_re.finditer(text):
+        parts.append(html.escape(text[pos:match.start()]))
+        value = match.group(0)
+        if value in keywords:
+            parts.append(tok("kw", value))
+        elif value in builtins:
+            parts.append(tok("builtin", value))
+        elif re.match(r"^\d", value):
+            parts.append(tok("number", value))
+        elif extra:
+            parts.append(extra(value))
+        else:
+            parts.append(html.escape(value))
+        pos = match.end()
+    parts.append(html.escape(text[pos:]))
+    return "".join(parts)
+
+
+def highlight_with_protected(text, protected_re, gap_highlighter):
+    out = []
+    pos = 0
+    for match in protected_re.finditer(text):
+        out.append(gap_highlighter(text[pos:match.start()]))
+        kind = match.lastgroup
+        out.append(tok(kind, match.group(0)))
+        pos = match.end()
+    out.append(gap_highlighter(text[pos:]))
+    return "".join(out)
+
+
+def highlight_bash(text):
+    protected = re.compile(
+        r"(?P<comment>(?<!\S)#.*$)|"
+        r"(?P<string>'(?:[^']*)'|\"(?:\\.|[^\"\\])*\")",
+        re.MULTILINE,
+    )
+
+    def gaps(segment):
+        out = []
+        pos = 0
+        token_re = re.compile(
+            r"\$\{[^}]+\}|\$[A-Za-z_][A-Za-z0-9_]*|"
+            r"(?<!\S)-{1,2}[A-Za-z0-9][A-Za-z0-9_-]*|"
+            r"\b\d+(?:\.\d+)?\b|\b[A-Za-z_][A-Za-z0-9_.-]*\b"
+        )
+        for match in token_re.finditer(segment):
+            out.append(html.escape(segment[pos:match.start()]))
+            value = match.group(0)
+            if value.startswith("$"):
+                out.append(tok("var", value))
+            elif value.startswith("-"):
+                out.append(tok("option", value))
+            elif value in BASH_BUILTINS:
+                out.append(tok("builtin", value))
+            elif re.match(r"^\d", value):
+                out.append(tok("number", value))
+            else:
+                out.append(html.escape(value))
+            pos = match.end()
+        out.append(html.escape(segment[pos:]))
+        return "".join(out)
+
+    return highlight_with_protected(text, protected, gaps)
+
+
+def highlight_python(text):
+    protected = re.compile(
+        r"(?P<comment>#.*?$)|"
+        r"(?P<string>'''[\s\S]*?'''|\"\"\"[\s\S]*?\"\"\"|'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\")",
+        re.MULTILINE,
+    )
+    return highlight_with_protected(
+        text,
+        protected,
+        lambda segment: highlight_words(
+            segment, keywords=PYTHON_KEYWORDS, builtins=PYTHON_BUILTINS
+        ),
+    )
+
+
+def highlight_cpp(text):
+    protected = re.compile(
+        r"(?P<comment>//.*?$|/\*[\s\S]*?\*/)|"
+        r"(?P<pre>^\s*#[^\n]*$)|"
+        r"(?P<string>'(?:\\.|[^'\\])*'|\"(?:\\.|[^\"\\])*\")",
+        re.MULTILINE,
+    )
+    return highlight_with_protected(
+        text,
+        protected,
+        lambda segment: highlight_words(segment, keywords=CPP_KEYWORDS),
+    )
+
+
+def highlight_yaml_line(line):
+    comment = ""
+    body = line
+    match = re.search(r"(?<!['\"])#.*$", line)
+    if match:
+        body = line[:match.start()]
+        comment = line[match.start():]
+
+    prefix = ""
+    key = ""
+    sep = ""
+    rest = body
+    key_match = re.match(r"^(\s*(?:-\s*)?)([A-Za-z0-9_.-]+)(\s*:)(.*)$", body)
+    if key_match:
+        prefix, key, sep, rest = key_match.groups()
+
+    def yaml_values(segment):
+        protected = re.compile(r"(?P<string>'(?:[^']*)'|\"(?:\\.|[^\"\\])*\")")
+
+        def gaps(gap):
+            out = []
+            pos = 0
+            value_re = re.compile(r"\b(true|false|null|yes|no|on|off)\b|\b\d+(?:\.\d+)?\b", re.I)
+            for m in value_re.finditer(gap):
+                out.append(html.escape(gap[pos:m.start()]))
+                value = m.group(0)
+                kind = "number" if re.match(r"^\d", value) else "kw"
+                out.append(tok(kind, value))
+                pos = m.end()
+            out.append(html.escape(gap[pos:]))
+            return "".join(out)
+
+        return highlight_with_protected(segment, protected, gaps)
+
+    rendered = html.escape(prefix)
+    if key:
+        rendered += tok("key", key) + html.escape(sep)
+    rendered += yaml_values(rest)
+    if comment:
+        rendered += tok("comment", comment)
+    return rendered
+
+
+def highlight_yaml(text):
+    return "\n".join(highlight_yaml_line(line) for line in text.splitlines())
+
+
+def highlight_code(text, lang):
+    if lang == "bash":
+        return highlight_bash(text)
+    if lang == "python":
+        return highlight_python(text)
+    if lang == "cpp":
+        return highlight_cpp(text)
+    if lang == "yaml":
+        return highlight_yaml(text)
+    return html.escape(text)
+
+
+def render_code_block(raw_lang, code):
+    lang = normalize_code_language(raw_lang)
+    label = code_language_label(raw_lang, lang)
+    cls = f' class="language-{html.escape(lang)}"' if lang else ""
+    label_html = (
+        f'<div class="code-label">{html.escape(label)}</div>'
+        if label else ""
+    )
+    body = highlight_code(code, lang)
+    return f'<div class="code-block">{label_html}<pre><code{cls}>{body}</code></pre></div>'
+
+
 def render_blocks(lines, base_dir=None):
     """Render a list of Markdown lines (no callouts) into HTML."""
     out = []
@@ -193,9 +433,7 @@ def render_blocks(lines, base_dir=None):
                 code.append(lines[i])
                 i += 1
             i += 1  # closing fence
-            cls = f' class="language-{lang}"' if lang else ""
-            body = html.escape("\n".join(code))
-            out.append(f"<pre><code{cls}>{body}</code></pre>")
+            out.append(render_code_block(lang, "\n".join(code)))
             continue
 
         # raw HTML block: a line starting with an HTML tag passes through
@@ -1173,6 +1411,9 @@ STYLE = """\
   --keypoints: #6d28d9; --note: #475569; --navy: #030620;
   --header: #ffffff; --menu: #ffffff; --shadow: rgb(140 152 164 / 10%);
   --menu-shadow: rgb(3 6 32 / 14%); --selection: lavender;
+  --syntax-keyword: #6d28d9; --syntax-string: #b91c1c; --syntax-comment: #64748b;
+  --syntax-number: #b45309; --syntax-builtin: #047857; --syntax-var: #0369a1;
+  --syntax-option: #15803d; --syntax-key: #0154cf; --syntax-pre: #9f1239;
   --max: 1024px;
 }
 :root[data-theme="dark"] {
@@ -1183,6 +1424,9 @@ STYLE = """\
   --keypoints: #cfbdff; --note: #adbac8; --navy: #f5f8fb;
   --header: #1a2330; --menu: #202a36; --shadow: rgb(0 0 0 / 20%);
   --menu-shadow: rgb(0 0 0 / 34%); --selection: rgb(145 194 255 / 30%);
+  --syntax-keyword: #cfbdff; --syntax-string: #fca5a5; --syntax-comment: #9aa8b8;
+  --syntax-number: #f4b350; --syntax-builtin: #46d6c6; --syntax-var: #91c2ff;
+  --syntax-option: #86efac; --syntax-key: #b4d5ff; --syntax-pre: #f0abfc;
 }
 
 :root[data-theme="warm-dark"] {
@@ -1193,6 +1437,9 @@ STYLE = """\
   --keypoints: #d1bfff; --note: #b6aea2; --navy: #f7f3ed;
   --header: #211f1c; --menu: #25231f; --shadow: rgb(0 0 0 / 20%);
   --menu-shadow: rgb(0 0 0 / 34%); --selection: rgb(154 191 255 / 28%);
+  --syntax-keyword: #d1bfff; --syntax-string: #f2a4a4; --syntax-comment: #a99f92;
+  --syntax-number: #e7a94c; --syntax-builtin: #56c9b8; --syntax-var: #9abfff;
+  --syntax-option: #9fdc8b; --syntax-key: #b8d3ff; --syntax-pre: #e9b8ff;
 }
 
 /* Presenter mode: light, low-glare theme instead of a true dark mode. */
@@ -1204,6 +1451,9 @@ STYLE = """\
   --keypoints: #6d28d9; --note: #58636f; --navy: #030620;
   --header: #ffffff; --menu: #ffffff; --shadow: rgb(87 97 92 / 12%);
   --menu-shadow: rgb(87 97 92 / 18%); --selection: rgb(1 97 239 / 18%);
+  --syntax-keyword: #6d28d9; --syntax-string: #b42318; --syntax-comment: #667085;
+  --syntax-number: #a05a00; --syntax-builtin: #087568; --syntax-var: #0154cf;
+  --syntax-option: #17803d; --syntax-key: #0154cf; --syntax-pre: #9f1239;
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--fg); background: var(--bg);
@@ -1260,11 +1510,24 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
 .content h1 { margin-top: 0; line-height: 1.2; }
 .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: -8px; }
 .lesson-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
-pre { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+.code-block { margin: 1em 0; border: 1px solid var(--keypoints); border-radius: 6px;
+  overflow: hidden; background: var(--panel); }
+.code-label { padding: 6px 10px; background: color-mix(in srgb, var(--keypoints) 8%, var(--panel));
+  color: var(--keypoints); font-weight: 700; font-size: .86rem; line-height: 1.25; }
+pre { margin: 1em 0; background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
   padding: 14px 48px 14px 16px; overflow: auto; position: relative; }
+.code-block pre { margin: 0; border: 0; border-radius: 0; }
 code { background: var(--panel); padding: .1em .35em; border-radius: 4px;
   font-size: .9em; font-family: "SF Mono", Menlo, Consolas, monospace; }
 pre code { background: none; padding: 0; }
+.tok-kw, .tok-pre { color: var(--syntax-keyword); font-weight: 600; }
+.tok-string { color: var(--syntax-string); }
+.tok-comment { color: var(--syntax-comment); font-style: italic; }
+.tok-number { color: var(--syntax-number); }
+.tok-builtin { color: var(--syntax-builtin); font-weight: 600; }
+.tok-var { color: var(--syntax-var); }
+.tok-option { color: var(--syntax-option); font-weight: 600; }
+.tok-key { color: var(--syntax-key); font-weight: 600; }
 .code-copy { position: absolute; top: 8px; right: 8px; display: inline-flex;
   align-items: center; justify-content: center; width: 30px; height: 30px;
   border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
