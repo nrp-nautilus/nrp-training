@@ -55,6 +55,8 @@ Or include a repo-stored deck relative to the training directory:
 """
 
 import html
+import hashlib
+import json
 import re
 import shutil
 import subprocess
@@ -578,26 +580,83 @@ def pdf_page_count(target):
     return max(count, 1)
 
 
-def pdf_image_output_dir(rel_path):
-    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", rel_path).strip("-").lower()
-    return SITE_DIR / "_pdf" / slug
+def pdf_cache_slug(path):
+    return re.sub(r"[^A-Za-z0-9_-]+", "-", path).strip("-").lower()
+
+
+def pdf_hash(target):
+    digest = hashlib.sha256()
+    with target.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def pdf_image_cache_dir(target):
+    return target.parent / "_rendered" / pdf_cache_slug(target.stem)
+
+
+def pdf_image_cache_manifest(target):
+    return pdf_image_cache_dir(target) / "manifest.json"
+
+
+def cached_pdf_pages(target, rel_path, expected_hash):
+    cache_dir = pdf_image_cache_dir(target)
+    manifest_path = pdf_image_cache_manifest(target)
+    if not manifest_path.is_file():
+        return None
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+    if manifest.get("sha256") != expected_hash:
+        return None
+
+    try:
+        page_total = int(manifest.get("pages", 0))
+    except (TypeError, ValueError):
+        return None
+    if page_total < 1:
+        return None
+
+    try:
+        cache_rel_dir = cache_dir.relative_to(ROOT).as_posix()
+    except ValueError:
+        return None
+
+    pages = []
+    for page_num in range(1, page_total + 1):
+        image = cache_dir / f"page-{page_num:03d}.png"
+        if not image.is_file():
+            return None
+        pages.append((page_num, quote(f"{cache_rel_dir}/{image.name}", safe="/")))
+    return pages
 
 
 def render_pdf_pages_to_images(target, rel_path):
+    source_hash = pdf_hash(target)
+    cached = cached_pdf_pages(target, rel_path, source_hash)
+    if cached:
+        return cached
+
     pdftoppm = shutil.which("pdftoppm")
     if not pdftoppm:
+        cache_rel = pdf_image_cache_dir(target).relative_to(ROOT).as_posix()
         raise ValueError(
-            "PDF slide decks require pdftoppm from Poppler during build. "
-            "Install Poppler or convert the deck to Markdown slides."
+            f"PDF slide deck cache is missing or stale for {rel_path}. "
+            "Run python3 build_site.py on a machine with Poppler installed, "
+            f"then commit {cache_rel}/ with the PDF."
         )
 
     total = pdf_page_count(target)
-    out_dir = pdf_image_output_dir(rel_path)
+    out_dir = pdf_image_cache_dir(target)
     if out_dir.exists():
         shutil.rmtree(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    rel_dir = out_dir.relative_to(SITE_DIR).as_posix()
+    rel_dir = out_dir.relative_to(ROOT).as_posix()
     pages = []
     for page_num in range(1, total + 1):
         out_prefix = out_dir / f"page-{page_num:03d}"
@@ -624,6 +683,18 @@ def render_pdf_pages_to_images(target, rel_path):
         if not image.is_file():
             raise ValueError(f"failed to render PDF page {page_num}: {rel_path}")
         pages.append((page_num, quote(f"{rel_dir}/{image.name}", safe="/")))
+
+    manifest = {
+        "source": rel_path,
+        "sha256": source_hash,
+        "pages": total,
+        "renderer": "pdftoppm",
+        "dpi": 144,
+    }
+    pdf_image_cache_manifest(target).write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
     return pages
 
 

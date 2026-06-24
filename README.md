@@ -1,8 +1,8 @@
 # Bare-bones lesson generator
 
 A minimal, Carpentries-style lesson builder. Write lessons in Markdown, run one
-Python script, get a navigable static website. **No dependencies** — pure Python
-standard library (3.8+). No pip, Node, or pandoc.
+Python script, get a navigable static website. **No Python dependencies** —
+pure Python standard library (3.8+). No pip, Node, or pandoc.
 
 ## Hosting many trainings (NRP)
 
@@ -191,8 +191,12 @@ same fullscreen button:
 :::
 ```
 
-PDF decks require Poppler's `pdftoppm` command during build so each page can be
-rendered as an image. On macOS, install it with `brew install poppler`.
+PDF decks render one page at a time from cached PNGs under
+`slides/_rendered/`. When Poppler's `pdftoppm` command is available,
+`python3 build_site.py` creates or refreshes that cache automatically. Commit
+the generated `_rendered/` files with the PDF so cluster builds can reuse them
+without installing Poppler. On macOS, install Poppler with `brew install
+poppler`.
 
 ## Adding / reordering lessons
 
