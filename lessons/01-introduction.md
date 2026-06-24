@@ -9,14 +9,14 @@ objectives:
   - Explain the goal of the lesson.
   - Identify the prerequisites.
 keypoints:
-  - Lessons are plain Markdown files in the episodes/ folder.
+  - Lessons are plain Markdown files in the lessons/ folder.
   - Frontmatter drives the schedule, objectives, and key points.
 ---
 
 ## Welcome
 
-This is a sample episode. Edit `episodes/01-introduction.md` to make it your
-own, or copy it to start a new episode. Everything you see here is generated
+This is a sample lesson. Edit `lessons/01-introduction.md` to make it your
+own, or copy it to start a new lesson. Everything you see here is generated
 from Markdown by `build.py`.
 
 You can write **bold**, *italic*, `inline code`, [links](https://www.google.com),

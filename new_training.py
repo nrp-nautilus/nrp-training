@@ -42,12 +42,12 @@ def config_template(args):
 {subtitle_line}length: {length}
 order: {args.order}
 published: {published}
-episodes:
+lessons:
   - 1_intro
 """
 
 
-def episode_template(title):
+def lesson_template(title):
     return f"""---
 title: Introduction
 teaching: 10
@@ -57,7 +57,7 @@ questions:
 objectives:
   - Identify the goals and structure of {title}.
 keypoints:
-  - Replace this starter episode with the training introduction.
+  - Replace this starter lesson with the training introduction.
 ---
 
 ## Overview
@@ -77,11 +77,11 @@ Training materials for `{name}`.
 
 ## Layout
 
-- `config.yml` controls the training title, landing-page metadata, and episode order.
-- `episodes/` contains the lesson Markdown files.
+- `config.yml` controls the training title, landing-page metadata, and lesson order.
+- `lessons/` contains the lesson Markdown files.
 - `workspace/` contains notebooks, scripts, and files for hands-on work.
 - `workspace/yamls/` contains Kubernetes or Helm YAML files used by the training.
-- `images/` contains screenshots and other episode images.
+- `images/` contains screenshots and other lesson images.
 """
 
 
@@ -122,7 +122,7 @@ def create_training(args):
     created_dirs = []
     for directory in (
         target,
-        target / "episodes",
+        target / "lessons",
         target / "workspace",
         target / "workspace" / "yamls",
         target / "images",
@@ -136,8 +136,8 @@ def create_training(args):
     write_file(target / "config.yml", config_template(args), created_files, skipped_files)
     write_file(target / "README.md", readme_template(title, args.name), created_files, skipped_files)
     write_file(
-        target / "episodes" / "1_intro.md",
-        episode_template(title),
+        target / "lessons" / "1_intro.md",
+        lesson_template(title),
         created_files,
         skipped_files,
     )
@@ -201,7 +201,7 @@ def main(argv=None):
         print("Skipped existing files:")
         for path in skipped_files:
             print(f"  - {path}")
-    print("\nNext: edit episodes/1_intro.md, then run python3 build_site.py")
+    print("\nNext: edit lessons/1_intro.md, then run python3 build_site.py")
 
 
 if __name__ == "__main__":

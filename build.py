@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
 Usage:
-    python3 build.py            # build site/ from episodes/ and config.yml
+    python3 build.py            # build site/ from lessons/ and config.yml
     python3 build.py --serve    # build, then serve starting at http://localhost:8000
 
 Authoring model
 ---------------
-Each lesson page is a Markdown file in episodes/. The top of the file holds
+Each lesson page is a Markdown file in lessons/. The top of the file holds
 YAML-ish frontmatter between '---' fences:
 
     ---
@@ -42,7 +42,8 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-EPISODE_DIR = ROOT / "episodes"
+LESSON_DIR = ROOT / "lessons"
+LEGACY_LESSON_DIR = ROOT / "episodes"
 SITE_DIR = ROOT / "site"
 CONFIG = ROOT / "config.yml"
 
@@ -352,47 +353,70 @@ def page(title, lesson_title, body, nav_html):
 <header class="site-header">
   <a class="brand" href="https://nrp.ai"><img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform" width="163" height="30"></a>
   <a class="site-title" href="index.html">{html.escape(lesson_title)}</a>
+  <button class="nav-toggle" type="button" data-nav-toggle aria-controls="lesson-nav" aria-expanded="true">Hide nav</button>
 </header>
-<div class="layout">
-  <nav class="sidebar">{nav_html}</nav>
-  <main class="content">{body}</main>
-</div>
+<nav id="lesson-nav" class="lesson-nav" aria-label="Lesson navigation">
+  <div class="lesson-nav-inner">{nav_html}</div>
+</nav>
+<main class="content">{body}</main>
 <footer class="site-footer">
   Built with a bare-bones lesson generator.
 </footer>
+{NAV_SCRIPT}
 </body>
 </html>
 """
 
 
-def build_nav(lesson_title, episodes, active=None):
+def build_nav(lesson_title, lessons, active=None):
     items = []
     if SITE_HOME_LINK:
         items.append(
             f'<a class="nav-all" href="{SITE_HOME_LINK}">&larr; All trainings</a>')
-    items += ['<a class="nav-home" href="index.html">Home &amp; Schedule</a>',
-              "<ol class=\"nav-list\">"]
-    for ep in episodes:
-        cls = ' class="active"' if ep["slug"] == active else ""
-        items.append(
-            f'<li{cls}><a href="{ep["slug"]}.html">{html.escape(ep["title"])}</a></li>'
+    items.append('<a class="nav-home" href="index.html">Home</a>')
+
+    lesson_links = []
+    for lesson in lessons:
+        active_attr = ' aria-current="page"' if lesson["slug"] == active else ""
+        class_attr = ' class="active"' if lesson["slug"] == active else ""
+        lesson_links.append(
+            f'<a{class_attr} href="{lesson["slug"]}.html"{active_attr}>'
+            f'{html.escape(lesson["title"])}</a>'
         )
-    items.append("</ol>")
+    items.append(
+        '<details class="lesson-menu"><summary>Lessons</summary>'
+        '<div class="lesson-menu-list">'
+        + "\n".join(lesson_links)
+        + "</div></details>"
+    )
     return "\n".join(items)
 
 
 # --------------------------------------------------------------------------
 # Build
 # --------------------------------------------------------------------------
-def load_episodes(config):
-    files = {p.stem: p for p in EPISODE_DIR.glob("*.md")}
-    ordered = [s for s in as_list(config.get("episodes")) if s in files]
+def source_lesson_dir():
+    if LESSON_DIR.exists():
+        return LESSON_DIR
+    if LEGACY_LESSON_DIR.exists():
+        return LEGACY_LESSON_DIR
+    return LESSON_DIR
+
+
+def configured_lessons(config):
+    return config.get("lessons", config.get("episodes"))
+
+
+def load_lessons(config):
+    lesson_dir = source_lesson_dir()
+    files = {p.stem: p for p in lesson_dir.glob("*.md")}
+    ordered = [s for s in as_list(configured_lessons(config)) if s in files]
     ordered += sorted(s for s in files if s not in ordered)
 
-    episodes = []
+    lessons = []
     for slug in ordered:
         fm, body = split_frontmatter(files[slug].read_text(encoding="utf-8"))
-        episodes.append({
+        lessons.append({
             "slug": slug,
             "path": files[slug],
             "title": fm.get("title", slug),
@@ -403,65 +427,65 @@ def load_episodes(config):
             "keypoints": as_list(fm.get("keypoints")),
             "body": body,
         })
-    return episodes
+    return lessons
 
 
-def render_episode(ep, lesson_title, episodes, index):
-    nav = build_nav(lesson_title, episodes, active=ep["slug"])
+def render_lesson(lesson, lesson_title, lessons, index):
+    nav = build_nav(lesson_title, lessons, active=lesson["slug"])
 
-    top = boxed_list("objectives", "Questions", ep["questions"])
-    top += boxed_list("objectives", "Objectives", ep["objectives"])
+    top = boxed_list("objectives", "Questions", lesson["questions"])
+    top += boxed_list("objectives", "Objectives", lesson["objectives"])
 
-    content = render_markdown(ep["body"])
+    content = render_markdown(lesson["body"])
 
-    bottom = boxed_list("keypoints", "Key Points", ep["keypoints"])
+    bottom = boxed_list("keypoints", "Key Points", lesson["keypoints"])
 
     # prev / next
-    prev_ep = episodes[index - 1] if index > 0 else None
-    next_ep = episodes[index + 1] if index < len(episodes) - 1 else None
+    prev_lesson = lessons[index - 1] if index > 0 else None
+    next_lesson = lessons[index + 1] if index < len(lessons) - 1 else None
     prev_html = (
-        f'<a class="prev" href="{prev_ep["slug"]}.html">&larr; {html.escape(prev_ep["title"])}</a>'
-        if prev_ep else "<span></span>"
+        f'<a class="prev" href="{prev_lesson["slug"]}.html">&larr; {html.escape(prev_lesson["title"])}</a>'
+        if prev_lesson else "<span></span>"
     )
     next_html = (
-        f'<a class="next" href="{next_ep["slug"]}.html">{html.escape(next_ep["title"])} &rarr;</a>'
-        if next_ep else "<span></span>"
+        f'<a class="next" href="{next_lesson["slug"]}.html">{html.escape(next_lesson["title"])} &rarr;</a>'
+        if next_lesson else "<span></span>"
     )
 
-    mins = ep["teaching"] + ep["exercises"]
+    mins = lesson["teaching"] + lesson["exercises"]
     meta = (
-        f'<p class="ep-meta">Teaching: {ep["teaching"]} min '
-        f'&middot; Exercises: {ep["exercises"]} min '
+        f'<p class="lesson-meta">Teaching: {lesson["teaching"]} min '
+        f'&middot; Exercises: {lesson["exercises"]} min '
         f'&middot; Total: {mins} min</p>'
     )
 
     body = (
-        f'<h1>{html.escape(ep["title"])}</h1>{meta}{top}{content}{bottom}'
+        f'<h1>{html.escape(lesson["title"])}</h1>{meta}{top}{content}{bottom}'
         f'<div class="pager">{prev_html}{next_html}</div>'
     )
-    return page(ep["title"], lesson_title, body, nav)
+    return page(lesson["title"], lesson_title, body, nav)
 
 
-def render_index(config, episodes):
+def render_index(config, lessons):
     lesson_title = config.get("title", "Lesson")
     subtitle = config.get("subtitle", "")
-    nav = build_nav(lesson_title, episodes)
+    nav = build_nav(lesson_title, lessons)
 
     rows = []
     cumulative = 0
-    for ep in episodes:
-        mins = ep["teaching"] + ep["exercises"]
+    for lesson in lessons:
+        mins = lesson["teaching"] + lesson["exercises"]
         start = f"{cumulative // 60:02d}:{cumulative % 60:02d}"
         cumulative += mins
         rows.append(
             f"<tr><td>{start}</td>"
-            f'<td><a href="{ep["slug"]}.html">{html.escape(ep["title"])}</a></td>'
+            f'<td><a href="{lesson["slug"]}.html">{html.escape(lesson["title"])}</a></td>'
             f"<td>{mins} min</td></tr>"
         )
     finish = f"{cumulative // 60:02d}:{cumulative % 60:02d}"
 
     schedule = (
-        '<table class="schedule"><thead><tr><th>Start</th><th>Episode</th>'
+        '<table class="schedule"><thead><tr><th>Start</th><th>Lesson</th>'
         "<th>Duration</th></tr></thead><tbody>"
         + "".join(rows)
         + f'<tr class="finish"><td>{finish}</td><td>Finish</td><td></td></tr>'
@@ -473,7 +497,7 @@ def render_index(config, episodes):
         f'<p class="subtitle">{html.escape(subtitle)}</p>'
         f"<h2>Schedule</h2>{schedule}"
         '<p class="hint">Times are cumulative and assume a prompt start. '
-        "Edit durations in each episode's frontmatter.</p>"
+        "Edit durations in each lesson's frontmatter.</p>"
     )
     return page("Home", lesson_title, body, nav)
 
@@ -482,25 +506,26 @@ def build():
     config = parse_yaml(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
     lesson_title = config.get("title", "Lesson")
 
-    if not EPISODE_DIR.exists():
-        sys.exit(f"No episodes/ directory found at {EPISODE_DIR}")
+    lesson_dir = source_lesson_dir()
+    if not lesson_dir.exists():
+        sys.exit(f"No lessons/ directory found at {LESSON_DIR}")
 
-    episodes = load_episodes(config)
-    if not episodes:
-        sys.exit("No episodes found in episodes/*.md")
+    lessons = load_lessons(config)
+    if not lessons:
+        sys.exit(f"No lessons found in {lesson_dir}/*.md")
 
     SITE_DIR.mkdir(exist_ok=True)
     (SITE_DIR / "style.css").write_text(STYLE, encoding="utf-8")
     (SITE_DIR / "index.html").write_text(
-        render_index(config, episodes), encoding="utf-8")
+        render_index(config, lessons), encoding="utf-8")
 
-    for idx, ep in enumerate(episodes):
-        (SITE_DIR / f"{ep['slug']}.html").write_text(
-            render_episode(ep, lesson_title, episodes, idx), encoding="utf-8")
+    for idx, lesson in enumerate(lessons):
+        (SITE_DIR / f"{lesson['slug']}.html").write_text(
+            render_lesson(lesson, lesson_title, lessons, idx), encoding="utf-8")
 
-    print(f"Built {len(episodes)} episode(s) + index into {SITE_DIR}/")
-    for ep in episodes:
-        print(f"  - {ep['slug']}.html  ({ep['title']})")
+    print(f"Built {len(lessons)} lesson(s) + index into {SITE_DIR}/")
+    for lesson in lessons:
+        print(f"  - {lesson['slug']}.html  ({lesson['title']})")
 
 
 def serve(port=8000):
@@ -527,6 +552,41 @@ def serve(port=8000):
     raise OSError(f"No available port found in range {port}-{port + 99}")
 
 
+NAV_SCRIPT = """\
+<script>
+(() => {
+  const storageKey = "nrpLessonNavHidden";
+  const nav = document.getElementById("lesson-nav");
+  const toggle = document.querySelector("[data-nav-toggle]");
+  if (!nav || !toggle) return;
+
+  function setHidden(hidden) {
+    document.body.classList.toggle("nav-hidden", hidden);
+    toggle.setAttribute("aria-expanded", String(!hidden));
+    toggle.textContent = hidden ? "Show nav" : "Hide nav";
+    try {
+      window.localStorage.setItem(storageKey, hidden ? "1" : "0");
+    } catch (error) {
+      // Private browsing modes may block localStorage.
+    }
+  }
+
+  let hidden = false;
+  try {
+    hidden = window.localStorage.getItem(storageKey) === "1";
+  } catch (error) {
+    hidden = false;
+  }
+
+  setHidden(hidden);
+  toggle.addEventListener("click", () => {
+    setHidden(!document.body.classList.contains("nav-hidden"));
+  });
+})();
+</script>
+"""
+
+
 STYLE = """\
 /* NRP theme: matches gitlab.nrp-nautilus.io/prp/nrp-site (AstroWind, Inter,
    primary #0161ef / secondary #0154cf / accent #6d28d9, navy #030620). */
@@ -535,7 +595,7 @@ STYLE = """\
   --border: #e5e9f0; --accent: #0161ef; --accent-2: #0154cf; --accent-weak: #e7f0ff;
   --obj: #0161ef; --challenge: #b45309; --solution: #0f766e;
   --keypoints: #6d28d9; --note: #475569; --navy: #030620;
-  --max: 820px; --sidebar: 260px;
+  --max: 820px;
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--fg); background: var(--bg);
@@ -551,19 +611,44 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
 .brand { display: flex; align-items: center; line-height: 0; }
 .brand-logo { height: 30px; width: auto; display: block; }
 .site-title { color: var(--fg); font-weight: 700; font-size: 1.0rem;
-  padding-left: 16px; border-left: 1px solid var(--border); }
+  padding-left: 16px; border-left: 1px solid var(--border); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .site-title:hover { text-decoration: none; color: var(--accent); }
-.layout { display: flex; gap: 32px; max-width: 1180px; margin: 0 auto; padding: 28px 24px; align-items: flex-start; }
-.sidebar { width: var(--sidebar); flex: 0 0 var(--sidebar); position: sticky; top: 80px;
-  background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 18px; font-size: .94rem; }
-.sidebar .nav-home { display: block; font-weight: 600; margin-bottom: 10px; }
-.nav-list { margin: 0; padding-left: 1.2em; }
-.nav-list li { margin: 6px 0; }
-.nav-list li.active > a { font-weight: 700; color: var(--accent); }
-.content { flex: 1 1 auto; min-width: 0; max-width: var(--max); }
+.nav-toggle { margin-left: auto; flex: 0 0 auto; border: 1px solid var(--border);
+  border-radius: 6px; background: #fff; color: var(--fg); cursor: pointer;
+  font: inherit; font-size: .85rem; font-weight: 600; line-height: 1.2; padding: 7px 10px; }
+.nav-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.lesson-nav { background: #fff; border-bottom: 1px solid var(--border); position: relative; z-index: 10; }
+.lesson-nav-inner { display: flex; align-items: center; gap: 8px; max-width: 1180px; margin: 0 auto;
+  padding: 10px 24px; }
+.lesson-nav a,
+.lesson-menu summary { flex: 0 0 auto; border: 1px solid transparent; border-radius: 6px;
+  color: var(--fg); font-size: .92rem; line-height: 1.25; padding: 6px 10px;
+  white-space: nowrap; }
+.lesson-nav a:hover,
+.lesson-menu summary:hover { background: var(--panel); color: var(--accent); text-decoration: none; }
+.lesson-nav .nav-all { color: var(--muted); }
+.lesson-nav .nav-home { font-weight: 600; }
+.lesson-menu { position: relative; }
+.lesson-menu summary { display: flex; align-items: center; cursor: pointer; font-weight: 600;
+  list-style: none; user-select: none; }
+.lesson-menu summary::-webkit-details-marker { display: none; }
+.lesson-menu summary::after { content: ""; border-left: 4px solid transparent;
+  border-right: 4px solid transparent; border-top: 5px solid currentColor; margin-left: 8px; }
+.lesson-menu[open] summary { background: var(--panel); color: var(--accent); }
+.lesson-menu-list { position: absolute; left: 0; top: calc(100% + 8px); z-index: 30;
+  min-width: 240px; max-width: min(420px, calc(100vw - 48px)); background: #fff;
+  border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 28px rgb(3 6 32 / 14%);
+  padding: 6px; }
+.lesson-menu-list a { display: block; white-space: normal; }
+.lesson-menu-list a + a { margin-top: 2px; }
+.lesson-menu-list .active { background: var(--accent-weak); border-color: rgb(1 97 239 / 24%);
+  color: var(--accent); font-weight: 700; }
+.nav-hidden .lesson-nav { display: none; }
+.content { max-width: var(--max); margin: 0 auto; min-width: 0; padding: 32px 24px 28px; }
 .content h1 { margin-top: 0; line-height: 1.2; }
 .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: -8px; }
-.ep-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
+.lesson-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
 pre { background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
   padding: 14px 16px; overflow: auto; }
 code { background: var(--panel); padding: .1em .35em; border-radius: 4px;
@@ -593,14 +678,18 @@ img { max-width: 100%; }
 .md-table th, .md-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
 .schedule thead, .md-table thead { background: var(--panel); }
 .schedule tr.finish { font-weight: 600; background: var(--panel); }
-.nav-all { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 10px; }
 .hint { color: var(--muted); font-size: .9rem; }
 .pager { display: flex; justify-content: space-between; margin-top: 36px;
   padding-top: 16px; border-top: 1px solid var(--border); }
 .site-footer { color: var(--muted); text-align: center; padding: 24px; font-size: .85rem; }
 @media (max-width: 760px) {
-  .layout { flex-direction: column; }
-  .sidebar { width: 100%; flex-basis: auto; position: static; }
+  .site-header { padding: 10px 16px; gap: 10px; }
+  .brand-logo { max-width: 38vw; }
+  .site-title { font-size: .92rem; padding-left: 10px; }
+  .nav-toggle { padding: 6px 8px; }
+  .lesson-nav-inner { padding: 8px 16px; }
+  .lesson-menu-list { left: auto; right: 0; max-width: calc(100vw - 32px); }
+  .content { padding: 24px 18px 28px; }
 }
 """
 

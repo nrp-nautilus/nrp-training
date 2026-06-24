@@ -3,8 +3,8 @@
 
 Layout
 ------
-    trainings/<name>/config.yml     # title, subtitle, length, order, episodes
-    trainings/<name>/episodes/*.md  # the lesson pages
+    trainings/<name>/config.yml     # title, subtitle, length, order, lessons
+    trainings/<name>/lessons/*.md   # the lesson pages
     trainings/<name>/images/        # optional assets
 
 Each training builds into site/<name>/ (a self-contained lesson site), and a
@@ -99,7 +99,8 @@ def build_one(item):
     """Point build.py's globals at one training and build it into site/<name>/."""
     out = SITE / item["name"]
     build.ROOT = item["dir"]
-    build.EPISODE_DIR = item["dir"] / "episodes"
+    build.LESSON_DIR = item["dir"] / "lessons"
+    build.LEGACY_LESSON_DIR = item["dir"] / "episodes"
     build.CONFIG = item["dir"] / "config.yml"
     build.SITE_DIR = out
     build.SITE_HOME_LINK = "../index.html"

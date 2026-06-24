@@ -1,6 +1,6 @@
 # Bare-bones lesson generator
 
-A minimal, Carpentries-style lesson builder. Write episodes in Markdown, run one
+A minimal, Carpentries-style lesson builder. Write lessons in Markdown, run one
 Python script, get a navigable static website. **No dependencies** — pure Python
 standard library (3.8+). No pip, Node, or pandoc.
 
@@ -10,8 +10,8 @@ This repo hosts several trainings at once, each in its own folder under
 `trainings/`, with a shared landing page:
 
 ```
-trainings/<name>/config.yml      # title, subtitle, length, order, episodes
-trainings/<name>/episodes/*.md    # the lesson pages
+trainings/<name>/config.yml      # title, subtitle, length, order, lessons
+trainings/<name>/lessons/*.md     # the lesson pages
 trainings/<name>/images/          # optional assets
 ```
 
@@ -24,10 +24,10 @@ python3 build_site.py --serve --watch  # rebuild and auto-refresh the browser on
 `site/index.html` is the landing page (one card per training); each training
 builds into `site/<name>/`.
 
-- **Add a training** — create `trainings/<name>/` with a `config.yml` and an
-  `episodes/` folder, then rebuild.
+- **Add a training** — create `trainings/<name>/` with a `config.yml` and a
+  `lessons/` folder, then rebuild.
 - **Scaffold a training** — run `python3 new_training.py <name>` to create the
-  expected `config.yml`, `episodes/`, `workspace/`, `workspace/yamls/`, and
+  expected `config.yml`, `lessons/`, `workspace/`, `workspace/yamls/`, and
   `images/` structure with starter files.
 - **Take a training off** — delete its folder, or set `published: false` in its
   `config.yml`.
@@ -41,7 +41,7 @@ on `training.nrp-nautilus.io`).
 
 ## Quick start (single lesson)
 
-The original single-lesson mode still works from the repo root (`episodes/` +
+The original single-lesson mode still works from the repo root (`lessons/` +
 `config.yml`):
 
 ```bash
@@ -55,14 +55,14 @@ Then open `site/index.html` (or the served URL).
 
 | Path         | Purpose                                              |
 |--------------|------------------------------------------------------|
-| `config.yml` | Lesson title, subtitle, and episode order.           |
-| `episodes/`  | One Markdown file per episode. This is what you edit. |
-| `build.py`   | The generator. Reads episodes, writes `site/`.       |
+| `config.yml` | Lesson title, subtitle, and lesson order.            |
+| `lessons/`   | One Markdown file per lesson. This is what you edit.  |
+| `build.py`   | The generator. Reads lessons, writes `site/`.        |
 | `site/`      | Generated output (safe to delete; rebuilt each time). |
 
-## Writing an episode
+## Writing a lesson
 
-Each episode starts with frontmatter, then Markdown:
+Each lesson starts with frontmatter, then Markdown:
 
 ```markdown
 ---
@@ -105,10 +105,10 @@ Built-in types: `objectives`, `questions`, `challenge`, `solution`, `callout`,
 `keypoints`, `discussion`, `prereq`. Any other word renders as a generic
 callout with that word as the title.
 
-## Adding / reordering episodes
+## Adding / reordering lessons
 
-1. Add a file to `episodes/`, e.g. `03-wrap-up.md`.
-2. List its name (without `.md`) in the `episodes:` block of `config.yml`.
+1. Add a file to `lessons/`, e.g. `03-wrap-up.md`.
+2. List its name (without `.md`) in the `lessons:` block of `config.yml`.
 3. Rebuild. Files not listed in `config.yml` are appended alphabetically.
 
 ## Supported Markdown
@@ -116,5 +116,5 @@ callout with that word as the title.
 Headings, paragraphs, **bold**/*italic*, `inline code`, fenced code blocks,
 ordered/unordered lists, blockquotes, horizontal rules, links, and images.
 It's a deliberate subset — enough to author lessons without a heavy toolchain.
-If you outgrow it, the episodes are plain Markdown and port cleanly to MkDocs,
+If you outgrow it, the lessons are plain Markdown and port cleanly to MkDocs,
 the Carpentries Workbench, or any other tool.
