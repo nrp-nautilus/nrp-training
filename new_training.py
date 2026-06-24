@@ -95,6 +95,7 @@ Training materials for `{name}`.
 - `workspace/` contains notebooks, scripts, and files for hands-on work.
 - `workspace/yamls/` contains Kubernetes or Helm YAML files used by the training.
 - `images/` contains screenshots and other lesson images.
+- `slides/` contains optional Markdown decks included from lessons.
 """
 
 
@@ -140,6 +141,7 @@ def create_training(args):
         target / "workspace",
         target / "workspace" / "yamls",
         target / "images",
+        target / "slides",
     ):
         if not directory.exists():
             directory.mkdir(parents=True)
@@ -163,6 +165,7 @@ def create_training(args):
     )
     write_file(target / "workspace" / "yamls" / ".gitkeep", "", created_files, skipped_files)
     write_file(target / "images" / ".gitkeep", "", created_files, skipped_files)
+    write_file(target / "slides" / ".gitkeep", "", created_files, skipped_files)
 
     return target, created_dirs, created_files, skipped_files
 

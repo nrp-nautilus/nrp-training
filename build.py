@@ -22,7 +22,7 @@ YAML-ish frontmatter between '---' fences:
     ---
 
 The body is Markdown. In addition to common Markdown, you can use callout
-blocks delimited by colons:
+blocks and in-page slide decks delimited by colons:
 
     ::: challenge Reverse a string
     Write a function that reverses a string.
@@ -34,6 +34,24 @@ blocks delimited by colons:
 
 Supported callout types: objectives, challenge, solution, callout, keypoints,
 discussion, prereq. Unknown types render as a generic callout.
+
+Slide decks use a slides block, with slides separated by horizontal rules:
+
+    ::: slides Optional deck title
+    # First slide
+    Opening content.
+
+    ---
+
+    # Second slide
+    More content.
+    :::
+
+Or include a repo-stored deck relative to the training directory:
+
+    ::: slides Optional deck title
+    @include slides/demo.md
+    :::
 """
 
 import html
@@ -149,7 +167,7 @@ def inline(text):
     return text
 
 
-def render_blocks(lines):
+def render_blocks(lines, base_dir=None):
     """Render a list of Markdown lines (no callouts) into HTML."""
     out = []
     i = 0
@@ -211,7 +229,7 @@ def render_blocks(lines):
             while i < n and lines[i].startswith(">"):
                 quote.append(re.sub(r"^>\s?", "", lines[i]))
                 i += 1
-            out.append("<blockquote>" + render_blocks(quote) + "</blockquote>")
+            out.append("<blockquote>" + render_blocks(quote, base_dir) + "</blockquote>")
             continue
 
         # lists (ordered / unordered)
@@ -268,7 +286,118 @@ def render_blocks(lines):
     return "\n".join(out)
 
 
-def render_markdown(text):
+def read_slide_include(include_path, base_dir):
+    if base_dir is None:
+        raise ValueError("slide includes require a base directory")
+
+    include = Path(include_path)
+    if include.is_absolute():
+        raise ValueError("slide include paths must be relative")
+
+    base = Path(base_dir).resolve()
+    target = (base / include).resolve()
+    try:
+        target.relative_to(base)
+    except ValueError as exc:
+        raise ValueError("slide include paths must stay within the training directory") from exc
+
+    return target.read_text(encoding="utf-8").splitlines()
+
+
+def expand_slide_include(lines, base_dir):
+    for idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        m = re.match(r"^\s*@include\s+(\S+)\s*$", line)
+        if not m:
+            return lines
+        before = lines[:idx]
+        after = lines[idx + 1:]
+        if any(part.strip() for part in before + after):
+            raise ValueError("a slides @include block cannot contain additional slide content")
+        return read_slide_include(m.group(1), base_dir)
+    return lines
+
+
+def split_slides(lines):
+    """Split a slides block on top-level --- separators."""
+    slides = []
+    current = []
+    in_code = False
+    colon_depth = 0
+
+    for line in lines:
+        if re.match(r"^```\s*", line):
+            in_code = not in_code
+
+        if not in_code:
+            if re.match(r"^:::+\s+\w+", line):
+                colon_depth += 1
+            elif re.match(r"^:::+\s*$", line) and colon_depth > 0:
+                colon_depth -= 1
+
+            if colon_depth == 0 and re.match(r"^---\s*$", line):
+                if any(part.strip() for part in current):
+                    slides.append(current)
+                current = []
+                continue
+
+        current.append(line)
+
+    if any(part.strip() for part in current):
+        slides.append(current)
+    return slides
+
+
+def render_slideshow(title, lines, base_dir=None):
+    lines = expand_slide_include(lines, base_dir)
+    slides = split_slides(lines)
+    if not slides:
+        return ""
+
+    label = title or "Slides"
+    title_html = (
+        f'<div class="slideshow-title">{html.escape(label)}</div>'
+        if title else '<div class="slideshow-title" aria-hidden="true"></div>'
+    )
+    total = len(slides)
+    rendered_slides = []
+    for idx, slide in enumerate(slides):
+        active = idx == 0
+        classes = "slide is-active" if active else "slide"
+        slide_body = render_markdown("\n".join(slide).strip(), base_dir)
+        rendered_slides.append(
+            f'<article class="{classes}" data-slide-panel '
+            f'aria-hidden="{str(not active).lower()}">'
+            f'{slide_body}'
+            '</article>'
+        )
+
+    return (
+        f'<section class="slideshow" data-slideshow tabindex="0" '
+        f'aria-label="{html.escape(label)}">'
+        '<div class="slideshow-chrome">'
+        f'{title_html}'
+        '<div class="slideshow-status" aria-live="polite">'
+        '<span data-slide-current>1</span>'
+        f'<span class="slideshow-total">/{total}</span>'
+        '</div>'
+        '<div class="slideshow-controls">'
+        '<button class="slide-button" type="button" data-slide-prev '
+        'aria-label="Previous slide" title="Previous slide">&#8592;</button>'
+        '<button class="slide-button" type="button" data-slide-next '
+        'aria-label="Next slide" title="Next slide">&#8594;</button>'
+        '<button class="slide-button" type="button" data-slide-fullscreen '
+        'aria-label="Present fullscreen" title="Present fullscreen" '
+        'aria-pressed="false">&#9974;</button>'
+        '</div></div>'
+        '<div class="slideshow-track">'
+        + "".join(rendered_slides) +
+        '</div></section>'
+    )
+
+
+def render_markdown(text, base_dir=None):
     """Render Markdown including ::: callout ::: blocks (one level of nesting)."""
     lines = text.splitlines()
     out = []
@@ -278,7 +407,7 @@ def render_markdown(text):
 
     def flush():
         if buffer:
-            out.append(render_blocks(buffer))
+            out.append(render_blocks(buffer, base_dir))
             buffer.clear()
 
     while i < n:
@@ -302,8 +431,11 @@ def render_markdown(text):
                 else:
                     inner.append(lines[i])
                 i += 1
+            if ctype == "slides":
+                out.append(render_slideshow(title, inner, base_dir))
+                continue
             label = title or CALLOUT_LABELS.get(ctype, ctype.title())
-            body = render_markdown("\n".join(inner))
+            body = render_markdown("\n".join(inner), base_dir)
             out.append(
                 f'<div class="callout callout-{html.escape(ctype)}">'
                 f'<div class="callout-title">{html.escape(label)}</div>'
@@ -451,7 +583,7 @@ def render_lesson(lesson, lesson_title, lessons, index):
     top = boxed_list("objectives", "Questions", lesson["questions"])
     top += boxed_list("objectives", "Objectives", lesson["objectives"])
 
-    content = render_markdown(lesson["body"])
+    content = render_markdown(lesson["body"], source_lesson_dir().parent)
 
     bottom = boxed_list("keypoints", "Key Points", lesson["keypoints"])
 
@@ -610,6 +742,148 @@ PAGE_SCRIPT = """\
   const themes = ["light", "dark", "warm-dark", "presenter"];
   const normalizeTheme = (theme) => themes.includes(theme) ? theme : "light";
 
+  function getSlides(deck) {
+    return Array.from(deck.querySelectorAll("[data-slide-panel]"));
+  }
+
+  function setSlide(deck, index) {
+    const slides = getSlides(deck);
+    if (!slides.length) return;
+    const nextIndex = Math.max(0, Math.min(index, slides.length - 1));
+    deck.dataset.slideIndex = String(nextIndex);
+    slides.forEach((slide, idx) => {
+      const active = idx === nextIndex;
+      slide.classList.toggle("is-active", active);
+      slide.setAttribute("aria-hidden", String(!active));
+    });
+
+    const current = deck.querySelector("[data-slide-current]");
+    if (current) current.textContent = String(nextIndex + 1);
+
+    const prev = deck.querySelector("[data-slide-prev]");
+    const next = deck.querySelector("[data-slide-next]");
+    if (prev) prev.disabled = nextIndex === 0;
+    if (next) next.disabled = nextIndex === slides.length - 1;
+  }
+
+  function stepSlide(deck, delta) {
+    const current = Number(deck.dataset.slideIndex || 0);
+    setSlide(deck, current + delta);
+  }
+
+  function currentFullscreenDeck() {
+    const fullscreen = document.fullscreenElement;
+    if (fullscreen && fullscreen.matches && fullscreen.matches("[data-slideshow]")) {
+      return fullscreen;
+    }
+    return document.querySelector(".slideshow.is-fallback-fullscreen");
+  }
+
+  function updateFullscreenButtons() {
+    document.querySelectorAll("[data-slideshow]").forEach((deck) => {
+      const active = document.fullscreenElement === deck ||
+        deck.classList.contains("is-fallback-fullscreen");
+      const button = deck.querySelector("[data-slide-fullscreen]");
+      if (!button) return;
+      button.innerHTML = active ? "&#10005;" : "&#9974;";
+      button.setAttribute("aria-label", active ? "Exit fullscreen" : "Present fullscreen");
+      button.setAttribute("title", active ? "Exit fullscreen" : "Present fullscreen");
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
+
+  function toggleSlideshowFullscreen(deck) {
+    const fallbackActive = deck.classList.contains("is-fallback-fullscreen");
+    if (document.fullscreenElement === deck) {
+      document.exitFullscreen();
+      return;
+    }
+    if (fallbackActive) {
+      deck.classList.remove("is-fallback-fullscreen");
+      updateFullscreenButtons();
+      return;
+    }
+
+    if (deck.requestFullscreen) {
+      const request = deck.requestFullscreen();
+      if (request && request.catch) {
+        request.catch(() => {
+          deck.classList.add("is-fallback-fullscreen");
+          updateFullscreenButtons();
+        });
+      }
+    } else {
+      deck.classList.add("is-fallback-fullscreen");
+      updateFullscreenButtons();
+    }
+    deck.focus({preventScroll: true});
+  }
+
+  function handleSlideKey(deck, event) {
+    const target = event.target;
+    const tag = target && target.tagName ? target.tagName.toLowerCase() : "";
+    if (["input", "textarea", "select"].includes(tag) || event.altKey ||
+        event.ctrlKey || event.metaKey) {
+      return;
+    }
+
+    if (event.key === "ArrowRight" || event.key === "PageDown") {
+      event.preventDefault();
+      stepSlide(deck, 1);
+    } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+      event.preventDefault();
+      stepSlide(deck, -1);
+    } else if (event.key === "Home") {
+      event.preventDefault();
+      setSlide(deck, 0);
+    } else if (event.key === "End") {
+      event.preventDefault();
+      setSlide(deck, getSlides(deck).length - 1);
+    } else if (event.key === "Escape" &&
+        deck.classList.contains("is-fallback-fullscreen")) {
+      deck.classList.remove("is-fallback-fullscreen");
+      updateFullscreenButtons();
+    }
+  }
+
+  function initSlideshows() {
+    const decks = Array.from(document.querySelectorAll("[data-slideshow]"));
+    decks.forEach((deck) => {
+      setSlide(deck, Number(deck.dataset.slideIndex || 0));
+
+      const prev = deck.querySelector("[data-slide-prev]");
+      const next = deck.querySelector("[data-slide-next]");
+      const fullscreen = deck.querySelector("[data-slide-fullscreen]");
+
+      if (prev) {
+        prev.addEventListener("click", () => stepSlide(deck, -1));
+      }
+      if (next) {
+        next.addEventListener("click", () => stepSlide(deck, 1));
+      }
+      if (fullscreen) {
+        fullscreen.addEventListener("click", () => toggleSlideshowFullscreen(deck));
+      }
+
+      deck.addEventListener("keydown", (event) => handleSlideKey(deck, event));
+      deck.addEventListener("click", (event) => {
+        if (!event.target.closest("a, button, input, textarea, select, summary")) {
+          deck.focus({preventScroll: true});
+        }
+      });
+    });
+
+    if (decks.length) {
+      document.addEventListener("fullscreenchange", updateFullscreenButtons);
+      document.addEventListener("keydown", (event) => {
+        const deck = currentFullscreenDeck();
+        if (!deck || deck.contains(event.target)) return;
+        handleSlideKey(deck, event);
+      });
+      updateFullscreenButtons();
+    }
+  }
+
   function setHidden(hidden) {
     document.body.classList.toggle("nav-hidden", hidden);
     if (navToggle) {
@@ -663,6 +937,8 @@ PAGE_SCRIPT = """\
       setTheme(isDark ? "light" : "dark");
     });
   }
+
+  initSlideshows();
 })();
 </script>
 """
@@ -790,6 +1066,48 @@ img { max-width: 100%; }
 .callout-solution { border-left-color: var(--solution); }
 .callout-keypoints { border-left-color: var(--keypoints); }
 .callout-callout, .callout-discussion, .callout-prereq { border-left-color: var(--note); }
+.slideshow { margin: 1.6em 0; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface); box-shadow: 0 8px 24px var(--shadow); overflow: hidden; }
+.slideshow:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.slideshow-chrome { display: flex; align-items: center; gap: 8px; min-height: 48px;
+  padding: 8px 10px; background: var(--panel); border-bottom: 1px solid var(--border); }
+.slideshow-title { flex: 1 1 auto; min-width: 0; color: var(--fg); font-weight: 700;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.slideshow-status { color: var(--muted); font-size: .86rem; font-variant-numeric: tabular-nums;
+  white-space: nowrap; }
+.slideshow-controls { display: flex; align-items: center; gap: 4px; margin-left: 2px; }
+.slide-button { display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; color: var(--fg); cursor: pointer; font: inherit;
+  font-size: 1rem; line-height: 1; padding: 0; }
+.slide-button:hover:not(:disabled) { background: var(--surface); border-color: var(--border);
+  color: var(--accent); }
+.slide-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slide-button:disabled { color: var(--muted); cursor: default; opacity: .38; }
+.slideshow-track { aspect-ratio: 16 / 9; min-height: 320px; background: var(--surface);
+  position: relative; }
+.slide { display: none; height: 100%; overflow: auto; padding: 34px 42px; }
+.slide.is-active { display: block; }
+.slide > :first-child { margin-top: 0; }
+.slide > :last-child { margin-bottom: 0; }
+.slide h1 { font-size: 2rem; line-height: 1.15; letter-spacing: 0; }
+.slide h2 { font-size: 1.55rem; line-height: 1.2; letter-spacing: 0; }
+.slide h3 { font-size: 1.25rem; line-height: 1.25; letter-spacing: 0; }
+.slide pre { max-height: 55%; }
+.slideshow:fullscreen,
+.slideshow.is-fallback-fullscreen { width: 100vw; height: 100vh; margin: 0;
+  border: 0; border-radius: 0; display: flex; flex-direction: column;
+  background: var(--bg); }
+.slideshow.is-fallback-fullscreen { position: fixed; inset: 0; z-index: 100; }
+.slideshow:fullscreen .slideshow-track,
+.slideshow.is-fallback-fullscreen .slideshow-track { flex: 1 1 auto; min-height: 0;
+  aspect-ratio: auto; }
+.slideshow:fullscreen .slide,
+.slideshow.is-fallback-fullscreen .slide { padding: 54px 72px; font-size: 1.18rem; }
+.slideshow:fullscreen .slide h1,
+.slideshow.is-fallback-fullscreen .slide h1 { font-size: 3rem; }
+.slideshow:fullscreen .slide h2,
+.slideshow.is-fallback-fullscreen .slide h2 { font-size: 2.25rem; }
 .schedule, .md-table { border-collapse: collapse; width: 100%; margin: 1em 0; }
 .schedule th, .schedule td,
 .md-table th, .md-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
@@ -809,6 +1127,16 @@ img { max-width: 100%; }
   .lesson-nav-inner { padding: 8px 16px; }
   .lesson-menu-list { left: auto; right: 0; max-width: calc(100vw - 32px); }
   .content { padding: 24px 18px 28px; }
+  .slideshow-chrome { flex-wrap: wrap; align-items: center; }
+  .slideshow-title { flex-basis: 100%; }
+  .slideshow-track { aspect-ratio: 4 / 3; min-height: 360px; }
+  .slide { padding: 22px 20px; }
+  .slideshow:fullscreen .slide,
+  .slideshow.is-fallback-fullscreen .slide { padding: 28px 24px; font-size: 1rem; }
+  .slideshow:fullscreen .slide h1,
+  .slideshow.is-fallback-fullscreen .slide h1 { font-size: 2rem; }
+  .slideshow:fullscreen .slide h2,
+  .slideshow.is-fallback-fullscreen .slide h2 { font-size: 1.55rem; }
 }
 """
 

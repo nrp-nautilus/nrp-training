@@ -13,6 +13,7 @@ This repo hosts several trainings at once, each in its own folder under
 trainings/<name>/config.yml      # title, subtitle, date, length, lessons
 trainings/<name>/lessons/*.md     # the lesson pages
 trainings/<name>/images/          # optional assets
+trainings/<name>/slides/*.md      # optional in-page slide decks
 ```
 
 ```bash
@@ -28,7 +29,7 @@ builds into `site/<name>/`.
   `lessons/` folder, then rebuild.
 - **Scaffold a training** — run `python3 new_training.py <name>` to create the
   expected `config.yml`, `lessons/`, `workspace/`, `workspace/yamls/`, and
-  `images/` structure with starter files.
+  `images/` / `slides/` structure with starter files.
 - **Take a training off** — delete its folder, or set `published: false` in its
   `config.yml`.
 - **Order on the landing page** — trainings without `date:` appear first.
@@ -108,6 +109,51 @@ Built-in types: `objectives`, `questions`, `challenge`, `solution`, `callout`,
 `keypoints`, `discussion`, `prereq`. Any other word renders as a generic
 callout with that word as the title.
 
+## In-page slides
+
+Use a `slides` block when part of a lesson is easier to present as a compact
+deck. Separate slides with a top-level `---` line:
+
+````markdown
+::: slides Optional deck title
+# First slide
+
+- One point
+- Another point
+
+---
+
+# Second slide
+
+```bash
+kubectl get pods
+```
+:::
+````
+
+Slides render inline with previous/next controls, keyboard navigation when the
+deck is focused, and a fullscreen button. Use `ArrowLeft`/`ArrowRight`,
+`PageUp`/`PageDown`, `Home`, and `End` while presenting.
+
+You can also keep a deck in a separate Markdown file and include it from a
+lesson. Include paths are relative to the training directory:
+
+````markdown
+::: slides Demo deck
+@include slides/demo.md
+:::
+````
+
+The included file uses the same slide separator:
+
+```markdown
+# First slide
+
+---
+
+# Second slide
+```
+
 ## Adding / reordering lessons
 
 1. Add a file to `lessons/`, e.g. `03-wrap-up.md`.
@@ -117,7 +163,8 @@ callout with that word as the title.
 ## Supported Markdown
 
 Headings, paragraphs, **bold**/*italic*, `inline code`, fenced code blocks,
-ordered/unordered lists, blockquotes, horizontal rules, links, and images.
+ordered/unordered lists, blockquotes, horizontal rules, links, images, callouts,
+and in-page slide decks.
 It's a deliberate subset — enough to author lessons without a heavy toolchain.
 If you outgrow it, the lessons are plain Markdown and port cleanly to MkDocs,
 the Carpentries Workbench, or any other tool.
