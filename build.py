@@ -232,7 +232,7 @@ def render_blocks(lines, base_dir=None):
             out.append("<blockquote>" + render_blocks(quote, base_dir) + "</blockquote>")
             continue
 
-        # lists (ordered / unordered)
+       # lists (ordered / unordered)
         if re.match(r"^\s*([-*+]|\d+\.)\s+", line):
             ordered = bool(re.match(r"^\s*\d+\.\s+", line))
             items = []
@@ -1027,7 +1027,7 @@ STYLE = """\
   --keypoints: #6d28d9; --note: #475569; --navy: #030620;
   --header: #ffffff; --menu: #ffffff; --shadow: rgb(140 152 164 / 10%);
   --menu-shadow: rgb(3 6 32 / 14%); --selection: lavender;
-  --max: 820px;
+  --max: 1024px;
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
