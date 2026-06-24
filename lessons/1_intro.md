@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Launch RCSI workspace in JupyterHub
-**[▶ Launch RCSI workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab. A **CPU-only** session is all you need.
+**[▶ Launch RCSI workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab in the training workspace directory. A **CPU-only** session is all you need.
 :::
 
 This tutorial runs on the
@@ -74,7 +74,7 @@ Everything here — managed LLM inference, RAG, and agentic coding — runs on a
 Open a **terminal** from the JupyterLab launcher and run:
 
 ```bash
-cd ~/rcsi
+cd ~/rcsi/workspace
 # the managed LLM endpoint
 echo "$OPENAI_API_BASE"
 kubectl auth can-i list pods -n nrp-training-k8s
@@ -87,5 +87,5 @@ needs.
 
 ---
 
-**Next:** open [`2_inference.ipynb`](2_inference.ipynb) and run the cells top
+**Next:** open `workspace/2_inference.ipynb` and run the cells top
 to bottom.

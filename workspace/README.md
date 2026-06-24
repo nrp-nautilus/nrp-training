@@ -8,7 +8,7 @@ embedding model, reusing the RAG pattern to query the JupyterHub docs, and agent
 
 Open the workspace in the pre-authenticated JupyterLab environment on NRP:
 
-**[Launch RCSI Tutorial Workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi)**
+**[Launch RCSI Tutorial Workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi%2Fworkspace)**
 
 
 ## 📋 Pre-training survey — please take 2 minutes before we start

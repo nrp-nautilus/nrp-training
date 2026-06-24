@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open a JupyterHub terminal
-**[▶ Open a JupyterHub terminal](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi)** — opens JupyterLab on jh-training.nrp-nautilus.io; use a Terminal for the `opencode` steps below.
+**[▶ Open a JupyterHub terminal](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Frcsi&targetpath=rcsi&urlpath=lab%2Ftree%2Frcsi%2Fworkspace)** — opens JupyterLab in the training workspace directory on jh-training.nrp-nautilus.io; use a Terminal for the `opencode` steps below.
 :::
 
 In Part 2 you **used** NRP's managed LLM from Python. Now you'll point an
