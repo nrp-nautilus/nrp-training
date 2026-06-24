@@ -6,6 +6,7 @@ Layout
     trainings/<name>/config.yml     # title, subtitle, date, length, lessons
     trainings/<name>/lessons/*.md   # the lesson pages
     trainings/<name>/images/        # optional assets
+    trainings/<name>/slides/        # optional slide decks and PDFs
 
 Each training builds into site/<name>/ (a self-contained lesson site), and a
 landing page at site/index.html links them all.

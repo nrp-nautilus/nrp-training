@@ -56,6 +56,8 @@ Or include a repo-stored deck relative to the training directory:
 
 import html
 import re
+import shutil
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import quote
@@ -66,6 +68,7 @@ LEGACY_LESSON_DIR = ROOT / "episodes"
 SITE_DIR = ROOT / "site"
 CONFIG = ROOT / "config.yml"
 REPOSITORY_URL = "https://github.com/nrp-nautilus/nrp-training"
+TRAINING_ASSET_DIRS = ("images", "slides")
 
 # Optional link back to a multi-lesson landing page (set by build_site.py).
 SITE_HOME_LINK = None
@@ -286,37 +289,104 @@ def render_blocks(lines, base_dir=None):
     return "\n".join(out)
 
 
-def read_slide_include(include_path, base_dir):
+def resolve_training_relative_path(include_path, base_dir):
     if base_dir is None:
         raise ValueError("slide includes require a base directory")
 
     include = Path(include_path)
     if include.is_absolute():
-        raise ValueError("slide include paths must be relative")
+        raise ValueError("included paths must be relative")
 
     base = Path(base_dir).resolve()
     target = (base / include).resolve()
     try:
-        target.relative_to(base)
+        rel_path = target.relative_to(base).as_posix()
     except ValueError as exc:
-        raise ValueError("slide include paths must stay within the training directory") from exc
+        raise ValueError("included paths must stay within the training directory") from exc
 
-    return target.read_text(encoding="utf-8").splitlines()
+    if not target.is_file():
+        raise ValueError(f"slide include not found: {include_path}")
+    return target, rel_path
 
 
-def expand_slide_include(lines, base_dir):
+def slide_include(lines, base_dir):
     for idx, line in enumerate(lines):
         if not line.strip():
             continue
         m = re.match(r"^\s*@include\s+(\S+)\s*$", line)
         if not m:
-            return lines
+            return None
         before = lines[:idx]
         after = lines[idx + 1:]
         if any(part.strip() for part in before + after):
             raise ValueError("a slides @include block cannot contain additional slide content")
-        return read_slide_include(m.group(1), base_dir)
-    return lines
+        return resolve_training_relative_path(m.group(1), base_dir)
+    return None
+
+
+def read_markdown_slide_include(target, rel_path):
+    try:
+        return target.read_text(encoding="utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise ValueError(
+            f"slide include is not UTF-8 Markdown: {rel_path}. "
+            "Use a .md deck or include a .pdf file directly."
+        ) from exc
+
+
+def pdf_page_count(target):
+    data = target.read_bytes()
+    count = len(re.findall(rb"/Type\s*/Page\b", data))
+    return max(count, 1)
+
+
+def pdf_image_output_dir(rel_path):
+    slug = re.sub(r"[^A-Za-z0-9_-]+", "-", rel_path).strip("-").lower()
+    return SITE_DIR / "_pdf" / slug
+
+
+def render_pdf_pages_to_images(target, rel_path):
+    pdftoppm = shutil.which("pdftoppm")
+    if not pdftoppm:
+        raise ValueError(
+            "PDF slide decks require pdftoppm from Poppler during build. "
+            "Install Poppler or convert the deck to Markdown slides."
+        )
+
+    total = pdf_page_count(target)
+    out_dir = pdf_image_output_dir(rel_path)
+    if out_dir.exists():
+        shutil.rmtree(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    rel_dir = out_dir.relative_to(SITE_DIR).as_posix()
+    pages = []
+    for page_num in range(1, total + 1):
+        out_prefix = out_dir / f"page-{page_num:03d}"
+        subprocess.run(
+            [
+                pdftoppm,
+                "-png",
+                "-r",
+                "144",
+                "-f",
+                str(page_num),
+                "-l",
+                str(page_num),
+                "-singlefile",
+                str(target),
+                str(out_prefix),
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        image = out_prefix.with_suffix(".png")
+        if not image.is_file():
+            raise ValueError(f"failed to render PDF page {page_num}: {rel_path}")
+        pages.append((page_num, quote(f"{rel_dir}/{image.name}", safe="/")))
+    return pages
 
 
 def split_slides(lines):
@@ -349,8 +419,63 @@ def split_slides(lines):
     return slides
 
 
+def render_pdf_slideshow(title, target, rel_path):
+    label = title or Path(rel_path).name
+    pdf_href = quote(rel_path, safe="/")
+    pdf_href_attr = html.escape(pdf_href, quote=True)
+    page_images = render_pdf_pages_to_images(target, rel_path)
+    title_html = (
+        f'<div class="slideshow-title">{html.escape(label)}</div>'
+        if title else '<div class="slideshow-title" aria-hidden="true"></div>'
+    )
+    total = len(page_images)
+    slides = []
+    for page_num, image_href in page_images:
+        active = page_num == 1
+        classes = "slide pdf-slide is-active" if active else "slide pdf-slide"
+        image_src = html.escape(image_href, quote=True)
+        slides.append(
+            f'<article class="{classes}" data-slide-panel '
+            f'aria-hidden="{str(not active).lower()}">'
+            f'<img class="pdf-page-image" src="{image_src}" '
+            f'alt="{html.escape(label)} page {page_num}">'
+            '</article>'
+        )
+
+    return (
+        f'<section class="slideshow pdf-slideshow" data-slideshow tabindex="0" '
+        f'aria-label="{html.escape(label)}">'
+        '<div class="slideshow-chrome">'
+        f'{title_html}'
+        '<div class="slideshow-status" aria-live="polite">'
+        '<span data-slide-current>1</span>'
+        f'<span class="slideshow-total">/{total}</span>'
+        '</div>'
+        '<div class="slideshow-controls">'
+        '<button class="slide-button" type="button" data-slide-prev '
+        'aria-label="Previous slide" title="Previous slide">&#8592;</button>'
+        '<button class="slide-button" type="button" data-slide-next '
+        'aria-label="Next slide" title="Next slide">&#8594;</button>'
+        f'<a class="slide-button" href="{pdf_href_attr}" target="_blank" rel="noopener" '
+        'aria-label="Open PDF in new tab" title="Open PDF in new tab">&#8599;</a>'
+        '<button class="slide-button" type="button" data-slide-fullscreen '
+        'aria-label="Present fullscreen" title="Present fullscreen" '
+        'aria-pressed="false">&#9974;</button>'
+        '</div></div>'
+        '<div class="slideshow-track pdf-track">'
+        + "".join(slides) +
+        '</div></section>'
+    )
+
+
 def render_slideshow(title, lines, base_dir=None):
-    lines = expand_slide_include(lines, base_dir)
+    include = slide_include(lines, base_dir)
+    if include:
+        target, rel_path = include
+        if target.suffix.lower() == ".pdf":
+            return render_pdf_slideshow(title, target, rel_path)
+        lines = read_markdown_slide_include(target, rel_path)
+
     slides = split_slides(lines)
     if not slides:
         return ""
@@ -661,6 +786,17 @@ def render_index(config, lessons):
     return page("Home", lesson_title, body, nav)
 
 
+def copy_training_assets():
+    for name in TRAINING_ASSET_DIRS:
+        src = ROOT / name
+        if not src.is_dir():
+            continue
+        dst = SITE_DIR / name
+        if dst.exists():
+            shutil.rmtree(dst)
+        shutil.copytree(src, dst)
+
+
 def build():
     config = parse_yaml(CONFIG.read_text(encoding="utf-8")) if CONFIG.exists() else {}
     lesson_title = config.get("title", "Lesson")
@@ -681,6 +817,7 @@ def build():
     for idx, lesson in enumerate(lessons):
         (SITE_DIR / f"{lesson['slug']}.html").write_text(
             render_lesson(lesson, lesson_title, lessons, idx), encoding="utf-8")
+    copy_training_assets()
 
     print(f"Built {len(lessons)} lesson(s) + index into {SITE_DIR}/")
     for lesson in lessons:
@@ -794,6 +931,13 @@ PAGE_SCRIPT = """\
 
   function toggleSlideshowFullscreen(deck) {
     const fallbackActive = deck.classList.contains("is-fallback-fullscreen");
+    if (deck.classList.contains("pdf-slideshow")) {
+      deck.classList.toggle("is-fallback-fullscreen", !fallbackActive);
+      updateFullscreenButtons();
+      deck.focus({preventScroll: true});
+      return;
+    }
+
     if (document.fullscreenElement === deck) {
       document.exitFullscreen();
       return;
@@ -874,7 +1018,9 @@ PAGE_SCRIPT = """\
     });
 
     if (decks.length) {
-      document.addEventListener("fullscreenchange", updateFullscreenButtons);
+      document.addEventListener("fullscreenchange", () => {
+        updateFullscreenButtons();
+      });
       document.addEventListener("keydown", (event) => {
         const deck = currentFullscreenDeck();
         if (!deck || deck.contains(event.target)) return;
@@ -1174,9 +1320,14 @@ img { max-width: 100%; }
 .slide-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .slide-button:disabled { color: var(--muted); cursor: default; opacity: .38; }
 .slideshow-track { aspect-ratio: 16 / 9; min-height: 320px; background: var(--surface);
-  position: relative; }
-.slide { display: none; height: 100%; overflow: auto; padding: 34px 42px; }
+  position: relative; overflow: hidden; }
+.pdf-track { min-height: 540px; }
+.slide { display: none; height: 100%; overflow: hidden; padding: 34px 42px; }
 .slide.is-active { display: block; }
+.pdf-slide { align-items: center; justify-content: center; padding: 0; overflow: hidden; }
+.pdf-slide.is-active { display: flex; }
+.pdf-page-image { display: block; max-width: 100%; max-height: 100%; width: auto; height: auto;
+  object-fit: contain; }
 .slide > :first-child { margin-top: 0; }
 .slide > :last-child { margin-bottom: 0; }
 .slide h1 { font-size: 2rem; line-height: 1.15; letter-spacing: 0; }
@@ -1193,6 +1344,8 @@ img { max-width: 100%; }
   aspect-ratio: auto; }
 .slideshow:fullscreen .slide,
 .slideshow.is-fallback-fullscreen .slide { padding: 54px 72px; font-size: 1.18rem; }
+.slideshow:fullscreen .pdf-slide,
+.slideshow.is-fallback-fullscreen .pdf-slide { padding: 0; font-size: 1rem; }
 .slideshow:fullscreen .slide h1,
 .slideshow.is-fallback-fullscreen .slide h1 { font-size: 3rem; }
 .slideshow:fullscreen .slide h2,
@@ -1219,9 +1372,12 @@ img { max-width: 100%; }
   .slideshow-chrome { flex-wrap: wrap; align-items: center; }
   .slideshow-title { flex-basis: 100%; }
   .slideshow-track { aspect-ratio: 4 / 3; min-height: 360px; }
+  .pdf-track { min-height: 520px; }
   .slide { padding: 22px 20px; }
   .slideshow:fullscreen .slide,
   .slideshow.is-fallback-fullscreen .slide { padding: 28px 24px; font-size: 1rem; }
+  .slideshow:fullscreen .pdf-slide,
+  .slideshow.is-fallback-fullscreen .pdf-slide { padding: 0; }
   .slideshow:fullscreen .slide h1,
   .slideshow.is-fallback-fullscreen .slide h1 { font-size: 2rem; }
   .slideshow:fullscreen .slide h2,

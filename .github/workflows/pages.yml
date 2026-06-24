@@ -28,8 +28,11 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install PDF renderer
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
       - name: Build the site
-        run: python3 build.py
+        run: python3 build_site.py
 
       - name: Disable Jekyll processing
         run: touch site/.nojekyll

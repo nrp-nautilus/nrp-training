@@ -163,8 +163,8 @@ Slides render inline with previous/next controls, keyboard navigation when the
 deck is focused, and a fullscreen button. Use `ArrowLeft`/`ArrowRight`,
 `PageUp`/`PageDown`, `Home`, and `End` while presenting.
 
-You can also keep a deck in a separate Markdown file and include it from a
-lesson. Include paths are relative to the training directory:
+You can also keep a deck in a separate Markdown file or PDF and include it from
+a lesson. Include paths are relative to the training directory:
 
 ````markdown
 ::: slides Demo deck
@@ -181,6 +181,18 @@ The included file uses the same slide separator:
 
 # Second slide
 ```
+
+PDF (experimental) decks render one PDF page at a time with previous/next controls and the
+same fullscreen button:
+
+```markdown
+::: slides Demo PDF
+@include slides/demo.pdf
+:::
+```
+
+PDF decks require Poppler's `pdftoppm` command during build so each page can be
+rendered as an image. On macOS, install it with `brew install poppler`.
 
 ## Adding / reordering lessons
 
