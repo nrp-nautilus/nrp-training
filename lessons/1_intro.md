@@ -14,6 +14,12 @@ keypoints:
 
 Add the learning context, prerequisites, and setup steps for this training here.
 
+## Demo slides
+
+::: slides CMS HATS slide demo
+@include slides/demo.md
+:::
+
 ::: callout Workspace
 Add JupyterHub, notebook, or command-line setup instructions here when they are ready.
 :::
