@@ -1,9 +1,10 @@
 name: Publish per-training materials branches
 
 # Keeps a lean `materials/<name>` branch for each training in sync with that
-# training's workspace on main. Each branch's ROOT is the contents of
-# trainings/<name>/workspace/, so an nbgitpuller link pointed at the branch
-# pulls ONLY that training's notebooks (not the whole repo).
+# training's directory on main. Each branch's ROOT is the contents of
+# trainings/<name>/, so an nbgitpuller link pointed at the branch pulls that
+# training's lessons, workspace, images, slides, and config without pulling the
+# whole repo.
 #
 # Authors never touch these branches: edit the notebook on main and this runs.
 
@@ -11,7 +12,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "trainings/*/workspace/**"
+      - ".github/workflows/materials.yml"
+      - "trainings/**"
   workflow_dispatch:        # allows a manual run (e.g. to seed the branches)
 
 permissions:
@@ -35,19 +37,19 @@ jobs:
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Split each training workspace into materials/<name>
+      - name: Split each training directory into materials/<name>
         run: |
           set -euo pipefail
           shopt -s nullglob
-          for ws in trainings/*/workspace; do
-            [ -d "$ws" ] || continue
-            name="$(basename "$(dirname "$ws")")"
+          for training in trainings/*; do
+            [ -d "$training" ] || continue
+            name="$(basename "$training")"
             branch="materials/$name"
-            echo "==> $ws  ->  $branch"
-            # subtree split is deterministic: when the workspace is unchanged
+            echo "==> $training  ->  $branch"
+            # subtree split is deterministic: when the training is unchanged
             # it reproduces the same commits, so the push below is a no-op.
             git branch -D "split-$name" 2>/dev/null || true
-            git subtree split --prefix="$ws" -b "split-$name"
+            git subtree split --prefix="$training" -b "split-$name"
             git push --force origin "split-$name:$branch"
             git branch -D "split-$name"
           done

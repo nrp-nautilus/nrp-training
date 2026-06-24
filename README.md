@@ -37,11 +37,39 @@ builds into `site/<name>/`.
   renders as a badge on the card.
 - **Link post-training resources** — set `materials_branch: materials/<name>` in
   `config.yml`; the training home page links to that GitHub branch.
+- **Publish runnable materials** — the GitHub Actions materials workflow updates
+  `materials/<name>` automatically when changes under `trainings/` land on
+  `main`. The materials branch root contains the contents of `trainings/<name>/`,
+  including `workspace/`, `lessons/`, `images/`, and `slides/`.
 
 The current trainings are **`rcsi`** (1 hour) and **`cra-rel`** (2 hours). Their
 in-page **"Launch in JupyterHub"** buttons are nbgitpuller links that target
 `https://jh-training.nrp-nautilus.io` (the materials site is hosted separately
 on `training.nrp-nautilus.io`).
+
+## Publishing materials branches
+
+Materials branches are what nbgitpuller pulls into JupyterHub. The
+`.github/workflows/materials.yml` workflow publishes them automatically from
+the committed training directory on `main`.
+
+For `trainings/rcsi/`, this creates or updates `materials/rcsi` with this shape:
+
+```text
+config.yml
+lessons/
+workspace/
+images/
+slides/
+```
+
+The JupyterHub links should clone the materials branch into `targetpath=<name>`
+and open `urlpath=lab/tree/<name>/workspace`. Notebook links should include the
+workspace path, for example:
+
+```text
+urlpath=lab/tree/rcsi/workspace/2_inference.ipynb
+```
 
 ## Quick start (single lesson)
 
