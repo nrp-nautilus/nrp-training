@@ -40,12 +40,14 @@ import html
 import re
 import sys
 from pathlib import Path
+from urllib.parse import quote
 
 ROOT = Path(__file__).resolve().parent
 LESSON_DIR = ROOT / "lessons"
 LEGACY_LESSON_DIR = ROOT / "episodes"
 SITE_DIR = ROOT / "site"
 CONFIG = ROOT / "config.yml"
+REPOSITORY_URL = "https://github.com/nrp-nautilus/nrp-training"
 
 # Optional link back to a multi-lesson landing page (set by build_site.py).
 SITE_HOME_LINK = None
@@ -343,6 +345,7 @@ def page(title, lesson_title, body, nav_html):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)} &mdash; {html.escape(lesson_title)}</title>
+{THEME_INIT_SCRIPT}
 <link rel="icon" href="nrp-tiny.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -353,16 +356,16 @@ def page(title, lesson_title, body, nav_html):
 <header class="site-header">
   <a class="brand" href="https://nrp.ai"><img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform" width="163" height="30"></a>
   <a class="site-title" href="index.html">{html.escape(lesson_title)}</a>
-  <button class="nav-toggle" type="button" data-nav-toggle aria-controls="lesson-nav" aria-expanded="true">Hide nav</button>
+  <div class="header-controls">
+    <button class="icon-toggle theme-toggle" type="button" data-theme-toggle aria-label="Toggle dark theme" title="Toggle dark theme" aria-pressed="false">&#9680;</button>
+    <button class="icon-toggle nav-toggle" type="button" data-nav-toggle aria-controls="lesson-nav" aria-expanded="true" aria-label="Hide navigation" title="Hide navigation">&#9776;</button>
+  </div>
 </header>
 <nav id="lesson-nav" class="lesson-nav" aria-label="Lesson navigation">
   <div class="lesson-nav-inner">{nav_html}</div>
 </nav>
 <main class="content">{body}</main>
-<footer class="site-footer">
-  Built with a bare-bones lesson generator.
-</footer>
-{NAV_SCRIPT}
+{PAGE_SCRIPT}
 </body>
 </html>
 """
@@ -405,6 +408,18 @@ def source_lesson_dir():
 
 def configured_lessons(config):
     return config.get("lessons", config.get("episodes"))
+
+
+def materials_url(config):
+    url = config.get("materials_url", "")
+    if url:
+        return url
+
+    branch = config.get("materials_branch", "")
+    if branch:
+        return f"{REPOSITORY_URL}/tree/{quote(branch, safe='/')}"
+
+    return ""
 
 
 def load_lessons(config):
@@ -491,11 +506,23 @@ def render_index(config, lessons):
         + f'<tr class="finish"><td>{finish}</td><td>Finish</td><td></td></tr>'
         + "</tbody></table>"
     )
+    resource_url = materials_url(config)
+    resource_label = (
+        f'{config["materials_branch"]} branch'
+        if config.get("materials_branch") else "training materials"
+    )
+    resources = (
+        '<p class="resources-note">Code and other resources used for this '
+        f'training session can be found in the <a href="{html.escape(resource_url)}">'
+        f'{html.escape(resource_label)}</a>.</p>'
+        if resource_url else ""
+    )
 
     body = (
         f"<h1>{html.escape(lesson_title)}</h1>"
         f'<p class="subtitle">{html.escape(subtitle)}</p>'
         f"<h2>Schedule</h2>{schedule}"
+        f"{resources}"
         '<p class="hint">Times are cumulative and assume a prompt start. '
         "Edit durations in each lesson's frontmatter.</p>"
     )
@@ -552,20 +579,59 @@ def serve(port=8000):
     raise OSError(f"No available port found in range {port}-{port + 99}")
 
 
-NAV_SCRIPT = """\
+THEME_INIT_SCRIPT = """\
 <script>
 (() => {
-  const storageKey = "nrpLessonNavHidden";
+  const storageKey = "nrpLessonTheme";
+  try {
+    const saved = window.localStorage.getItem(storageKey);
+    const prefersDark = window.matchMedia &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const theme = saved || (prefersDark ? "dark" : "light");
+    document.documentElement.dataset.theme = theme;
+  } catch (error) {
+    document.documentElement.dataset.theme = "light";
+  }
+})();
+</script>
+"""
+
+
+PAGE_SCRIPT = """\
+<script>
+(() => {
+  const navStorageKey = "nrpLessonNavHidden";
+  const themeStorageKey = "nrpLessonTheme";
   const nav = document.getElementById("lesson-nav");
-  const toggle = document.querySelector("[data-nav-toggle]");
-  if (!nav || !toggle) return;
+  const navToggle = document.querySelector("[data-nav-toggle]");
+  const themeToggle = document.querySelector("[data-theme-toggle]");
 
   function setHidden(hidden) {
     document.body.classList.toggle("nav-hidden", hidden);
-    toggle.setAttribute("aria-expanded", String(!hidden));
-    toggle.textContent = hidden ? "Show nav" : "Hide nav";
+    if (navToggle) {
+      navToggle.setAttribute("aria-expanded", String(!hidden));
+      navToggle.setAttribute("aria-label", hidden ? "Show navigation" : "Hide navigation");
+      navToggle.setAttribute("title", hidden ? "Show navigation" : "Hide navigation");
+    }
     try {
-      window.localStorage.setItem(storageKey, hidden ? "1" : "0");
+      window.localStorage.setItem(navStorageKey, hidden ? "1" : "0");
+    } catch (error) {
+      // Private browsing modes may block localStorage.
+    }
+  }
+
+  function setTheme(theme) {
+    const nextTheme = theme === "dark" ? "dark" : "light";
+    const isDark = nextTheme === "dark";
+    document.documentElement.dataset.theme = nextTheme;
+    if (themeToggle) {
+      themeToggle.innerHTML = isDark ? "&#9728;" : "&#9790;";
+      themeToggle.setAttribute("aria-label", isDark ? "Use light theme" : "Use dark theme");
+      themeToggle.setAttribute("title", isDark ? "Use light theme" : "Use dark theme");
+      themeToggle.setAttribute("aria-pressed", String(isDark));
+    }
+    try {
+      window.localStorage.setItem(themeStorageKey, nextTheme);
     } catch (error) {
       // Private browsing modes may block localStorage.
     }
@@ -573,15 +639,25 @@ NAV_SCRIPT = """\
 
   let hidden = false;
   try {
-    hidden = window.localStorage.getItem(storageKey) === "1";
+    hidden = window.localStorage.getItem(navStorageKey) === "1";
   } catch (error) {
     hidden = false;
   }
 
-  setHidden(hidden);
-  toggle.addEventListener("click", () => {
-    setHidden(!document.body.classList.contains("nav-hidden"));
-  });
+  if (nav && navToggle) {
+    setHidden(hidden);
+    navToggle.addEventListener("click", () => {
+      setHidden(!document.body.classList.contains("nav-hidden"));
+    });
+  }
+
+  setTheme(document.documentElement.dataset.theme || "light");
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      const current = document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+      setTheme(current === "dark" ? "light" : "dark");
+    });
+  }
 })();
 </script>
 """
@@ -591,11 +667,44 @@ STYLE = """\
 /* NRP theme: matches gitlab.nrp-nautilus.io/prp/nrp-site (AstroWind, Inter,
    primary #0161ef / secondary #0154cf / accent #6d28d9, navy #030620). */
 :root {
-  --fg: #101010; --muted: rgba(16,16,16,.66); --bg: #ffffff; --panel: #f6f8fa;
+  color-scheme: light;
+  --fg: #101010; --muted: rgba(16,16,16,.66); --bg: #ffffff; --surface: #ffffff; --panel: #f6f8fa;
   --border: #e5e9f0; --accent: #0161ef; --accent-2: #0154cf; --accent-weak: #e7f0ff;
   --obj: #0161ef; --challenge: #b45309; --solution: #0f766e;
   --keypoints: #6d28d9; --note: #475569; --navy: #030620;
+  --header: #ffffff; --menu: #ffffff; --shadow: rgb(140 152 164 / 10%);
+  --menu-shadow: rgb(3 6 32 / 14%); --selection: lavender;
   --max: 820px;
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fg: #eef3f8; --muted: rgba(238,243,248,.70); --bg: #18202b; --surface: #202a36; --panel: #273342;
+  --border: #39495b; --accent: #91c2ff; --accent-2: #b4d5ff; --accent-weak: rgb(145 194 255 / 16%);
+  --obj: #91c2ff; --challenge: #f4b350; --solution: #46d6c6;
+  --keypoints: #cfbdff; --note: #adbac8; --navy: #f5f8fb;
+  --header: #1a2330; --menu: #202a36; --shadow: rgb(0 0 0 / 20%);
+  --menu-shadow: rgb(0 0 0 / 34%); --selection: rgb(145 194 255 / 30%);
+}
+
+:root[data-theme="warm-dark"] {
+  color-scheme: dark;
+  --fg: #f0eee9; --muted: rgba(240,238,233,.70); --bg: #1d1c1a; --surface: #25231f; --panel: #2c2924;
+  --border: #413c34; --accent: #9abfff; --accent-2: #b8d3ff; --accent-weak: rgb(154 191 255 / 15%);
+  --obj: #9abfff; --challenge: #e7a94c; --solution: #56c9b8;
+  --keypoints: #d1bfff; --note: #b6aea2; --navy: #f7f3ed;
+  --header: #211f1c; --menu: #25231f; --shadow: rgb(0 0 0 / 20%);
+  --menu-shadow: rgb(0 0 0 / 34%); --selection: rgb(154 191 255 / 28%);
+}
+
+/* Presenter mode: light, low-glare theme instead of a true dark mode. */
+:root[data-theme="presenter"] {
+  color-scheme: light;
+  --fg: #141615; --muted: rgba(20,22,21,.66); --bg: #f4f5f2; --surface: #ffffff; --panel: #ecefeb;
+  --border: #d8ddd5; --accent: #0161ef; --accent-2: #0154cf; --accent-weak: #e4edff;
+  --obj: #0161ef; --challenge: #a05a00; --solution: #087568;
+  --keypoints: #6d28d9; --note: #58636f; --navy: #030620;
+  --header: #ffffff; --menu: #ffffff; --shadow: rgb(87 97 92 / 12%);
+  --menu-shadow: rgb(87 97 92 / 18%); --selection: rgb(1 97 239 / 18%);
 }
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--fg); background: var(--bg);
@@ -604,21 +713,24 @@ body { margin: 0; color: var(--fg); background: var(--bg);
 h1, h2, h3, h4 { font-weight: 700; letter-spacing: -.012em; color: var(--navy); }
 a { color: var(--accent); text-decoration: none; }
 a:hover { color: var(--accent-2); text-decoration: underline; }
-::selection { background: lavender; }
-.site-header { display: flex; align-items: center; gap: 16px; background: #fff;
+::selection { background: var(--selection); }
+.site-header { display: flex; align-items: center; gap: 16px; background: var(--header);
   padding: 11px 28px; border-bottom: 1px solid var(--border);
-  box-shadow: 0 1px 12px rgb(140 152 164 / 10%); position: sticky; top: 0; z-index: 20; }
+  box-shadow: 0 1px 12px var(--shadow); position: sticky; top: 0; z-index: 20; }
 .brand { display: flex; align-items: center; line-height: 0; }
 .brand-logo { height: 30px; width: auto; display: block; }
 .site-title { color: var(--fg); font-weight: 700; font-size: 1.0rem;
   padding-left: 16px; border-left: 1px solid var(--border); min-width: 0;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .site-title:hover { text-decoration: none; color: var(--accent); }
-.nav-toggle { margin-left: auto; flex: 0 0 auto; border: 1px solid var(--border);
-  border-radius: 6px; background: #fff; color: var(--fg); cursor: pointer;
-  font: inherit; font-size: .85rem; font-weight: 600; line-height: 1.2; padding: 7px 10px; }
-.nav-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.lesson-nav { background: #fff; border-bottom: 1px solid var(--border); position: relative; z-index: 10; }
+.header-controls { margin-left: auto; display: flex; align-items: center; gap: 4px; flex: 0 0 auto; }
+.icon-toggle { display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid transparent; border-radius: 6px;
+  background: transparent; color: var(--muted); cursor: pointer;
+  font: inherit; font-size: 1rem; line-height: 1; padding: 0; }
+.icon-toggle:hover { background: var(--panel); border-color: var(--border); color: var(--fg); }
+.icon-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.lesson-nav { background: var(--surface); border-bottom: 1px solid var(--border); position: relative; z-index: 10; }
 .lesson-nav-inner { display: flex; align-items: center; gap: 8px; max-width: 1180px; margin: 0 auto;
   padding: 10px 24px; }
 .lesson-nav a,
@@ -637,8 +749,8 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
   border-right: 4px solid transparent; border-top: 5px solid currentColor; margin-left: 8px; }
 .lesson-menu[open] summary { background: var(--panel); color: var(--accent); }
 .lesson-menu-list { position: absolute; left: 0; top: calc(100% + 8px); z-index: 30;
-  min-width: 240px; max-width: min(420px, calc(100vw - 48px)); background: #fff;
-  border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 28px rgb(3 6 32 / 14%);
+  min-width: 240px; max-width: min(420px, calc(100vw - 48px)); background: var(--menu);
+  border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 12px 28px var(--menu-shadow);
   padding: 6px; }
 .lesson-menu-list a { display: block; white-space: normal; }
 .lesson-menu-list a + a { margin-top: 2px; }
@@ -657,7 +769,7 @@ pre code { background: none; padding: 0; }
 blockquote { margin: 1em 0; padding: .2em 1em; border-left: 4px solid var(--accent-weak); color: var(--muted); }
 img { max-width: 100%; }
 .callout { border: 1px solid var(--border); border-left-width: 5px; border-radius: 10px;
-  margin: 1.2em 0; background: var(--bg); overflow: hidden; }
+  margin: 1.2em 0; background: var(--surface); overflow: hidden; }
 .callout-title { font-weight: 700; padding: 8px 16px; background: var(--panel); }
 .callout-body { padding: 4px 16px; }
 .callout-body > :first-child { margin-top: .4em; }
@@ -678,6 +790,8 @@ img { max-width: 100%; }
 .md-table th, .md-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
 .schedule thead, .md-table thead { background: var(--panel); }
 .schedule tr.finish { font-weight: 600; background: var(--panel); }
+.resources-note { border-left: 4px solid var(--accent); background: var(--accent-weak);
+  border-radius: 8px; margin: 1.2em 0; padding: 10px 14px; }
 .hint { color: var(--muted); font-size: .9rem; }
 .pager { display: flex; justify-content: space-between; margin-top: 36px;
   padding-top: 16px; border-top: 1px solid var(--border); }
@@ -686,7 +800,7 @@ img { max-width: 100%; }
   .site-header { padding: 10px 16px; gap: 10px; }
   .brand-logo { max-width: 38vw; }
   .site-title { font-size: .92rem; padding-left: 10px; }
-  .nav-toggle { padding: 6px 8px; }
+  .icon-toggle { width: 30px; height: 30px; }
   .lesson-nav-inner { padding: 8px 16px; }
   .lesson-menu-list { left: auto; right: 0; max-width: calc(100vw - 32px); }
   .content { padding: 24px 18px 28px; }

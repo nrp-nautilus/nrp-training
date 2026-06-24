@@ -129,7 +129,11 @@ def write_landing(items):
         '<header class="site-header">'
         '<a class="brand" href="https://nrp.ai">'
         '<img class="brand-logo" src="nrp-logo.webp" alt="National Research Platform" width="163" height="30"></a>'
-        '<span class="site-title">Trainings</span></header>'
+        '<span class="site-title">Trainings</span>'
+        '<div class="header-controls">'
+        '<button class="icon-toggle theme-toggle" type="button" data-theme-toggle '
+        'aria-label="Toggle dark theme" title="Toggle dark theme" aria-pressed="false">&#9680;</button>'
+        '</div></header>'
         '<section class="hero">'
         '<div class="hero-inner">'
         '<h1>NRP Trainings</h1>'
@@ -149,13 +153,14 @@ def write_landing(items):
         '<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         '<title>NRP Trainings</title>\n'
+        f'{build.THEME_INIT_SCRIPT}\n'
         '<link rel="icon" href="nrp-tiny.png">\n'
         '<link rel="preconnect" href="https://fonts.googleapis.com">\n'
         '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n'
         '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?'
         'family=Inter:wght@400;500;600;700;800&display=swap">\n'
         '<link rel="stylesheet" href="style.css">\n</head>\n'
-        f'<body>\n{body}\n</body>\n</html>\n'
+        f'<body>\n{body}\n{build.PAGE_SCRIPT}\n</body>\n</html>\n'
     )
     SITE.mkdir(exist_ok=True)
     (SITE / "index.html").write_text(doc, encoding="utf-8")
@@ -233,20 +238,47 @@ def watch_and_rebuild():
 
 
 LANDING_CSS = """
-.hero { background:
-    radial-gradient(1100px 400px at 15% -10%, rgb(1 97 239 / 35%), transparent 60%),
-    linear-gradient(160deg, #0a1230 0%, var(--navy) 70%);
-  color: #fff; padding: 64px 24px 72px; }
+.hero {
+  --hero-start: #0a1230;
+  --hero-end: var(--navy);
+  --hero-glow: rgb(1 97 239 / 35%);
+  --hero-fg: #fff;
+  --hero-sub: rgb(229 236 246 / 82%);
+  background:
+    radial-gradient(1100px 400px at 15% -10%, var(--hero-glow), transparent 60%),
+    linear-gradient(160deg, var(--hero-start) 0%, var(--hero-end) 70%);
+  color: var(--hero-fg); padding: 64px 24px 72px; }
+:root[data-theme="dark"] .hero {
+  --hero-start: #1a2330;
+  --hero-end: #202a36;
+  --hero-glow: rgb(145 194 255 / 9%);
+  --hero-fg: #f5f8fb;
+  --hero-sub: rgba(238,243,248,.72);
+}
+:root[data-theme="warm-dark"] .hero {
+  --hero-start: #211f1c;
+  --hero-end: #25231f;
+  --hero-glow: rgb(154 191 255 / 8%);
+  --hero-fg: #f7f3ed;
+  --hero-sub: rgba(240,238,233,.72);
+}
+:root[data-theme="presenter"] .hero {
+  --hero-start: #eef1ec;
+  --hero-end: #f4f5f2;
+  --hero-glow: rgb(1 97 239 / 10%);
+  --hero-fg: #030620;
+  --hero-sub: rgba(20,22,21,.68);
+}
 .hero-inner { max-width: 980px; margin: 0 auto; }
-.hero h1 { color: #fff; font-size: 2.6rem; line-height: 1.1; margin: 0 0 14px;
+.hero h1 { color: var(--hero-fg); font-size: 2.6rem; line-height: 1.1; margin: 0 0 14px;
   letter-spacing: -.02em; }
-.hero-sub { color: rgb(229 236 246 / 82%); font-size: 1.18rem; max-width: 640px; margin: 0; }
+.hero-sub { color: var(--hero-sub); font-size: 1.18rem; max-width: 640px; margin: 0; }
 .landing { max-width: 980px; margin: 0 auto; padding: 0 24px; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px; margin-top: -34px; margin-bottom: 40px; }
 .card { display: block; border: 1px solid var(--border); border-radius: 16px;
-  padding: 22px 24px; background: #fff; color: var(--fg);
-  box-shadow: 0 6px 20px rgb(3 6 32 / 8%); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+  padding: 22px 24px; background: var(--surface); color: var(--fg);
+  box-shadow: 0 6px 20px var(--shadow); transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
 .card:hover { text-decoration: none; border-color: var(--accent);
   transform: translateY(-3px); box-shadow: 0 12px 30px rgb(1 97 239 / 16%); }
 .card h2 { margin: 0 0 8px; font-size: 1.2rem; line-height: 1.3; color: var(--navy); }

@@ -36,12 +36,14 @@ def config_template(args):
     title = clean_scalar(args.title or slug_title(args.name))
     subtitle = clean_scalar(args.subtitle)
     length = clean_scalar(args.length)
+    materials_branch = clean_scalar(args.materials_branch or f"materials/{args.name}")
     published = "false" if args.unpublished else "true"
     subtitle_line = f"subtitle: {subtitle}\n" if subtitle else ""
     return f"""title: {title}
 {subtitle_line}length: {length}
 order: {args.order}
 published: {published}
+materials_branch: {materials_branch}
 lessons:
   - 1_intro
 """
@@ -162,6 +164,10 @@ def parse_args(argv):
     parser.add_argument("--subtitle", default="", help="landing-page subtitle")
     parser.add_argument("--length", default="TBD", help='landing-page length badge, e.g. "2 hours"')
     parser.add_argument("--order", type=int, default=999, help="landing-page order; lower appears first")
+    parser.add_argument(
+        "--materials-branch",
+        help='Git branch for post-training code/resources; defaults to "materials/<name>"',
+    )
     parser.add_argument(
         "--unpublished",
         action="store_true",

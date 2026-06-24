@@ -33,6 +33,8 @@ builds into `site/<name>/`.
   `config.yml`.
 - **Order on the landing page** — set `order:` (lower = first) in each
   `config.yml`; `length:` renders as a badge on the card.
+- **Link post-training resources** — set `materials_branch: materials/<name>` in
+  `config.yml`; the training home page links to that GitHub branch.
 
 The current trainings are **`rcsi`** (1 hour) and **`cra-rel`** (2 hours). Their
 in-page **"Launch in JupyterHub"** buttons are nbgitpuller links that target

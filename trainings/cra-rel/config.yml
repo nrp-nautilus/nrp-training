@@ -3,6 +3,7 @@ subtitle: Capacity and Community for Research Emerging Institutions with Large C
 length: 2 hours
 order: 20
 published: true
+materials_branch: materials/cra-rel
 lessons:
   - 1_intro
   - 2_inference

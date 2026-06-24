@@ -3,6 +3,7 @@ subtitle: Managed LLM, RAG, and agentic coding against NRP inference
 length: 1 hour
 order: 10
 published: true
+materials_branch: materials/rcsi
 lessons:
   - 1_intro
   - 2_inference
