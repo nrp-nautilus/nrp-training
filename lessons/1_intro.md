@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab on the training GPU nodes.
+**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the repo, and opens JupyterLab in the training workspace directory on the training GPU nodes.
 :::
 
 **Time:** 00:00-00:25
@@ -93,7 +93,7 @@ The core mental model is:
 
 Useful links for the live session:
 
-- [Launch the workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel)
+- [Launch the workspace](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel%2Fworkspace)
 - [NRP live resource view](https://nrp.ai/viz/resources/)
 - [NRP namespaces view](https://nrp.ai/viz/namespaces/)
 - [NRP support chat](https://nrp.ai/contact/)
@@ -188,7 +188,7 @@ Use the JupyterLab launcher to open:
 Confirm that the prepared environment is ready:
 
 ```bash
-cd ~/cra-rel
+cd ~/cra-rel/workspace
 kubectl version --client
 kubectl auth whoami
 kubectl config current-context
@@ -313,7 +313,7 @@ resources:
 Create a per-user copy of the manifest, replace `<username>`, and launch the pod:
 
 ```bash
-cd ~/cra-rel
+cd ~/cra-rel/workspace
 cp yamls/gpu-pod.yaml /tmp/gpu-pod-${TUTORIAL_USER}.yaml
 sed -i "s/<username>/${TUTORIAL_USER}/g" /tmp/gpu-pod-${TUTORIAL_USER}.yaml
 kubectl apply -n nrp-training-k8s -f /tmp/gpu-pod-${TUTORIAL_USER}.yaml

@@ -5,7 +5,7 @@ exercises: 0
 ---
 
 ::: callout Open the Helm notebook in JupyterHub
-**[▶ Open the Helm notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel%2F4_jupyterhub_helm.ipynb)** — opens the runnable Helm notebook (in this repo) live on jh-training.nrp-nautilus.io.
+**[▶ Open the Helm notebook in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcra-rel&targetpath=cra-rel&urlpath=lab%2Ftree%2Fcra-rel%2Fworkspace%2F4_jupyterhub_helm.ipynb)** — opens the runnable Helm notebook in `workspace/` live on jh-training.nrp-nautilus.io.
 :::
 
 In Part 2 you **used** NRP's managed AI. Now you'll **deploy your own**
@@ -169,7 +169,7 @@ embedding model, finds the most relevant, and answers — citing the page it use
 
 This is **one plain-Python cell**. To run it, switch the kernel to **Python 3**
 (the kernel picker at the top-right) — or paste it into
-[`2_inference.ipynb`](2_inference.ipynb). Edit `QUESTION` and run.
+the same workspace directory's `2_inference.ipynb`. Edit `QUESTION` and run.
 
 </details>
 
