@@ -22,7 +22,7 @@ Before attending the training session, please ensure you have completed the foll
 
 ::: Important
    We are using the namespace `us-cms` 
-   
+
    Ask Daniel or Martin to add you if you have not been added already
 :::
 
@@ -150,18 +150,16 @@ If you see "No resources found", that's okay - it means you have access but ther
 kubectl config set-context nautilus --namespace <YOUR_NAMESPACE>
 ```
 
-### 7. Training Environment
+### 7. CLI Tools
 
-**For Live Training:**
-- The training will be conducted using NRP's JupyterHub: `jupyterhub-west.nrp-nautilus.io`
-- You'll use this as your local environment during the session
-- All commands can be copy-pasted from the training notebooks
+Below are two tools which reduce the amount of kubernetes commands you need to type out.
 
-**For Self-Paced Learning:**
-- Use your local environment with `kubectl` configured as above
-- Follow the training notebooks: `Beginner_Track_Training.ipynb` and `Intermediate_Track_Training.ipynb`
+- [k9s](https://k9scli.io): A console-like CLI tool 
+- [Lens](https://k8slens.dev/): More of a GUI CLI tool
 
-## Getting Help
+These are not required. All parts of the tutorial and using Kubernetes in general can be done via the command line, however these tools make things easier. If you wish to use these PLEASE INSTALL PRIOR TO THE EXERCISE.
+
+## 8. Getting Help
 
 If you encounter issues during setup:
 
@@ -169,7 +167,7 @@ If you encounter issues during setup:
 - **Email**: usersupport@nrp-nautilus.io
 - **Documentation**: [NRP Getting Started Guide](https://nrp.ai/documentation/userdocs/start/getting-started/)
 
-## Additional Resources
+## 9. Additional Resources
 
 - [NRP Portal](https://nrp.ai)
 - [NRP Documentation](https://nrp.ai/documentation/)
