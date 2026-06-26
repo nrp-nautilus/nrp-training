@@ -477,7 +477,9 @@ def render_blocks(lines, base_dir=None):
 
        # lists (ordered / unordered)
         if re.match(r"^\s*([-*+]|\d+\.)\s+", line):
-            ordered = bool(re.match(r"^\s*\d+\.\s+", line))
+            first_ordered = re.match(r"^\s*(\d+)\.\s+", line)
+            ordered = bool(first_ordered)
+            start = int(first_ordered.group(1)) if first_ordered else 1
             items = []
             while i < n and re.match(r"^\s*([-*+]|\d+\.)\s+", lines[i]):
                 item = re.sub(r"^\s*([-*+]|\d+\.)\s+", "", lines[i])
@@ -485,7 +487,8 @@ def render_blocks(lines, base_dir=None):
                 i += 1
             tag = "ol" if ordered else "ul"
             lis = "".join(f"<li>{it}</li>" for it in items)
-            out.append(f"<{tag}>{lis}</{tag}>")
+            start_attr = f' start="{start}"' if ordered and start != 1 else ""
+            out.append(f"<{tag}{start_attr}>{lis}</{tag}>")
             continue
 
         # GFM pipe table: a header row followed by a |---|---| separator
