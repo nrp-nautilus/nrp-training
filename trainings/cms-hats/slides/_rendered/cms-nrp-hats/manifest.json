@@ -1,7 +1,7 @@
 {
   "dpi": 144,
-  "pages": 3,
+  "pages": 12,
   "renderer": "pdftoppm",
-  "sha256": "bd789680408b3cc72f5ef4ca531a1c99f9cd57e5a044b1d1980def0b032cfd8a",
+  "sha256": "7ed68e2e01f728f2eb8bc6523829256695771592a2d2fabc7d801913121784e9",
   "source": "slides/cms-nrp-hats.pdf"
 }
