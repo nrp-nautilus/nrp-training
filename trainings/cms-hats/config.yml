@@ -7,3 +7,6 @@ materials_branch: materials/cms-hats
 lessons:
   - 0_setup
   - 1_intro
+  - 2_prep
+  - 3_hands_on
+  - 4_cms_data
