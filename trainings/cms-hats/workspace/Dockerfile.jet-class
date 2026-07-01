@@ -1,0 +1,19 @@
+FROM quay.io/jupyter/tensorflow-notebook:cuda-2024-04-22
+
+USER root
+WORKDIR /workspace
+
+COPY jet_class.py analyze_jet_class.py /workspace/
+
+RUN chmod +x /workspace/jet_class.py /workspace/analyze_jet_class.py \
+    && mkdir -p /outputs /tmp/openml \
+    && chown -R 1000:100 /workspace /outputs /tmp/openml
+
+USER 1000
+
+ENV MPLBACKEND=Agg \
+    OUTPUT_DIR=/outputs \
+    OPENML_CACHE_DIR=/tmp/openml \
+    TF_CPP_MIN_LOG_LEVEL=2
+
+CMD ["python", "/workspace/jet_class.py"]

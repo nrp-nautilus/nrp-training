@@ -1,0 +1,36 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-analysis-<username>
+  namespace: us-cms
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-analysis
+        image: <YOUR_IMAGE>
+        command: ["python", "/workspace/analyze_jet_class.py"]
+        env:
+        - name: RUN_ID
+          value: single
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        volumeMounts:
+        - name: outputs
+          mountPath: /outputs
+
+      volumes:
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: jet-class-output-<username>
