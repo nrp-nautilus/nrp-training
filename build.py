@@ -32,8 +32,9 @@ blocks and in-page slide decks delimited by colons:
     :::
     :::
 
-Supported callout types: objectives, challenge, solution, callout, keypoints,
-discussion, prereq. Unknown types render as a generic callout.
+Supported callout types: objectives, questions, challenge, solution, important,
+danger, callout, keypoints, discussion, prereq. Unknown types render as a
+generic callout.
 
 Slide decks use a slides block, with slides separated by horizontal rules:
 
@@ -80,6 +81,8 @@ CALLOUT_LABELS = {
     "questions": "Questions",
     "challenge": "Challenge",
     "solution": "Solution",
+    "important": "Important",
+    "danger": "Danger",
     "callout": "Note",
     "keypoints": "Key Points",
     "discussion": "Discussion",
@@ -1482,6 +1485,7 @@ STYLE = """\
   --fg: #101010; --muted: rgba(16,16,16,.66); --bg: #ffffff; --surface: #ffffff; --panel: #f6f8fa;
   --border: #e5e9f0; --accent: #0161ef; --accent-2: #0154cf; --accent-weak: #e7f0ff;
   --obj: #0161ef; --challenge: #b45309; --solution: #0f766e;
+  --important: #d97706; --important-weak: #fff7d6; --danger: #dc2626; --danger-weak: #fee2e2;
   --keypoints: #6d28d9; --note: #475569; --navy: #030620;
   --header: #ffffff; --menu: #ffffff; --shadow: rgb(140 152 164 / 10%);
   --menu-shadow: rgb(3 6 32 / 14%); --selection: lavender;
@@ -1495,6 +1499,7 @@ STYLE = """\
   --fg: #eef3f8; --muted: rgba(238,243,248,.70); --bg: #18202b; --surface: #202a36; --panel: #273342;
   --border: #39495b; --accent: #91c2ff; --accent-2: #b4d5ff; --accent-weak: rgb(145 194 255 / 16%);
   --obj: #91c2ff; --challenge: #f4b350; --solution: #46d6c6;
+  --important: #facc15; --important-weak: rgb(250 204 21 / 14%); --danger: #f87171; --danger-weak: rgb(248 113 113 / 15%);
   --keypoints: #cfbdff; --note: #adbac8; --navy: #f5f8fb;
   --header: #1a2330; --menu: #202a36; --shadow: rgb(0 0 0 / 20%);
   --menu-shadow: rgb(0 0 0 / 34%); --selection: rgb(145 194 255 / 30%);
@@ -1508,6 +1513,7 @@ STYLE = """\
   --fg: #f0eee9; --muted: rgba(240,238,233,.70); --bg: #1d1c1a; --surface: #25231f; --panel: #2c2924;
   --border: #413c34; --accent: #9abfff; --accent-2: #b8d3ff; --accent-weak: rgb(154 191 255 / 15%);
   --obj: #9abfff; --challenge: #e7a94c; --solution: #56c9b8;
+  --important: #f3c45b; --important-weak: rgb(243 196 91 / 15%); --danger: #ef8a84; --danger-weak: rgb(239 138 132 / 16%);
   --keypoints: #d1bfff; --note: #b6aea2; --navy: #f7f3ed;
   --header: #211f1c; --menu: #25231f; --shadow: rgb(0 0 0 / 20%);
   --menu-shadow: rgb(0 0 0 / 34%); --selection: rgb(154 191 255 / 28%);
@@ -1522,6 +1528,7 @@ STYLE = """\
   --fg: #141615; --muted: rgba(20,22,21,.66); --bg: #f4f5f2; --surface: #ffffff; --panel: #ecefeb;
   --border: #d8ddd5; --accent: #0161ef; --accent-2: #0154cf; --accent-weak: #e4edff;
   --obj: #0161ef; --challenge: #a05a00; --solution: #087568;
+  --important: #b77900; --important-weak: #fff4c2; --danger: #c32222; --danger-weak: #fde1df;
   --keypoints: #6d28d9; --note: #58636f; --navy: #030620;
   --header: #ffffff; --menu: #ffffff; --shadow: rgb(87 97 92 / 12%);
   --menu-shadow: rgb(87 97 92 / 18%); --selection: rgb(1 97 239 / 18%);
@@ -1623,7 +1630,9 @@ blockquote { margin: 1em 0; padding: .2em 1em; border-left: 4px solid var(--acce
 img { max-width: 100%; }
 .callout { border: 1px solid var(--border); border-left-width: 5px; border-radius: 10px;
   margin: 1.2em 0; background: var(--surface); overflow: hidden; }
-.callout-title { font-weight: 700; padding: 8px 16px; background: var(--panel); }
+.callout-title { display: flex; align-items: center; gap: 8px; font-weight: 700;
+  padding: 8px 16px; background: var(--panel); }
+.callout-title::before { content: ""; display: none; flex: 0 0 auto; }
 .callout-body { padding: 4px 16px; }
 .callout-body > :first-child { margin-top: .4em; }
 /* Launch buttons: bold markdown links inside callouts render as NRP pill buttons. */
@@ -1632,10 +1641,23 @@ img { max-width: 100%; }
   box-shadow: 0 1px 6px rgb(1 97 239 / 30%); transition: background .15s ease, transform .1s ease; }
 .callout-body strong a:hover { background: var(--accent-2); color: #fff; text-decoration: none;
   transform: translateY(-1px); }
-.callout-objectives { border-left-color: var(--obj); }
-.callout-objectives > .callout-title { background: var(--accent-weak); }
+.callout-objectives, .callout-questions { border-left-color: var(--obj); }
+.callout-objectives > .callout-title,
+.callout-questions > .callout-title { background: var(--accent-weak); }
 .callout-challenge { border-left-color: var(--challenge); }
 .callout-solution { border-left-color: var(--solution); }
+.callout-important { border-left-color: var(--important); }
+.callout-important > .callout-title { background: var(--important-weak); }
+.callout-danger { border-left-color: var(--danger); }
+.callout-danger > .callout-title { background: var(--danger-weak); }
+.callout-important > .callout-title::before,
+.callout-danger > .callout-title::before { display: inline-flex; align-items: center;
+  justify-content: center; width: 1.1rem; height: 1.1rem; color: #fff;
+  font-size: .72rem; line-height: 1; font-weight: 800; box-sizing: border-box; }
+.callout-important > .callout-title::before { content: "!"; background: var(--important);
+  clip-path: polygon(50% 0, 100% 100%, 0 100%); padding-top: .16rem; }
+.callout-danger > .callout-title::before { content: "!"; background: var(--danger);
+  border-radius: 50%; }
 .callout-keypoints { border-left-color: var(--keypoints); }
 .callout-callout, .callout-discussion, .callout-prereq { border-left-color: var(--note); }
 .slideshow { margin: 1.6em 0; border: 1px solid var(--border); border-radius: 10px;

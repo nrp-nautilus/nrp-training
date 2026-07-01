@@ -133,9 +133,35 @@ Use slicing: `s[::-1]`.
 :::
 ```
 
-Built-in types: `objectives`, `questions`, `challenge`, `solution`, `callout`,
-`keypoints`, `discussion`, `prereq`. Any other word renders as a generic
-callout with that word as the title.
+Use the type after the opening `:::`. Add text after the type to override the
+default title:
+
+```markdown
+::: important Check this first
+Make sure your kubeconfig points at the right cluster before running commands.
+:::
+
+::: danger Do not run this on a shared namespace
+This command deletes resources.
+:::
+```
+
+Built-in types:
+
+| Type | Default title | Styling |
+|---|---|---|
+| `objectives` | Objectives | Blue |
+| `questions` | Questions | Blue |
+| `challenge` | Challenge | Orange |
+| `solution` | Solution | Teal |
+| `important` | Important | Yellow with warning icon |
+| `danger` | Danger | Red with warning icon |
+| `callout` | Note | Gray |
+| `keypoints` | Key Points | Purple |
+| `discussion` | Discussion | Gray |
+| `prereq` | Prerequisites | Gray |
+
+Any other word renders as a generic callout with that word as the title.
 
 ## In-page slides
 
