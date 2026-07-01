@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jet-class-output-<username>
+  namespace: us-cms
+spec:
+  storageClassName: rook-ceph-block
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-<username>
+  namespace: us-cms
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class
+        image: <YOUR_IMAGE>
+        env:
+        - name: RUN_ID
+          value: single
+        - name: EPOCHS
+          value: "50"
+        - name: BATCH_SIZE
+          value: "8192"
+        - name: MODEL_WIDTHS
+          value: "4096,4096,2048,1024"
+        - name: MIXED_PRECISION
+          value: "1"
+        resources:
+          requests:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: outputs
+          mountPath: /outputs
+
+      volumes:
+      - name: outputs
+        persistentVolumeClaim:
+          claimName: jet-class-output-<username>
+
+      # NRP training GPU nodes are reserved/tainted.
+      # This line lets the job run on those nodes.
+      #tolerations:
+      #- key: nautilus.io/reservation
+      #  operator: Equal
+      #  value: nrp
+      #  effect: NoSchedule
