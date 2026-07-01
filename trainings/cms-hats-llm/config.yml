@@ -1,0 +1,10 @@
+title: LPC HATS -- NRP as a Resource for LLMs
+length: 3 hours
+# date: YYYY-MM-DD
+# Undated trainings appear first on the landing page.
+published: true
+materials_branch: materials/cms-hats-llm
+lessons:
+  - 1_intro
+  - 2_chat
+  - 3_agentic
