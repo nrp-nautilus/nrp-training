@@ -164,7 +164,7 @@ These are not required. All parts of the tutorial and using Kubernetes in genera
 If you encounter issues during setup:
 
 - **Support Chat**: [Join NRP's Support Chat](https://nrp.ai/contact/) for community support
-- **Email**: usersupport@nrp-nautilus.io
+- **Email**: [usersupport@nrp-nautilus.io](mailto:usersupport@nrp-nautilus.io)
 - **Documentation**: [NRP Getting Started Guide](https://nrp.ai/documentation/userdocs/start/getting-started/)
 
 ## 9. Additional Resources
