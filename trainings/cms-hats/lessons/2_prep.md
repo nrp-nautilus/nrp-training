@@ -9,24 +9,67 @@ exercises: 0
 In this section we will prepare to run the hands-on exercise 
 
 
-## 1. Create a PVC to store your work
-```yaml
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: jet-class-output-<username>
-  namespace: us-cms
-spec:
-  storageClassName: rook-ceph-block
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 5Gi
+## 1. Clone the training materials
+
+Clone the branch containing the files for this training:
+
+```bash
+git clone --branch materials/cms-hats --single-branch https://github.com/nrp-nautilus/nrp-training.git ~/cms-hats
+cd ~/cms-hats/workspace
 ```
+
+If you already cloned the training materials, update your local copy instead:
+
+```bash
+cd ~/cms-hats
+git pull
+cd workspace
+```
+
 ---
 
-## 2. The Container Image
+## 2. Set your username
+
+Set a short username once and use the same value for each command in this
+training. This keeps your Kubernetes object names separate from everyone else's.
+
+```bash
+export USER=<username>
+cd ~/cms-hats/workspace
+```
+
+---
+
+## 3. Create a shared PVC for the training
+
+The hands-on jobs write their outputs to one persistent volume claim (PVC) for
+the whole training. You only need to create this PVC once. If you need more
+space later, the storage request can be increased, but it cannot be decreased.
+The jet classifier examples write under `/training/jet-class`; the CMS data
+access example writes under `/training/cms-data`.
+
+Make a temporary copy of the PVC manifest and replace the username placeholder:
+
+```bash
+cp yamls/pvc.yaml /tmp/cms-nrp-hats-pvc-${USER}.yaml
+perl -pi -e 's/<username>/$ENV{USER}/g' /tmp/cms-nrp-hats-pvc-${USER}.yaml
+```
+
+Apply the PVC manifest:
+
+```bash
+kubectl apply -n us-cms -f /tmp/cms-nrp-hats-pvc-${USER}.yaml
+```
+
+Verify that the PVC exists:
+
+```bash
+kubectl get pvc -n us-cms cms-nrp-hats-${USER}
+```
+
+---
+
+## 4. The Container Image
 
 The training job runs a container image. Kubernetes cannot use a local unnamed
 Docker image, so the image needs a registry name that the cluster can pull.
@@ -82,13 +125,12 @@ docker pull "$IMAGE"
 ---
 
 
-## 3. Prepare the YAML
+## 5. Prepare the YAML
 
-Set a short username and image name. Use the same `USER` value everywhere so
-your Job and PVC names are unique.
+Set the image name. Use the same `USER` value from the previous step so your Job
+uses the shared PVC you created above.
 
 ```bash
-export USER=<username>
 export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
 cd ~/cms-hats/workspace
 ```
@@ -97,8 +139,8 @@ Make a temporary copy of the training manifest and replace the placeholders:
 
 ```bash
 cp yamls/jet-class-job.yaml /tmp/jet-class-${USER}.yaml
-sed -i "s/<username>/${USER}/g" /tmp/jet-class-${USER}.yaml
-sed -i "s|<YOUR_IMAGE>|${IMAGE}|g" /tmp/jet-class-${USER}.yaml
+perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' /tmp/jet-class-${USER}.yaml
 ```
 
-The first manifest creates both the PVC and the GPU training Job.
+The manifest creates the GPU training Job, mounts the shared PVC at
+`/training`, and writes jet classifier outputs under `/training/jet-class`.

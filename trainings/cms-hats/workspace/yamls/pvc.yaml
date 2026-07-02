@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: jet-class-output-<username>
+  name: cms-nrp-hats-<username>
   namespace: us-cms
 spec:
   storageClassName: rook-ceph-block

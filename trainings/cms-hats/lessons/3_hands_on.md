@@ -24,14 +24,14 @@ When training completes, prepare and run the CPU analysis job:
 
 ```bash
 cp yamls/jet-class-analysis-job.yaml /tmp/jet-class-analysis-${USER}.yaml
-sed -i "s/<username>/${USER}/g" /tmp/jet-class-analysis-${USER}.yaml
-sed -i "s|<YOUR_IMAGE>|${IMAGE}|g" /tmp/jet-class-analysis-${USER}.yaml
+perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' /tmp/jet-class-analysis-${USER}.yaml
 
 kubectl delete job -n us-cms jet-class-analysis-${USER} --ignore-not-found
 kubectl apply -n us-cms -f /tmp/jet-class-analysis-${USER}.yaml
 kubectl logs -n us-cms job/jet-class-analysis-${USER} -f
 ```
 
-Both jobs mount the same PVC. The training job writes artifacts such as the
-model, prediction arrays, history, and metadata. The analysis job writes plots
-and `metrics.json` into the same run directory.
+Both jobs mount the shared training PVC at `/training` and use
+`/training/jet-class` for the jet classifier outputs. The training job writes
+artifacts such as the model, prediction arrays, history, and metadata. The
+analysis job writes plots and `metrics.json` into the same run directory.
