@@ -1,0 +1,38 @@
+FROM geddes-registry.rcac.purdue.edu/docker-hub-cache/library/rockylinux:9
+
+RUN dnf -y install git wget which procps-ng brotli glibc-headers dnf-plugins-core \
+    python3 python3-pip shadow-utils \
+    && dnf config-manager --set-enabled crb \
+    && dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
+    && dnf -y install https://repo.osg-htc.org/osg/25-main/osg-25-main-el9-release-latest.rpm \
+    && dnf -y install osg-ca-certs xrootd-client voms-clients-cpp \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+RUN python3 -m pip install --no-cache-dir --upgrade pip \
+    && python3 -m pip install --no-cache-dir \
+      awkward \
+      hist \
+      jupyterlab \
+      matplotlib \
+      numpy \
+      pandas \
+      uproot
+
+RUN useradd -m -u 1000 -g 0 jovyan \
+    && mkdir -p /home/jovyan/work \
+    && chown -R 1000:0 /home/jovyan \
+    && chmod -R g=u /home/jovyan
+
+WORKDIR /home/jovyan/work
+COPY --chown=1000:0 cms_uproot_example.ipynb /home/jovyan/work/
+COPY --chown=1000:0 cms_uproot_example.py /home/jovyan/work/
+
+USER 1000
+
+ENV X509_CERT_DIR=/etc/grid-security/certificates \
+    X509_USER_PROXY=/tmp/x509/proxy
+
+EXPOSE 8888
+
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser"]

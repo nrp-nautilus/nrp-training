@@ -6,13 +6,13 @@ WORKDIR /workspace
 COPY jet_class.py analyze_jet_class.py /workspace/
 
 RUN chmod +x /workspace/jet_class.py /workspace/analyze_jet_class.py \
-    && mkdir -p /outputs /tmp/openml \
-    && chown -R 1000:100 /workspace /outputs /tmp/openml
+    && mkdir -p /training/jet-class /tmp/openml \
+    && chown -R 1000:100 /workspace /training /tmp/openml
 
 USER 1000
 
 ENV MPLBACKEND=Agg \
-    OUTPUT_DIR=/outputs \
+    OUTPUT_DIR=/training/jet-class \
     OPENML_CACHE_DIR=/tmp/openml \
     TF_CPP_MIN_LOG_LEVEL=2
 
