@@ -143,6 +143,21 @@ Docker is a tool for building and running **containers**. A container image pack
 
 **Container registries** store and distribute images. Docker Hub is the public example; NRP GitLab provides a registry for your own images (public or private), and you can build images directly in GitLab CI/CD — the afternoon session does exactly that.
 
+## How to follow along — three ways
+
+Every hands-on block in this tutorial can be driven three ways; pick what you like and switch anytime:
+
+1. **Runnable notebooks (recommended).** The workspace ships a `notebooks/` folder with one notebook per episode — every command is a cell; **Shift+Enter** runs it. Cells execute in a *persistent* bash shell (the Bash kernel), so `export`s, `cd`, and variables carry from cell to cell. A ⚙️ setup cell at the top renders every manifest with your username filled in — no hand-editing `<username>`.
+2. **Copy from this site.** Hover any code block for a copy button, then paste into a JupyterLab terminal (**File → New → Terminal**).
+3. **Console-on-markdown.** In JupyterLab, right-click any lesson `.md` file → **Create Console for Editor** → pick the **Bash** kernel. Shift+Enter inside a code block runs it without leaving the file.
+
+Two helpers as you go:
+
+- **✅ Check your work** — `bash check.sh <episode>` in the workspace verifies your resources on the live cluster, with a hint for anything broken. Every notebook ends with that cell; rerun it as often as you like.
+- **🧠 Quick check** — each episode page on this site ends with a few click-to-answer questions.
+
+Commands marked **🖥️ Terminal step** in the notebooks (`kubectl exec -it`, `port-forward`, `-w` watches) are interactive or long-running — run those in a terminal, not a cell.
+
 ## Getting a terminal with kubectl
 
 ::: callout Zero install — use the training JupyterHub
@@ -173,5 +188,25 @@ Nautilus runs a cluster-wide Gatekeeper policy that **rejects pods that omit CPU
 ## Being a good citizen
 
 NRP is a **shared resource**. Aim for pod utilization of GPU > 40%, CPU 20–200%, RAM 20–150% of the requested amount, and delete what you're not using. Live dashboards are on [Grafana](https://grafana.nrp-nautilus.io/dashboards); the acceptable-use policy is at [nrp.ai/documentation/userdocs/start/policies](https://nrp.ai/documentation/userdocs/start/policies/).
+
+::: quiz Quick check — before you move on
+1. A pod you submitted is rejected with a Gatekeeper policy error. What is the most likely cause?
+- [ ] The image comes from Docker Hub instead of NRP GitLab
+- [x] Missing CPU/memory requests and limits, or a limit more than 1.2× the request
+- [ ] The namespace has run out of quota
+> Nautilus rejects pods without requests/limits (or with limit/request ratios above 1.2×). Every manifest in this tutorial sets `requests == limits` so you never trip it.
+
+2. You need to fine-tune a model for about two hours and then stop. Which workload fits best?
+- [ ] Deployment
+- [x] Job
+- [ ] Ingress
+> Jobs run work to completion; Deployments keep services running forever. Rule of thumb: work that should *finish* → Job, work that should *stay up* → Deployment.
+
+3. Where does data survive after a pod terminates?
+- [ ] The pod's container filesystem
+- [x] A PersistentVolumeClaim
+- [ ] The container image
+> Pods are ephemeral — anything on the container filesystem is gone at termination. PVCs claim long-lived storage that outlives pods.
+:::
 
 Next up: hands-on Kubernetes — pods, storage, deployments, jobs, services, and your first GPU pod.

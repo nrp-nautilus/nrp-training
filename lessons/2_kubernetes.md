@@ -5,7 +5,7 @@ exercises: 60
 ---
 
 ::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — the YAML manifests for this episode are in the workspace's `yamls/` folder.
+**[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F2_kubernetes.ipynb)** — every command below is a Shift+Enter cell; the YAML manifests are in the workspace's `yamls/` folder.
 :::
 
 **Morning session · 9:40 – 10:50 AM**
@@ -449,3 +449,31 @@ kubectl delete pod tutorial-<username>-gpu-pod    -n nrp-training-k8s --ignore-n
 # what did I leave running?
 kubectl get all -n nrp-training-k8s
 ```
+
+Then verify: `bash check.sh 2` in the workspace (or the last cell of the notebook).
+
+::: quiz Quick check — before the break
+1. You deleted a pod that mounted a PVC, then re-created it from the same manifest. What happened to the files in /data?
+- [x] Still there — the PVC's lifecycle is independent of any pod
+- [ ] Wiped when the pod terminated
+- [ ] Recovered only if the pod landed on the same node
+> That is the whole point of a PersistentVolumeClaim: storage outlives pods. You proved it with `cat /data/log.txt` after the delete/re-apply cycle.
+
+2. Your pod must run on the reserved (tainted) A10 nodes. What does its spec need?
+- [ ] Just a nodeSelector for the pool label
+- [x] A toleration for the taint *and* a node-affinity rule for the pool label
+- [ ] A label on the pod matching the node
+> The toleration gets you *permission* to land on tainted nodes; the affinity makes the scheduler actually *prefer* them. Repulsion + attraction — you usually need both.
+
+3. `kubectl get secret … | base64 -d` printed your token in plain text. Is a Secret encrypted?
+- [ ] Yes — base64 is a form of encryption
+- [x] No — base64 is only an encoding; access is protected by RBAC, not cryptography
+- [ ] Only if the cluster admin enables TLS
+> Base64 is storage format, not encryption. Anyone who can `get secret` in the namespace can read the value — protect Secrets with RBAC and separate namespaces.
+
+4. You delete one pod of a 4-replica Deployment. What does the cluster do?
+- [x] Immediately creates a replacement to get back to 4
+- [ ] Runs with 3 replicas until you re-apply the manifest
+- [ ] Fails the Deployment
+> Kubernetes continuously reconciles actual state toward desired state. The ReplicaSet notices 3 ≠ 4 and spawns a new pod — you watched it happen.
+:::

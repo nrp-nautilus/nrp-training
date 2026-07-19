@@ -5,7 +5,7 @@ exercises: 50
 ---
 
 ::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — `yamls/jhub-values.yaml` for this episode is in the workspace.
+**[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F6_custom_jupyterhub.ipynb)** — `yamls/jhub-values.yaml` for this episode is in the workspace.
 :::
 
 **Afternoon session · 1:40 – 2:50 PM**
@@ -276,6 +276,26 @@ User PVCs are kept by default; delete them only if you're sure:
 ```bash
 kubectl delete pvc -n <namespace> -l app=jupyterhub,component=singleuser-storage
 ```
+
+::: quiz Quick check — the capstone
+1. What role does the Helm values file play in your deployment?
+- [x] It customizes the chart's templates — auth, images, storage, resources — in one YAML file
+- [ ] It replaces kubectl for managing the cluster
+- [ ] It builds the container images the hub uses
+> The z2jh chart contains the templates for every hub/proxy/spawner object; your values file is the *entire* description of your deployment. Version-control it and you can rebuild the hub anywhere.
+
+2. Your course hub goes to production. What happens to the Dummy authenticator?
+- [x] Swap it for CILogon/OIDC so students use campus credentials
+- [ ] Keep it and share the password with the class
+- [ ] Remove authentication entirely — the ingress is already HTTPS
+> Dummy auth is a tutorial convenience. The workspace's `cilogon-jupyterhub-config.yaml` shows the production pattern: institutional login, allowlists, no passwords to distribute.
+
+3. Why tag course images with commit SHAs instead of only `latest`?
+- [x] So the environment never changes underneath students mid-semester
+- [ ] Because `latest` images pull more slowly
+- [ ] Because GitLab requires unique tags
+> `latest` moves every time CI runs. Pinning profiles to a SHA (or release tag) means the same image all semester — reproducibility is the whole reason you built a custom image.
+:::
 
 ## Where to go from here
 

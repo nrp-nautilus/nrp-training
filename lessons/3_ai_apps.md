@@ -5,7 +5,7 @@ exercises: 35
 ---
 
 ::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — manifests for this episode are in the workspace's `yamls/` folder.
+**[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F3_ai_apps.ipynb)** — every command below is a Shift+Enter cell; manifests are in the workspace's `yamls/` folder.
 :::
 
 **Morning session · 11:05 – 11:55 AM**
@@ -277,4 +277,24 @@ kubectl delete -n nrp-training-k8s -f yamls/tgi-inference.yaml    --ignore-not-f
 kubectl delete -n nrp-training-k8s -f yamls/milvus-rag.yaml       --ignore-not-found
 ```
 
-Stop any `kubectl port-forward` processes. See you after lunch for storage, JupyterHub, and custom hub deployments.
+Stop any `kubectl port-forward` processes, then verify with `bash check.sh 3`.
+
+::: quiz Quick check — before lunch
+1. Your notebook code talks to the NRP managed LLM. What changes to point the same code at the TGI server on your own GPU pod?
+- [x] Only the base URL (and the token, which your own server doesn't need)
+- [ ] Rewrite the code against a different SDK
+- [ ] Nothing — the managed endpoint proxies to your pod automatically
+> That is the value of the OpenAI-compatible API: managed endpoint, your own TGI/vLLM pod, or OpenAI cloud — same code, different `base_url`.
+
+2. When do you need your **own** GPU pod instead of the managed endpoint?
+- [ ] Whenever you use Python instead of curl
+- [x] When you need control over the weights, version, quantization, or want to train
+- [ ] When you need streaming responses
+> The managed service is zero-ops but its catalog rotates and you don't pick the runtime. Training, custom weights, or pinned versions ⇒ bring your own pod (with the reservation pattern from Episode 2).
+
+3. In the RAG exercise, the pipeline refused to answer a question. Why is that the *desired* behavior?
+- [ ] The Milvus collection was still indexing
+- [x] The answer wasn't in the retrieved context, and a grounded pipeline should decline rather than make something up
+- [ ] The model was too small to know the answer
+> The system prompt says "answer only from this context." Declining on out-of-context questions is evidence the grounding works — the opposite of confabulation.
+:::

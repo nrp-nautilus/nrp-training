@@ -5,7 +5,7 @@ exercises: 15
 ---
 
 ::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — manifests for this episode are in the workspace's `yamls/` folder.
+**[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F4_storage.ipynb)** — every command below is a Shift+Enter cell; manifests are in the workspace's `yamls/` folder.
 :::
 
 **Afternoon session · 12:15 – 12:45 PM**
@@ -100,4 +100,24 @@ For classrooms, the equivalent pattern is: course materials on an **RWX CephFS v
 kubectl delete pod tutorial-<username>-pod -n nrp-training-k8s --ignore-not-found
 ```
 
-Keep `jupyterhub-shared-volume` — the custom JupyterHub episode mounts it.
+Keep `jupyterhub-shared-volume` — the custom JupyterHub episode mounts it. Verify with `bash check.sh 4`.
+
+::: quiz Quick check
+1. Ten student pods need to read the same course dataset at the same time. Which storage fits?
+- [ ] An RBD block PVC (`rook-ceph-block-east`)
+- [x] A CephFS PVC with ReadWriteMany
+- [ ] An emptyDir volume
+> RWO block storage mounts on one node at a time (you hit that limit in the sidecar exercise). CephFS RWX mounts into many pods on many nodes — the classroom shared-folder pattern.
+
+2. Where should a training job stage its dataset for the fastest dataloader reads?
+- [ ] Read it straight from S3 every epoch
+- [x] Copy it once to node-local scratch (`emptyDir`) at job start
+- [ ] Keep it in the home PVC
+> Stage in → local NVMe scratch, checkpoint out → PVC or S3 at epoch boundaries, publish → S3. Local scratch is far faster for random reads than any network storage.
+
+3. What's true of NRP's S3 storage?
+- [x] Reachable over HTTP from anywhere — object semantics, not a POSIX filesystem
+- [ ] It mounts into pods like a normal directory
+- [ ] Its contents disappear when your pod terminates
+> S3 is the right tool for distribution and publishing: any S3 client works from inside or outside the cluster, but you `get`/`put` objects instead of doing POSIX file I/O.
+:::
