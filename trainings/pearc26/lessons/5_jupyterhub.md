@@ -5,7 +5,7 @@ exercises: 10
 ---
 
 ::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — you have been using the thing this episode explains all day.
+**[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F5_jupyterhub.ipynb)** — you have been using the thing this episode explains all day.
 :::
 
 **Afternoon session · 12:45 – 1:25 PM**
@@ -73,3 +73,23 @@ Rules of thumb the NRP team uses when provisioning class hubs:
 - **Storage** — home PVC size × enrollment is your Ceph footprint; keep homes small and put datasets on a shared RWX volume.
 
 Requesting a hub without running one yourself: NRP can host custom hubs for courses — [contact the team](https://nrp.ai/contact/). Or run your own, which is exactly what's next.
+
+::: quiz Quick check
+1. Which JupyterHub component actually creates the per-user JupyterLab pods?
+- [x] The hub pod, via its spawner
+- [ ] The proxy pod
+- [ ] Each user's browser session
+> The hub authenticates users and its spawner (KubeSpawner on z2jh) creates a pod + PVC per user; the proxy just routes traffic to the right server.
+
+2. What makes nbgitpuller links the standard way to hand out course materials?
+- [x] They clone/update a repo into the student's home *without overwriting their edits*
+- [ ] They force-reset the student's folder to match the repo
+- [ ] They email students a zip archive
+> nbgitpuller does an automatic merge that always preserves student changes — you can re-click the launch link all day without losing work. That's exactly what the buttons on this site do.
+
+3. Why is idle culling non-negotiable on a shared hub?
+- [ ] It keeps the hub database small
+- [x] It reclaims CPU/RAM/GPU from servers people forgot to stop
+- [ ] It logs students out for security
+> Forgotten servers hold real resources on shared nodes. The 1-hour cull timeout is why NRP requires it on every hub — you'll set it in your own values file next episode.
+:::

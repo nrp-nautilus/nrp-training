@@ -874,6 +874,9 @@ def render_markdown(text, base_dir=None):
             if ctype == "slides":
                 out.append(render_slideshow(title, inner, base_dir))
                 continue
+            if ctype == "quiz":
+                out.append(render_quiz(title, inner))
+                continue
             label = title or CALLOUT_LABELS.get(ctype, ctype.title())
             body = render_markdown("\n".join(inner), base_dir)
             out.append(
@@ -886,6 +889,58 @@ def render_markdown(text, base_dir=None):
         i += 1
     flush()
     return "\n".join(out)
+
+
+def render_quiz(title, lines):
+    """Render a ::: quiz block: interactive multiple choice with feedback.
+
+    Format inside the block:
+        1. Question text?
+        - [ ] wrong option
+        - [x] right option
+        > shown-after-answering explanation
+    """
+    questions = []
+    cur = None
+    for line in lines:
+        m = re.match(r"^(?:Q:|\d+\.)\s+(.*)$", line)
+        if m:
+            cur = {"q": m.group(1).strip(), "opts": [], "explain": []}
+            questions.append(cur)
+            continue
+        m = re.match(r"^-\s*\[( |x|X)\]\s+(.*)$", line)
+        if m and cur is not None:
+            cur["opts"].append((m.group(1).lower() == "x", m.group(2).strip()))
+            continue
+        m = re.match(r"^>\s?(.*)$", line)
+        if m and cur is not None:
+            cur["explain"].append(m.group(1))
+            continue
+        if cur is not None and line.strip() and not cur["opts"]:
+            cur["q"] += " " + line.strip()
+    questions = [q for q in questions if q["opts"]]
+    if not questions:
+        return ""
+    label = title or "Quick check"
+    parts = [f'<div class="quiz"><div class="quiz-head">&#129504; {html.escape(label)}</div>']
+    for q in questions:
+        opts = "".join(
+            f'<button type="button" class="quiz-opt"{" data-correct" if correct else ""}>'
+            f'{inline(html.escape(text))}</button>'
+            for correct, text in q["opts"]
+        )
+        explain = " ".join(q["explain"]).strip()
+        explain_html = (
+            f'<div class="quiz-explain" hidden>{inline(html.escape(explain))}</div>'
+            if explain else ""
+        )
+        parts.append(
+            '<div class="quiz-q">'
+            f'<div class="quiz-question">{inline(html.escape(q["q"]))}</div>'
+            f'<div class="quiz-opts">{opts}</div>{explain_html}</div>'
+        )
+    parts.append("</div>")
+    return "".join(parts)
 
 
 def boxed_list(ctype, label, items):
@@ -1470,8 +1525,29 @@ PAGE_SCRIPT = """\
     });
   }
 
+  function initQuizzes() {
+    document.querySelectorAll(".quiz-q").forEach((q) => {
+      const explain = q.querySelector(".quiz-explain");
+      q.querySelectorAll(".quiz-opt").forEach((opt) => {
+        opt.addEventListener("click", () => {
+          if (q.classList.contains("is-done")) return;
+          if (opt.hasAttribute("data-correct")) {
+            q.classList.add("is-done");
+            opt.classList.add("is-correct");
+            q.querySelectorAll(".quiz-opt").forEach((o) => { o.disabled = true; });
+            if (explain) explain.hidden = false;
+          } else {
+            opt.classList.add("is-wrong");
+            opt.disabled = true;
+          }
+        });
+      });
+    });
+  }
+
   initCodeCopyButtons();
   initSlideshows();
+  initQuizzes();
 })();
 </script>
 """
@@ -1742,6 +1818,31 @@ img { max-width: 100%; }
   .slideshow:fullscreen .slide h2,
   .slideshow.is-fallback-fullscreen .slide h2 { font-size: 1.55rem; }
 }
+
+/* interactive quizzes (::: quiz) */
+.quiz { border: 1px solid var(--border); border-radius: 14px; background: var(--surface);
+  margin: 22px 0; overflow: hidden; box-shadow: 0 4px 14px var(--shadow); }
+.quiz-head { font-weight: 700; padding: 12px 18px; background: var(--accent-weak);
+  color: var(--accent); border-bottom: 1px solid var(--border); }
+.quiz-q { padding: 14px 18px 16px; border-bottom: 1px solid var(--border); }
+.quiz-q:last-child { border-bottom: 0; }
+.quiz-question { font-weight: 600; margin-bottom: 10px; }
+.quiz-opts { display: grid; gap: 8px; }
+.quiz-opt { text-align: left; border: 1px solid var(--border); border-radius: 10px;
+  background: var(--panel); color: var(--fg); padding: 9px 12px; font: inherit;
+  font-size: .95rem; cursor: pointer;
+  transition: border-color .12s ease, background .12s ease; }
+.quiz-opt:hover:not(:disabled) { border-color: var(--accent); }
+.quiz-opt:disabled { cursor: default; }
+.quiz-opt.is-correct { border-color: #16a34a; background: rgb(22 163 74 / 12%);
+  font-weight: 600; opacity: 1; }
+.quiz-opt.is-correct::after { content: " \\2713"; color: #16a34a; font-weight: 700; }
+.quiz-opt.is-wrong { border-color: #dc2626; background: rgb(220 38 38 / 10%);
+  opacity: .75; animation: quiz-shake .25s; }
+.quiz-opt.is-wrong::after { content: " \\2715"; color: #dc2626; }
+.quiz-explain { margin-top: 10px; padding: 10px 12px; border-left: 3px solid #16a34a;
+  background: rgb(22 163 74 / 8%); border-radius: 0 8px 8px 0; }
+@keyframes quiz-shake { 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 """
 
 
