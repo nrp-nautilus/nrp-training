@@ -1,0 +1,13 @@
+title: PEARC26 — Kubernetes for AI-Enabled Scientific Research Computing, and Education
+subtitle: Full-day hands-on tutorial on the National Research Platform — Kubernetes, GPUs, LLM services, and scalable JupyterHub classrooms
+length: Full day
+# date: YYYY-MM-DD
+materials_branch: materials/pearc26
+published: true
+lessons:
+  - 1_intro
+  - 2_kubernetes
+  - 3_ai_apps
+  - 4_storage
+  - 5_jupyterhub
+  - 6_custom_jupyterhub

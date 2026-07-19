@@ -1,0 +1,61 @@
+# PyTorch GPU + MNIST pod for Part 3. Replace <username> in metadata.name before apply.
+# Uses 23.07-py3. We fetch an older pytorch/examples MNIST main.py (commit f82f562) that uses
+# torch.cuda.is_available() instead of torch.accelerator, so it runs on this image.
+# See: https://raw.githubusercontent.com/pytorch/examples/f82f5626b6432b8d0b08d58cc91f3bdbb355a772/mnist/main.py
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tutorial-<username>-gp3
+  namespace: nrp-training-k8s
+spec:
+  restartPolicy: Never
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+          - key: nrp-training
+            operator: In
+            values: ["true"]
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: nvidia.com/gpu.product
+            operator: In
+            values:
+            - NVIDIA-A10
+  tolerations:
+  - key: nautilus.io/reservation
+    operator: Equal
+    value: nrp
+    effect: NoSchedule
+  volumes:
+  - name: scratch
+    emptyDir: {}
+  containers:
+  - name: mypod
+    image: nvcr.io/nvidia/pytorch:23.07-py3
+    resources:
+      limits:
+        memory: 16Gi
+        cpu: 4
+        nvidia.com/gpu: 1
+      requests:
+        memory: 16Gi
+        cpu: 4
+        nvidia.com/gpu: 1
+    command: ["/bin/bash", "-c"]
+    args:
+    - |
+        set -e
+        cd /scratch
+        mkdir -p run data
+        cd run
+        wget -q https://raw.githubusercontent.com/pytorch/examples/f82f5626b6432b8d0b08d58cc91f3bdbb355a772/mnist/main.py
+        nvidia-smi
+        python3 main.py --epochs 1
+        echo "PyTorch MNIST completed successfully."
+    volumeMounts:
+    - name: scratch
+      mountPath: /scratch

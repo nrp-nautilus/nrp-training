@@ -1,0 +1,51 @@
+# Two-container pod (sidecar pattern) sharing the PVC from pvc.yaml.
+# Container 1 (writer) appends a tick line to /shared/data.log every 5s.
+# Container 2 (reader) tails the same file from a different process.
+# Each container has its own log stream — fetch with `kubectl logs <pod> -c <name>`.
+# Replace <username> in pod name + claimName before applying.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sidecar-<username>
+  namespace: nrp-training-k8s
+spec:
+  restartPolicy: Never
+  containers:
+  - name: writer
+    image: ubuntu:22.04
+    command: ["sh", "-c"]
+    args:
+    - |
+      i=0
+      while true; do
+        i=$((i+1))
+        line="writer-tick $i $(date -u +%H:%M:%S)"
+        echo "$line" >> /shared/data.log    # written to the shared volume
+        echo "$line"                        # also echoed to writer's own stdout
+        sleep 5
+      done
+    volumeMounts:
+    - name: shared
+      mountPath: /shared
+    resources:
+      limits:  { memory: 128Mi, cpu: 200m }
+      requests: { memory: 128Mi, cpu: 200m }
+  - name: reader
+    image: ubuntu:22.04
+    command: ["sh", "-c"]
+    args:
+    - |
+      echo "reader started, tailing /shared/data.log"
+      # wait for the file to appear, then stream it
+      until [ -f /shared/data.log ]; do sleep 1; done
+      tail -F /shared/data.log
+    volumeMounts:
+    - name: shared
+      mountPath: /shared
+    resources:
+      limits:  { memory: 128Mi, cpu: 200m }
+      requests: { memory: 128Mi, cpu: 200m }
+  volumes:
+  - name: shared
+    persistentVolumeClaim:
+      claimName: pvc-<username>

@@ -1,0 +1,103 @@
+---
+title: Persistent Storage & I/O for AI/Scientific Workloads
+teaching: 15
+exercises: 15
+---
+
+::: callout Launch the workspace in JupyterHub
+**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — manifests for this episode are in the workspace's `yamls/` folder.
+:::
+
+**Afternoon session · 12:15 – 12:45 PM**
+
+AI and scientific workloads live or die on I/O: where the dataset sits, how fast checkpoints write, and whether ten students can read the same files at once. This episode maps NRP's storage options to those needs and gets hands-on with each from a notebook terminal.
+
+> 📘 **Docs:** [Storage intro](https://nrp.ai/documentation/userdocs/storage/intro/) · [Ceph](https://nrp.ai/documentation/userdocs/storage/ceph/) · [S3](https://nrp.ai/documentation/userdocs/storage/ceph-s3/) · [Policies](https://nrp.ai/documentation/userdocs/start/policies/)
+
+## Storage options on NRP
+
+| Option | Access mode | Best for | Caveats |
+|---|---|---|---|
+| **Pod filesystem** | per-container | scratch during a single run | gone when the pod dies |
+| **`emptyDir`** | per-pod, shared by its containers | fast scratch, staging downloads | gone when the pod dies; counts against ephemeral-storage |
+| **RBD block (`rook-ceph-block-*`)** | `ReadWriteOnce` | home dirs, checkpoints, databases | one pod at a time |
+| **CephFS (`rook-cephfs-*`)** | `ReadWriteMany` | shared datasets, course materials, multi-pod pipelines | slightly slower metadata than block |
+| **S3 (Ceph RGW)** | HTTP, from anywhere | dataset distribution, results publishing, cross-site access | object semantics, not POSIX |
+
+Your JupyterHub home directory (`/home/jovyan`) is itself an RBD PVC — everything you save in the notebook survives server restarts, but it is sized in gigabytes; keep bulk data on CephFS or S3.
+
+### Choosing an access mode
+
+- **`ReadWriteOnce` (RWO)** — one node mounts read-write. Block storage. You saw the consequence in Episode 2: the sidecar exercise had to delete the first pod before the second could mount.
+- **`ReadWriteMany` (RWX)** — many pods on many nodes mount simultaneously. CephFS. This is what a classroom shared folder or a multi-worker training job wants.
+
+## Hands-on: an RWX CephFS volume shared by many pods
+
+`yamls/shared-pvc.yaml` creates a CephFS-backed PVC. Apply it and note the `RWX` access mode:
+
+```bash
+kubectl apply -n nrp-training-k8s -f yamls/shared-pvc.yaml
+kubectl get pvc -n nrp-training-k8s | grep shared
+```
+
+<details>
+<summary>Expected output</summary>
+
+```text
+jupyterhub-shared-volume   Bound    pvc-…   5Gi   RWX   rook-cephfs   30s
+```
+</details>
+
+Unlike the Episode 2 PVC, **many pods can mount this claim at the same time** — in the final episode this exact volume becomes the `/home/shared` folder every student sees in a course JupyterHub.
+
+## Hands-on: S3 object storage
+
+NRP runs S3-compatible object storage on Ceph. It's the right tool when data must be reachable from outside the cluster, shared across sites, or published alongside a paper. Any S3 client works — `aws` CLI, `boto3`, `s3fs`, rclone.
+
+`yamls/pod-awscli.yaml` starts a pod with the AWS CLI image, a 100 Gi `emptyDir` scratch volume at `/scratch`, and installs `boto3` + `torch` on boot. Replace `<username>` and apply:
+
+```bash
+kubectl apply -n nrp-training-k8s -f yamls/pod-awscli.yaml
+kubectl get pod tutorial-<username>-pod -n nrp-training-k8s -w
+```
+
+Wait for the install loop to log `Done with installs`, then exec in and talk to S3 (credentials are handed out by the instructors; outside the tutorial, request S3 credentials via [Matrix](https://nrp.ai/contact/)):
+
+```bash
+kubectl exec -it tutorial-<username>-pod -n nrp-training-k8s -- bash
+
+# inside the pod:
+aws configure                     # paste the tutorial access key / secret
+aws --endpoint https://s3-west.nrp-nautilus.io s3 ls
+aws --endpoint https://s3-west.nrp-nautilus.io s3 ls s3://<tutorial-bucket>/
+
+# stage a dataset onto the fast local scratch:
+aws --endpoint https://s3-west.nrp-nautilus.io s3 cp s3://<tutorial-bucket>/dataset.tar.gz /scratch/
+```
+
+The same works from Python with `boto3`:
+
+```python
+import boto3
+s3 = boto3.client("s3", endpoint_url="https://s3-west.nrp-nautilus.io")
+for obj in s3.list_objects_v2(Bucket="<tutorial-bucket>").get("Contents", []):
+    print(obj["Key"], obj["Size"])
+```
+
+## I/O patterns for AI workloads
+
+A pattern that serves nearly every training job on NRP:
+
+1. **Stage in** — copy the dataset from S3 (or CephFS) to node-local scratch (`emptyDir`) at job start. Local NVMe is far faster for the random reads of a dataloader.
+2. **Checkpoint out** — write checkpoints to an RWO block PVC (or push to S3) at epoch boundaries, not every step.
+3. **Publish** — copy final artifacts to S3 where collaborators (or your future self) can fetch them without cluster access.
+
+For classrooms, the equivalent pattern is: course materials on an **RWX CephFS volume** mounted read-only into every student server, student work on **per-user RWO home volumes** — exactly what we'll configure in the final episode.
+
+## Cleanup
+
+```bash
+kubectl delete pod tutorial-<username>-pod -n nrp-training-k8s --ignore-not-found
+```
+
+Keep `jupyterhub-shared-volume` — the custom JupyterHub episode mounts it.
