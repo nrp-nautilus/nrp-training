@@ -151,10 +151,12 @@ Every hands-on block in this tutorial can be driven three ways; pick what you li
 2. **Copy from this site.** Hover any code block for a copy button, then paste into a JupyterLab terminal (**File → New → Terminal**).
 3. **Console-on-markdown.** In JupyterLab, right-click any lesson `.md` file → **Create Console for Editor** → pick the **Bash** kernel. Shift+Enter inside a code block runs it without leaving the file.
 
-Two helpers as you go:
+A few helpers as you go:
 
+- **🗺️ Guided tour** — new to JupyterLab? In the hub, open **Help → PEARC26 Tutorial Tour** for a one-minute walkthrough of the workspace (files, notebooks, terminals, check script).
 - **✅ Check your work** — `bash check.sh <episode>` in the workspace verifies your resources on the live cluster, with a hint for anything broken. Every notebook ends with that cell; rerun it as often as you like.
 - **🧠 Quick check** — each episode page on this site ends with a few click-to-answer questions.
+- **⏱️ Cell timers** — every executed cell shows how long it took, so you'll know a slow step from a stuck one.
 
 Commands marked **🖥️ Terminal step** in the notebooks (`kubectl exec -it`, `port-forward`, `-w` watches) are interactive or long-running — run those in a terminal, not a cell.
 
