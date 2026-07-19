@@ -19,8 +19,9 @@ the launch buttons at [training.nrp-nautilus.io](https://training.nrp-nautilus.i
   Uses `$NRP_USER` (and `$NRP_NAMESPACE` for episode 6).
 
 New to JupyterLab? **Help → PEARC26 Tutorial Tour** in the hub gives a one-minute
-guided walkthrough. Executed cells also show a run-time stamp, so you can tell a
-slow step from a stuck one.
+guided walkthrough, and each notebook carries its own mini-tour — click the
+**📌 pin icon** in the notebook toolbar. Executed cells also show a run-time
+stamp, so you can tell a slow step from a stuck one.
 
 Conventions: namespace `nrp-training-k8s`; replace `<username>` in every manifest
 with your own short name (the notebooks do this for you). Reserved GPU pool:
