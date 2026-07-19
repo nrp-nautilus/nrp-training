@@ -297,4 +297,22 @@ Stop any `kubectl port-forward` processes, then verify with `bash check.sh 3`.
 - [x] The answer wasn't in the retrieved context, and a grounded pipeline should decline rather than make something up
 - [ ] The model was too small to know the answer
 > The system prompt says "answer only from this context." Declining on out-of-context questions is evidence the grounding works — the opposite of confabulation.
+
+4. The RAG pod mounts two Secrets (`nrp-llm-token`, `nrp-training-milvus-credentials`). Why Secrets instead of putting the values in the YAML?
+- [x] Credentials stay out of manifests and images — anyone with the YAML gets no keys
+- [ ] Secrets make the pod start faster
+- [ ] Milvus only accepts connections from pods that mount Secrets
+> The manifest is public in the workspace repo; the credentials are injected at runtime from namespace Secrets. Episode 2's lesson applies: manifests are shareable, Secrets are RBAC-protected.
+
+5. You deleted the RAG pod at cleanup. What happened to the vectors in Milvus?
+- [x] Nothing — the collection lives in the managed Milvus cluster and the next pod reuses it
+- [ ] They were deleted with the pod
+- [ ] They expire after the tutorial ends
+> Milvus is a managed service outside your pod's lifecycle, which is why later `--only-ask` runs answer in seconds with no re-indexing. State that must outlive pods belongs in services or PVCs, never in the pod.
+
+6. What does the `curl $OPENAI_API_BASE/models` one-liner actually prove?
+- [x] The endpoint is reachable and your token is valid — so anything OpenAI-compatible will work
+- [ ] The models listed are all loaded into your namespace
+- [ ] Your pod has GPU access
+> It's the universal smoke test: auth + connectivity in one request. If it returns the catalog, LangChain, the openai SDK, and Jupyter AI will all work with the same two environment variables.
 :::

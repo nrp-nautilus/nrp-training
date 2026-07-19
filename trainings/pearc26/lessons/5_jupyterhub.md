@@ -92,4 +92,16 @@ Requesting a hub without running one yourself: NRP can host custom hubs for cour
 - [x] It reclaims CPU/RAM/GPU from servers people forgot to stop
 - [ ] It logs students out for security
 > Forgotten servers hold real resources on shared nodes. The 1-hour cull timeout is why NRP requires it on every hub — you'll set it in your own values file next episode.
+
+4. "Each user server is just a pod." What does that buy you as a hub operator?
+- [x] Everything from this morning applies — images, resource limits, tolerations/affinity, PVCs
+- [ ] Nothing — hub pods are a special Kubernetes resource type
+- [ ] Users can kubectl into each other's servers
+> That's the deep idea of z2jh: the spawner writes an ordinary pod spec. Steering students onto reserved GPU nodes uses the exact toleration+affinity pattern from Episode 2; per-user homes are ordinary PVCs.
+
+5. You're provisioning a hub for a 100-student course. What number do you actually size for?
+- [x] Peak concurrent servers — typically ~40% of enrollment outside deadline nights
+- [ ] Total enrollment, one server each
+- [ ] One server per teaching assistant
+> Concurrency, not enrollment. With idle culling on, a 100-student course rarely exceeds ~40 simultaneous servers — provision for that (plus deadline-night headroom), and let the cluster autoscale absorb spikes.
 :::

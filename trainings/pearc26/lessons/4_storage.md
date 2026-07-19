@@ -120,4 +120,16 @@ Keep `jupyterhub-shared-volume` — the custom JupyterHub episode mounts it. Ver
 - [ ] It mounts into pods like a normal directory
 - [ ] Its contents disappear when your pod terminates
 > S3 is the right tool for distribution and publishing: any S3 client works from inside or outside the cluster, but you `get`/`put` objects instead of doing POSIX file I/O.
+
+4. Your JupyterHub home directory (`/home/jovyan`) survives server restarts. What is it, really?
+- [x] A per-user RWO block PVC — persistent, but sized in gigabytes
+- [ ] Node-local disk on whichever node you spawned
+- [ ] A CephFS share common to all users
+> Every hub user gets a `claim-<username>` RBD PVC as their home. It persists across sessions but it's small — keep bulk datasets on CephFS RWX volumes or S3, not in your home.
+
+5. During training, when and where should checkpoints be written?
+- [x] To an RWO PVC or S3 at epoch boundaries — not every step
+- [ ] To emptyDir scratch, for speed
+- [ ] To stdout, so they end up in `kubectl logs`
+> emptyDir dies with the pod — the one place a checkpoint must not live. Durable storage at epoch boundaries balances safety against I/O overhead: stage in → scratch, checkpoint out → PVC/S3, publish → S3.
 :::

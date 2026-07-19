@@ -209,6 +209,18 @@ NRP is a **shared resource**. Aim for pod utilization of GPU > 40%, CPU 20–200
 - [x] A PersistentVolumeClaim
 - [ ] The container image
 > Pods are ephemeral — anything on the container filesystem is gone at termination. PVCs claim long-lived storage that outlives pods.
+
+4. Who builds the container images that Kubernetes runs?
+- [x] You (or CI/CD) build them and push to a registry — Kubernetes only pulls and runs
+- [ ] Kubernetes builds them from your Dockerfile at deploy time
+- [ ] The cluster admin builds them on request
+> Kubernetes never builds images. Build with Docker or GitLab CI, push to a registry (Docker Hub, NRP GitLab), and reference the image in your pod spec — the afternoon session does exactly this.
+
+5. The same image runs identically on your laptop and on a cluster node. What makes that true?
+- [x] The image packages the code, its libraries, and the OS files it needs
+- [ ] Kubernetes recompiles the application for each node
+- [ ] Both machines must run the same Linux distribution
+> A container image is a self-contained filesystem — that's the reproducibility story: "works on my machine" becomes "works on every machine that can run the image".
 :::
 
 Next up: hands-on Kubernetes — pods, storage, deployments, jobs, services, and your first GPU pod.
