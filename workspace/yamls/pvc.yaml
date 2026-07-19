@@ -1,0 +1,39 @@
+# PersistentVolumeClaim + a Pod that mounts it.
+# Replace <username> in both names. Apply with: kubectl apply -f pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-<username>
+  namespace: nrp-training-k8s
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: rook-ceph-block-east
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pvc-pod-<username>
+  namespace: nrp-training-k8s
+spec:
+  containers:
+  - name: writer
+    image: ubuntu:22.04
+    command: ["sh", "-c"]
+    args:
+    - |
+      echo "hello from $(hostname) at $(date)" >> /data/log.txt
+      tail -F /data/log.txt
+    volumeMounts:
+    - name: data
+      mountPath: /data
+    resources:
+      limits:  { memory: 256Mi, cpu: 200m }
+      requests: { memory: 256Mi, cpu: 200m }
+  volumes:
+  - name: data
+    persistentVolumeClaim:
+      claimName: pvc-<username>
+  restartPolicy: Never

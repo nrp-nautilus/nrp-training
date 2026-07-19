@@ -1,0 +1,20 @@
+# Batch Job: computes pi to 2000 digits with Perl, then exits.
+# Replace <username>. Apply with: kubectl apply -f job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pi-<username>
+  namespace: nrp-training-k8s
+spec:
+  backoffLimit: 2
+  ttlSecondsAfterFinished: 600   # auto-clean 10 min after the job finishes
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: pi
+        image: perl:5.34.0
+        command: ["perl", "-Mbignum=bpi", "-wle", "print bpi(2000)"]
+        resources:
+          limits:  { memory: 256Mi, cpu: 200m }
+          requests: { memory: 256Mi, cpu: 200m }

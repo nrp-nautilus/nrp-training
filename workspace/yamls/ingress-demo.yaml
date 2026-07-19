@@ -1,0 +1,68 @@
+# End-to-end HTTPS demo: Deployment + Service + Ingress on haproxy.
+# Replace every <username> below. Apply with: kubectl apply -f ingress-demo.yaml
+# After it comes up, browse to https://hello-<username>.nrp-nautilus.io
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-web-<username>
+  namespace: nrp-training-k8s
+  labels:
+    k8s-app: hello-web-<username>
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      k8s-app: hello-web-<username>
+  template:
+    metadata:
+      labels:
+        k8s-app: hello-web-<username>
+    spec:
+      containers:
+      - name: hello
+        image: nginxdemos/hello:plain-text
+        ports:
+        - containerPort: 80
+        resources:
+          limits:  { memory: 128Mi, cpu: 200m }
+          requests: { memory: 128Mi, cpu: 200m }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-web-<username>
+  namespace: nrp-training-k8s
+  labels:
+    k8s-app: hello-web-<username>
+spec:
+  type: ClusterIP
+  selector:
+    k8s-app: hello-web-<username>
+  ports:
+  - port: 8080
+    protocol: TCP
+    targetPort: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hello-web-<username>
+  namespace: nrp-training-k8s
+  labels:
+    k8s-app: hello-web-<username>
+spec:
+  ingressClassName: haproxy
+  rules:
+  - host: hello-<username>.nrp-nautilus.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: hello-web-<username>
+            port:
+              number: 8080
+  tls:
+  - hosts:
+    - hello-<username>.nrp-nautilus.io
