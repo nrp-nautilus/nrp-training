@@ -210,6 +210,26 @@ Base64 is **storage format, not encryption** — anyone who can `get secret` in 
 kubectl delete -n nrp-training-k8s -f yamls/configmap-secret.yaml
 ```
 
+::: quiz Quick check — pods & config
+1. Both sidecar containers saw the same `writer-tick` lines. What do containers in one pod share?
+- [x] The network namespace (same `localhost`) and any volumes mounted into both
+- [ ] Nothing — they talk over the cluster network like separate pods
+- [ ] The entire filesystem of the main container
+> Containers in a pod are co-scheduled on one node, share `localhost`, and see any volume mounted into each of them — that's what makes the sidecar pattern work.
+
+2. Your pod is crashlooping. Which command shows why the *previous* container instance died?
+- [ ] `kubectl logs -f` on the pod
+- [x] `kubectl logs <pod> --previous`
+- [ ] `kubectl delete` and re-apply, then read the logs quickly
+> The current container may have no useful output yet — `--previous` reads the logs of the instance that crashed. Pair it with `describe` and `get events`: the debugging trio.
+
+3. `env-pod` printed `GREETING=Hello from NRP`. Where did that value come from?
+- [x] A ConfigMap, injected as environment variables via `envFrom`
+- [ ] It was hard-coded in the container image
+- [ ] A Secret, decoded at startup
+> Non-sensitive config lives in ConfigMaps (`envFrom` pulls all keys in bulk); sensitive values live in Secrets referenced via `secretKeyRef`. Neither is baked into the image.
+:::
+
 ## Hands-on: Deployment
 
 A **Deployment** keeps a set of identical pods running: it restarts them when they fail and rolls out new versions without downtime. Open `yamls/deployment.yaml`, replace `<username>`, apply:
@@ -476,4 +496,16 @@ Then verify: `bash check.sh 2` in the workspace (or the last cell of the noteboo
 - [ ] Runs with 3 replicas until you re-apply the manifest
 - [ ] Fails the Deployment
 > Kubernetes continuously reconciles actual state toward desired state. The ReplicaSet notices 3 ≠ 4 and spawns a new pod — you watched it happen.
+
+5. Serving `https://hello-<you>.nrp-nautilus.io` took three objects. Which set, doing what?
+- [x] Deployment (runs the pods) + Service (stable in-cluster name) + Ingress (routes the public hostname)
+- [ ] Pod + ConfigMap + Secret
+- [ ] Deployment + PVC + Job
+> The Ingress on the `haproxy` class maps the hostname to the Service, which load-balances across the Deployment's pods — and Cert Manager issued the Let's Encrypt certificate without you asking.
+
+6. Your GPU manifest uses `preferredDuringScheduling…` affinity for the reserved pool. Every reserved node is busy — what happens?
+- [x] The pod may schedule on another suitable node — *preferred* is a soft hint
+- [ ] It pends until a reserved node frees up
+- [ ] The scheduler evicts someone else's pod from the pool
+> `preferred…` trades placement for availability; the `required…` variant would leave your pod Pending until a matching node frees up. Pick per how strict your hardware needs are.
 :::

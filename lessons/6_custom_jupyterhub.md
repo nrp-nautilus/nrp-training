@@ -295,6 +295,18 @@ kubectl delete pvc -n <namespace> -l app=jupyterhub,component=singleuser-storage
 - [ ] Because `latest` images pull more slowly
 - [ ] Because GitLab requires unique tags
 > `latest` moves every time CI runs. Pinning profiles to a SHA (or release tag) means the same image all semester — reproducibility is the whole reason you built a custom image.
+
+4. You edited `jhub-values.yaml` to add an ingress. How do the changes reach your running hub?
+- [x] `helm upgrade <release> jupyterhub/jupyterhub --values yamls/jhub-values.yaml`
+- [ ] `kubectl apply -f yamls/jhub-values.yaml`
+- [ ] Delete the release and reinstall from scratch
+> A values file is chart *input*, not a Kubernetes manifest — `kubectl apply` on it fails. `helm upgrade` re-renders the templates with your new values and rolls out only what changed; you did this live when adding the ingress and profiles.
+
+5. Every student's server shows the same `/home/shared` folder. What makes that work?
+- [x] One RWX CephFS PVC mounted into every user pod via `extraVolumes`/`extraVolumeMounts`
+- [ ] Each student's home PVC is cloned from a master copy
+- [ ] The hub copies the files into each home directory at spawn
+> It's the `jupyterhub-shared-volume` claim from the storage episode — RWX means all user pods mount it simultaneously. Instructors drop a dataset in once; the whole class sees it instantly (mount it read-only for students in production).
 :::
 
 ## Where to go from here
