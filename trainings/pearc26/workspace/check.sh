@@ -111,10 +111,10 @@ case "$EP" in
     code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $OPENAI_API_KEY" "$OPENAI_API_BASE/models" --max-time 15)
     if [ "$code" = 200 ]; then
       ok "managed LLM endpoint reachable (/models needs no token)"
-      reply=$(curl -s -X POST "$OPENAI_API_BASE/chat/completions" --max-time 30 \
+      reply=$(curl -s -X POST "$OPENAI_API_BASE/chat/completions" --max-time 90 \
         -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" \
-        -d '{"model":"minimax-m2","max_tokens":10,"messages":[{"role":"user","content":"Say OK"}]}' \
-        | python3 -c 'import json,sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"])' 2>/dev/null)
+        -d '{"model":"minimax-m2","max_tokens":300,"messages":[{"role":"user","content":"Say OK"}]}' \
+        | python3 -c 'import json,sys; print((json.load(sys.stdin)["choices"][0]["message"]["content"] or "").strip())' 2>/dev/null)
       if [ -n "$reply" ]; then ok "chat completion round-trip works — your token is valid"
       else bad "chat completion returned nothing" "token invalid or expired? instructors can mint one at nrp.ai/llmtoken — or check minimax-m2 is still in the catalog"; fi
     else bad "LLM endpoint answered '$code'" "network problem reaching ellm.nrp-nautilus.io — ask an instructor"; fi
