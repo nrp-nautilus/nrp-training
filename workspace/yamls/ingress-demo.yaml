@@ -24,8 +24,10 @@ spec:
         ports:
         - containerPort: 80
         resources:
-          limits:  { memory: 128Mi, cpu: 200m }
-          requests: { memory: 128Mi, cpu: 200m }
+          # nginx starts one worker per host CPU (it does not see the cpu limit),
+          # and NRP has nodes with 256 cores — 128Mi OOMKills there.
+          limits:  { memory: 512Mi, cpu: 200m }
+          requests: { memory: 512Mi, cpu: 200m }
 ---
 apiVersion: v1
 kind: Service
