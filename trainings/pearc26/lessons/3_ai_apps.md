@@ -311,8 +311,8 @@ Stop any `kubectl port-forward` processes, then verify with `bash check.sh 3`.
 > Milvus is a managed service outside your pod's lifecycle, which is why later `--only-ask` runs answer in seconds with no re-indexing. State that must outlive pods belongs in services or PVCs, never in the pod.
 
 6. What does the `curl $OPENAI_API_BASE/models` one-liner actually prove?
-- [x] The endpoint is reachable and your token is valid — so anything OpenAI-compatible will work
+- [x] The endpoint is reachable and the catalog is live — but not yet that your token works
 - [ ] The models listed are all loaded into your namespace
 - [ ] Your pod has GPU access
-> It's the universal smoke test: auth + connectivity in one request. If it returns the catalog, LangChain, the openai SDK, and Jupyter AI will all work with the same two environment variables.
+> On the NRP gateway `/models` answers without authentication, so it only proves connectivity. The first call the auth service actually gates is `chat/completions` — that's the real smoke test for your token (new tokens: nrp.ai/llmtoken).
 :::

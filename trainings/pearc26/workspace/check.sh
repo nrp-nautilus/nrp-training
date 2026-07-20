@@ -110,14 +110,14 @@ case "$EP" in
   if [ -n "$OPENAI_API_KEY" ] && [ -n "$OPENAI_API_BASE" ]; then
     code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $OPENAI_API_KEY" "$OPENAI_API_BASE/models" --max-time 15)
     if [ "$code" = 200 ]; then
-      ok "managed LLM endpoint reachable with your token"
+      ok "managed LLM endpoint reachable (/models needs no token)"
       reply=$(curl -s -X POST "$OPENAI_API_BASE/chat/completions" --max-time 30 \
         -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" \
         -d '{"model":"minimax-m2","max_tokens":10,"messages":[{"role":"user","content":"Say OK"}]}' \
         | python3 -c 'import json,sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"])' 2>/dev/null)
-      if [ -n "$reply" ]; then ok "chat completion round-trip works (model replied)"
-      else bad "chat completion returned nothing" "try the §3 curl by hand — is minimax-m2 still in the catalog?"; fi
-    else bad "LLM endpoint answered '$code'" "token may have expired — ask an instructor"; fi
+      if [ -n "$reply" ]; then ok "chat completion round-trip works — your token is valid"
+      else bad "chat completion returned nothing" "token invalid or expired? instructors can mint one at nrp.ai/llmtoken — or check minimax-m2 is still in the catalog"; fi
+    else bad "LLM endpoint answered '$code'" "network problem reaching ellm.nrp-nautilus.io — ask an instructor"; fi
   else bad "OPENAI_API_KEY / OPENAI_API_BASE not set" "they are pre-exported on hub spawns; restart your server"; fi
   for sec in nrp-llm-token nrp-training-milvus-credentials; do
     if kubectl get secret "$sec" -n $NS >/dev/null 2>&1; then ok "secret/$sec present in $NS"
