@@ -97,6 +97,13 @@ Clean up:
 kubectl delete pod test-pod-<username> -n nrp-training-k8s
 ```
 
+> ⏳ **Bare pods on NRP are reaped after 6 hours.** The cluster stamps every pod
+> that isn't managed by a Deployment or Job with a 6-hour `activeDeadlineSeconds`.
+> A pod you start this morning will be gone by mid-afternoon — that's expected,
+> not a failure, and `check.sh` reports it as "already cleaned up". Anything that
+> must outlive that (or survive a node reboot) belongs in a Deployment, and its
+> data belongs on a PVC — which is exactly where we go next.
+
 ## Hands-on: persistent storage with a PVC
 
 Pods are ephemeral — anything written to the container filesystem disappears when the pod terminates. **PersistentVolumeClaims** ask Kubernetes for long-lived storage you can mount into pods. On NRP we typically use `rook-ceph-block-east` for general-purpose `ReadWriteOnce` block storage.
