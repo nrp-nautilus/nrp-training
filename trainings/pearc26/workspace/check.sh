@@ -204,11 +204,17 @@ case "$EP" in
   nsrv=$(kubectl get pod -n "$NSP" -l "app=jupyterhub,component=singleuser-server" --no-headers 2>/dev/null | wc -l | tr -d ' ')
   if [ "${nsrv:-0}" -gt 0 ]; then ok "$nsrv user server(s) spawned — someone logged in to your hub 🎓"
   else skip "user servers (log in to your hub and spawn one to complete the loop)"; fi
-  host=$(kubectl get ingress -n "$NSP" -o jsonpath='{.items[0].spec.rules[0].host}' 2>/dev/null)
+  # Only the hub's own ingress — a shared namespace may hold unrelated ones.
+  host=$(kubectl get ingress -n "$NSP" -l app=jupyterhub -o jsonpath='{.items[0].spec.rules[0].host}' 2>/dev/null)
   if [ -z "$host" ]; then skip "ingress (section 4)"
   else
+    body=$(curl -s "https://$host/hub/login" --max-time 15)
     code=$(curl -s -o /dev/null -w '%{http_code}' "https://$host/hub/login" --max-time 15)
-    if [ "$code" = 200 ]; then ok "https://$host serves the hub login page"
+    # A 200 alone proves little — anything on that host answers. Look for the hub.
+    if [ "$code" = 200 ] && printf '%s' "$body" | grep -qi 'jupyterhub\|id="login-main"'; then
+      ok "https://$host serves the hub login page"
+    elif [ "$code" = 200 ]; then
+      bad "https://$host answers 200 but it is not a JupyterHub login page" "is another app already using that hostname? check your ingress host in the values"
     else bad "https://$host answered '$code'" "certificate + HAProxy need ~60s after the upgrade"; fi
   fi
   ;;
