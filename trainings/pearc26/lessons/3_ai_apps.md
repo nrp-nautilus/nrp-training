@@ -269,7 +269,117 @@ kubectl delete -n nrp-training-k8s -f yamls/milvus-rag.yaml
 
 The Milvus collection survives the pod — the next RAG pod reuses it without re-indexing.
 
-## 6. End-of-morning cleanup
+### 5.4 Distributed compute with the MPI operator (optional)
+
+Not everything is a single GPU. NRP runs the Kubeflow **MPI operator**, so a classic
+multi-process MPI job — the pattern behind distributed training (Horovod), CFD, and
+molecular dynamics — is just another Kubernetes object: an `MPIJob` with one launcher
+and N workers wired together over SSH + `mpirun`. The example below computes π across 2
+workers; the mechanics are identical whether it's π or a 200-node training run.
+
+<details>
+<summary>Run a 2-worker MPIJob (`yamls/mpi-pi.yaml`)</summary>
+
+```bash
+# submit the job (launcher + 2 workers)
+kubectl apply -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
+
+# watch the pods come up (launcher stays Init until the workers' sshd is ready)
+kubectl get pods -n nrp-training-k8s -l training.kubeflow.org/job-name=<username>-mpi-pi
+
+# read the computed value of pi from the launcher's log
+kubectl logs -n nrp-training-k8s -l training.kubeflow.org/job-name=<username>-mpi-pi,training.kubeflow.org/job-role=launcher
+
+# clean up
+kubectl delete -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
+```
+
+You should see a line like `pi is approximately 3.1415926...`. The `MPIJob` kind
+(`kubeflow.org/v2beta1`) is provided by the cluster's MPI operator — you write the spec,
+it creates the launcher/worker pods, injects SSH keys, and runs `mpirun` for you.
+
+</details>
+
+## 6. Agentic coding against the managed LLM (`opencode`)
+
+Chat and RAG are one-shot. An **agent** plans, edits files, runs tools, and iterates —
+the pattern behind AI-assisted research automation. We point [`opencode`](https://opencode.ai)
+(a terminal coding agent, like Claude Code or Cursor's CLI) at NRP's managed LLM. The
+teaching point is portability: anything that speaks an OpenAI-compatible base URL runs
+unchanged against NRP, so the agentic workflow you already use locally works here with
+just a config file — no separate model subscription.
+
+Install `opencode` into your session (the installer drops a binary in `~/.opencode/bin`,
+no `sudo`) and point it at the managed LLM via your already-exported `$OPENAI_API_KEY`:
+
+```bash
+curl -fsSL https://opencode.ai/install | bash
+export PATH="$HOME/.opencode/bin:$PATH"
+
+mkdir -p ~/.config/opencode
+cat > ~/.config/opencode/opencode.json <<'JSON'
+{
+  "$schema": "https://opencode.ai/config.json",
+  "provider": {
+    "nrp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NRP LLM",
+      "options": {
+        "baseURL": "https://ellm.nrp-nautilus.io/v1",
+        "apiKey": "{env:OPENAI_API_KEY}"
+      },
+      "models": {
+        "minimax-m2": { "name": "MiniMax M2" },
+        "gpt-oss":    { "name": "GPT-OSS"    },
+        "qwen3":      { "name": "Qwen3 397B" },
+        "gemma":      { "name": "Gemma 31B"  }
+      }
+    }
+  },
+  "model": "nrp/gpt-oss"
+}
+JSON
+```
+
+Create a scratch project and launch the agent:
+
+```bash
+mkdir -p ~/agent-demo && cd ~/agent-demo
+opencode
+```
+
+Inside the `opencode` TUI, press `/` to open the prompt and paste a small but real task:
+
+```text
+Write a single-file Python program board_game.py that lets two humans play chess
+in the terminal using the python-chess library. Render the board after each move
+with board.unicode(), accept moves in SAN (e.g. "e4", "Nf3"), and print the result
+when the game ends. Then add a requirements.txt pinning python-chess to 1.999, and
+tell me the exact commands to install and run it.
+```
+
+`opencode` plans, writes `board_game.py` + `requirements.txt`, and prints the run
+commands. Install and play:
+
+```bash
+pip install -r requirements.txt
+python board_game.py
+```
+
+> ⚠️ **Don't let the model name the file `chess.py`** — it shadows the `python-chess`
+> package, so `import chess` re-imports the script and `chess.Board()` raises
+> `AttributeError`. Models also sometimes invent a version like `python-chess==1.10.0`
+> that isn't on PyPI — the real current pin is `1.999`, which is why the prompt
+> pre-pins it. Same idea applies to any research script: give the agent the constraints
+> up front and review its diffs before you run them.
+
+**Switch models mid-session** with `Ctrl+P → Switch models` — try the same prompt against
+`qwen3` (largest context) or `minimax-m2` (strong reasoning). Same agent, same prompt,
+different inference backend — that's the portability point. Any OpenAI-compatible agent
+(`opencode`, Crush, Continue, Claude Code via `ANTHROPIC_BASE_URL`) works the same way;
+you bring the workflow, NRP supplies the inference.
+
+## 7. End-of-morning cleanup
 
 ```bash
 kubectl delete -n nrp-training-k8s -f yamls/pytorch-training.yaml --ignore-not-found
