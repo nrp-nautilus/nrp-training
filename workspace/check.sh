@@ -158,9 +158,12 @@ case "$EP" in
   if [ "$(kubectl get pod "tutorial-$U-pod" -n $NS -o jsonpath='{.status.phase}' 2>/dev/null)" = Running ]; then
     if kubectl logs "tutorial-$U-pod" -n $NS 2>/dev/null | grep -q "Done with installs"; then ok "boto3/torch installs finished — ready to exec in"
     else bad "install loop still running" "wait for 'Done with installs': kubectl logs tutorial-$U-pod -n $NS -f"; fi
-    if kubectl exec "tutorial-$U-pod" -n $NS --request-timeout=15s -- test -f /root/.aws/credentials 2>/dev/null; then
-      ok "aws configure completed inside the pod"
-    else skip "aws credentials in the pod (run 'aws configure' inside it)"; fi
+    # S3 creds arrive as env vars from the nrp-tutorial-s3 Secret; prove real access
+    # by listing the shared dataset from inside the pod (needs auth + endpoint + bucket).
+    if kubectl exec "tutorial-$U-pod" -n $NS --request-timeout=25s -- \
+         sh -c 'aws --endpoint "$AWS_ENDPOINT_URL" s3 ls "s3://$S3_BUCKET/dataset.tar.gz"' >/dev/null 2>&1; then
+      ok "S3 works — tutorial bucket + dataset reachable from the pod (creds wired via Secret)"
+    else skip "S3 access (dataset not listed — is the nrp-tutorial-s3 secret present and installs finished?)"; fi
   fi
   ;;
 

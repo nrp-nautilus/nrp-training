@@ -21,6 +21,13 @@ spec:
   containers:
   - name: mypod
     image: amazon/aws-cli:2.31.36
+    # The tutorial S3 credentials + endpoint + bucket are handed to the pod as
+    # env vars from a Secret the instructors created — so `aws` and `boto3` both
+    # authenticate automatically, no `aws configure` needed. (Same pattern as the
+    # LLM and Milvus secrets in Episode 3.)
+    envFrom:
+    - secretRef:
+        name: nrp-tutorial-s3
     resources:
       limits:
         memory: 10Gi

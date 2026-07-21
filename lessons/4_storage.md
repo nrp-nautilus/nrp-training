@@ -54,33 +54,44 @@ Unlike the Episode 2 PVC, **many pods can mount this claim at the same time** �
 
 NRP runs S3-compatible object storage on Ceph. It's the right tool when data must be reachable from outside the cluster, shared across sites, or published alongside a paper. Any S3 client works — `aws` CLI, `boto3`, `s3fs`, rclone.
 
-`yamls/pod-awscli.yaml` starts a pod with the AWS CLI image, a 100 Gi `emptyDir` scratch volume at `/scratch`, and installs `boto3` + `torch` on boot. Replace `<username>` and apply:
+`yamls/pod-awscli.yaml` starts a pod with the AWS CLI image, a 100 Gi `emptyDir` scratch volume at `/scratch`, and installs `boto3` + `torch` on boot. It also pulls the shared tutorial S3 credentials in from a Secret (`nrp-tutorial-s3`) as environment variables — so inside the pod both `aws` and `boto3` authenticate automatically, no `aws configure` step. Replace `<username>` and apply:
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/pod-awscli.yaml
 kubectl get pod tutorial-<username>-pod -n nrp-training-k8s -w
 ```
 
-Wait for the install loop to log `Done with installs`, then exec in and talk to S3 (credentials are handed out by the instructors; outside the tutorial, request S3 credentials via [Matrix](https://nrp.ai/contact/)):
+Wait for the install loop to log `Done with installs`, then exec in and talk to S3:
 
 ```bash
 kubectl exec -it tutorial-<username>-pod -n nrp-training-k8s -- bash
 
-# inside the pod:
-aws configure                     # paste the tutorial access key / secret
-aws --endpoint https://s3-west.nrp-nautilus.io s3 ls
-aws --endpoint https://s3-west.nrp-nautilus.io s3 ls s3://<tutorial-bucket>/
+# inside the pod — the tutorial key is already in the environment
+# ($AWS_ACCESS_KEY_ID / $AWS_SECRET_ACCESS_KEY / $AWS_ENDPOINT_URL / $S3_BUCKET):
+aws --endpoint $AWS_ENDPOINT_URL s3 ls
+aws --endpoint $AWS_ENDPOINT_URL s3 ls s3://$S3_BUCKET/
 
-# stage a dataset onto the fast local scratch:
-aws --endpoint https://s3-west.nrp-nautilus.io s3 cp s3://<tutorial-bucket>/dataset.tar.gz /scratch/
+# stage the shared dataset onto the fast local scratch:
+aws --endpoint $AWS_ENDPOINT_URL s3 cp s3://$S3_BUCKET/dataset.tar.gz /scratch/
+tar xzf /scratch/dataset.tar.gz -C /scratch     # 30 sample images + labels.csv + shards
+
+# publish your own results back — write under your username so you don't
+# clobber the shared dataset (everyone shares one bucket in this tutorial):
+echo "hello from <username>" > /scratch/result.txt
+aws --endpoint $AWS_ENDPOINT_URL s3 cp /scratch/result.txt s3://$S3_BUCKET/<username>/result.txt
 ```
 
-The same works from Python with `boto3`:
+> On your own laptop (outside this pod) you'd first run `aws configure` and paste
+> an access key / secret from [nrp.ai/s3token](https://nrp.ai/s3token), then use the
+> same `--endpoint` commands. Request your own S3 credentials via the User Portal.
+
+The same works from Python with `boto3` — it reads the same credentials from the environment:
 
 ```python
-import boto3
-s3 = boto3.client("s3", endpoint_url="https://s3-west.nrp-nautilus.io")
-for obj in s3.list_objects_v2(Bucket="<tutorial-bucket>").get("Contents", []):
+import boto3, os
+s3 = boto3.client("s3", endpoint_url=os.environ["AWS_ENDPOINT_URL"])
+bucket = os.environ["S3_BUCKET"]
+for obj in s3.list_objects_v2(Bucket=bucket).get("Contents", []):
     print(obj["Key"], obj["Size"])
 ```
 
