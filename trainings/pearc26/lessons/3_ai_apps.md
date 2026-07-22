@@ -300,6 +300,41 @@ it creates the launcher/worker pods, injects SSH keys, and runs `mpirun` for you
 
 </details>
 
+### 5.5 Serve an LLM on a Qualcomm Cloud AI 100 (optional)
+
+GPUs aren't the only accelerator on NRP — it also has **Qualcomm Cloud AI 100** cards,
+requested with the `qualcomm.com/qaic` resource key. The same OpenAI-compatible vLLM
+server you'd run on a GPU runs on Qualcomm silicon; only the accelerator changes. This is
+a look-don't-touch example: the pod needs 20 CPU / 200 Gi (above the default bare-pod
+limit) so it requires an [NRP resource exception](https://nrp.ai/documentation/userdocs/start/policies/),
+and there is currently a single shared Qualcomm node — hence optional.
+
+<details>
+<summary>Run vLLM on a Cloud AI 100 card (`yamls/qaic-vllm-server.yaml`)</summary>
+
+```bash
+# request a card and start an OpenAI-compatible vLLM server (needs a resource exception)
+kubectl apply -n nrp-training-k8s -f my-yamls/qaic-vllm-server.yaml
+
+# wait for the model to compile + load onto the QAIC card (several minutes)
+kubectl logs -n nrp-training-k8s tutorial-<username>-qaic-vllm -f
+
+# once it logs "Application startup complete", call it like any OpenAI endpoint
+kubectl port-forward -n nrp-training-k8s svc/qaic-vllm-server 8000:8000
+curl http://localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"TinyLlama/TinyLlama-1.1B-Chat-v1.0","messages":[{"role":"user","content":"Say hi from Qualcomm"}]}'
+
+# clean up
+kubectl delete -n nrp-training-k8s -f my-yamls/qaic-vllm-server.yaml
+```
+
+Same `/v1/chat/completions` API as the managed endpoint and your TGI pod (§5.2) — the
+takeaway is that the OpenAI-compatible contract makes the accelerator underneath (NVIDIA,
+Qualcomm, …) an implementation detail your code never has to know about.
+
+</details>
+
 ## 6. Agentic coding against the managed LLM (`opencode`)
 
 Chat and RAG are one-shot. An **agent** plans, edits files, runs tools, and iterates —

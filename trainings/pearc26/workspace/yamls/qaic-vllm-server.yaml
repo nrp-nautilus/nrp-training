@@ -1,0 +1,60 @@
+# QAIC vLLM OpenAI-compatible server for Part 4 (Milvus RAG on Qualcomm).
+# Replace <username> in metadata.name. Pod runs vLLM server on port 8000; other pods
+# (e.g. Milvus RAG) can use http://qaic-vllm-server:8000/v1 for chat completions.
+# Same resource limits as qaic-inference.yaml (namespace exception may be required).
+apiVersion: v1
+kind: Pod
+metadata:
+  name: tutorial-<username>-qaic-vllm
+  namespace: nrp-training-k8s
+  labels:
+    app: qaic-vllm-server
+spec:
+  affinity:
+    nodeAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        preference:
+          matchExpressions:
+          - key: nrp-training
+            operator: In
+            values: ["true"]
+  tolerations:
+  - key: nautilus.io/reservation
+    operator: Equal
+    value: nrp
+    effect: NoSchedule
+  volumes:
+  - name: scratch
+    emptyDir: {}
+  containers:
+  - name: qaic-vllm
+    image: ghcr.io/quic/cloud_ai_inference_ubuntu24:1.20.6.0
+    resources:
+      limits:
+        memory: 200Gi
+        cpu: "20"
+        qualcomm.com/qaic: 1
+      requests:
+        memory: 200Gi
+        cpu: "20"
+        qualcomm.com/qaic: 1
+    command: ["/bin/bash", "-c"]
+    args:
+    - "ulimit -n 1048576; export OMP_NUM_THREADS=8 HOME=/scratch; cd /scratch; source /opt/vllm-env/bin/activate; exec python3 -m vllm.entrypoints.openai.api_server --host 0.0.0.0 --port 8000 --model TinyLlama/TinyLlama-1.1B-Chat-v1.0 --max-model-len 256 --max-num-seq 16 --max-seq-len-to-capture 128 --device qaic --block-size 32 --quantization mxfp6 --kv-cache-dtype mxint8"
+    volumeMounts:
+    - name: scratch
+      mountPath: /scratch
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qaic-vllm-server
+  namespace: nrp-training-k8s
+spec:
+  selector:
+    app: qaic-vllm-server
+  ports:
+  - port: 8000
+    targetPort: 8000
+    name: http
