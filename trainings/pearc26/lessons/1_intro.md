@@ -160,6 +160,8 @@ A few helpers as you go:
 
 Commands marked **🖥️ Terminal step** in the notebooks (`kubectl exec -it`, `port-forward`, `-w` watches) are interactive or long-running — run those in a terminal, not a cell.
 
+Blocks shown as **`python`** are printed that way for readability, but the Bash-kernel notebook wraps them so they run as an ordinary cell — just **Shift+Enter**. To run one in a plain terminal instead, save it to a file and `python3 file.py`.
+
 ## Getting a terminal with kubectl
 
 ::: callout Zero install — use the training JupyterHub

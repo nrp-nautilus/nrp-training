@@ -92,7 +92,7 @@ curl -sN -X POST "$OPENAI_API_BASE/chat/completions" \
 
 ## 4. Talk to the LLM with Python (`openai` SDK)
 
-The client is pre-installed on hub spawns (`pip install openai` elsewhere):
+The client is pre-installed on hub spawns (`pip install openai` elsewhere). As in Episode 1: the `python` blocks below run as ordinary notebook cells (**Shift+Enter**) — the Bash-kernel notebook wraps them for you.
 
 ```python
 import os
