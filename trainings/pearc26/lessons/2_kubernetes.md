@@ -461,6 +461,75 @@ kubectl exec -it tutorial-<username>-gpu-pod -n nrp-training-k8s -- nvidia-smi
 kubectl delete pod tutorial-<username>-gpu-pod -n nrp-training-k8s
 ```
 
+## Same operations from Python: the Kubernetes API
+
+`kubectl` is just a client for the Kubernetes **REST API** — every `get`, `apply`, and
+`delete` you ran is an HTTP call to the API server. Anything you can do with `kubectl`,
+you can do from code, which is how automation, CI pipelines, dashboards, and operators
+drive a cluster. The official [`kubernetes`](https://github.com/kubernetes-client/python)
+Python client is the most common way to do it.
+
+Install it once (a small, ~20-second pure-Python install):
+
+```bash
+pip install --quiet kubernetes
+```
+
+The script below does a full round-trip — **list → create → wait → read logs → delete** —
+against your namespace, entirely from Python. It reuses the same kubeconfig `kubectl`
+uses, so you're already authenticated; and it builds the Pod out of Python objects
+(`V1Pod`, `V1Container`, …) that map one-to-one to the YAML fields you saw earlier.
+
+```python
+import os, time
+from kubernetes import client, config
+
+config.load_kube_config()          # the same config kubectl uses — already authenticated
+v1   = client.CoreV1Api()
+ns   = "nrp-training-k8s"
+user = os.environ["NRP_USER"]      # set by the ⚙️ setup cell
+name = f"pyapi-{user}"
+
+# LIST — like `kubectl get pods -n nrp-training-k8s`
+for p in v1.list_namespaced_pod(ns).items:
+    print(p.metadata.name, "->", p.status.phase)
+
+# CREATE — the same Pod you'd write in YAML, built as Python objects
+pod = client.V1Pod(
+    metadata=client.V1ObjectMeta(name=name, labels={"app": "pyapi-demo"}),
+    spec=client.V1PodSpec(
+        restart_policy="Never",
+        tolerations=[client.V1Toleration(
+            key="nautilus.io/reservation", operator="Equal",
+            value="nrp", effect="NoSchedule")],
+        containers=[client.V1Container(
+            name="main", image="busybox:1.36",
+            command=["sh", "-c", "echo hello from the kubernetes python client"],
+            resources=client.V1ResourceRequirements(
+                requests={"cpu": "200m", "memory": "128Mi"},
+                limits={"cpu": "200m", "memory": "128Mi"}))]))
+v1.create_namespaced_pod(ns, pod)
+print("created", name)
+
+# WAIT + READ LOGS — like `kubectl logs`
+for _ in range(60):
+    if v1.read_namespaced_pod(name, ns).status.phase in ("Succeeded", "Failed"):
+        break
+    time.sleep(2)
+# _preload_content=False returns the raw HTTP response, giving clean log text
+resp = v1.read_namespaced_pod_log(name, ns, _preload_content=False)
+print("logs:", resp.read().decode().strip())
+
+# DELETE — like `kubectl delete pod`
+v1.delete_namespaced_pod(name, ns)
+print("deleted", name)
+```
+
+Same three verbs (`list` / `create` / `delete`), same objects, just expressed in Python
+instead of YAML + `kubectl`. Every resource type has a matching API group — `CoreV1Api`
+for pods/services/configmaps, `AppsV1Api` for deployments, `BatchV1Api` for jobs — so the
+patterns from the whole morning carry straight over into code.
+
 ## End of episode — cleanup
 
 ```bash

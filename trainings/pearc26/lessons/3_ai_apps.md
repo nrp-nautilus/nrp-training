@@ -278,20 +278,22 @@ and N workers wired together over SSH + `mpirun`. The example below computes π 
 workers; the mechanics are identical whether it's π or a 200-node training run.
 
 <details>
-<summary>Run a 2-worker MPIJob (`yamls/mpi-pi.yaml`)</summary>
+<summary>Run a 2-worker MPIJob (`my-yamls/mpi-pi.yaml`)</summary>
+
+Run the ⚙️ setup cell first — it renders `my-yamls/mpi-pi.yaml` with your name filled in and exports `$NRP_USER` (both used below).
 
 ```bash
 # submit the job (launcher + 2 workers)
-kubectl apply -n nrp-training-k8s -f yamls/mpi-pi.yaml
+kubectl apply -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
 
 # watch the pods come up (launcher stays Init until the workers' sshd is ready)
-kubectl get pods -n nrp-training-k8s -l training.kubeflow.org/job-name=<username>-mpi-pi
+kubectl get pods -n nrp-training-k8s -l training.kubeflow.org/job-name=$NRP_USER-mpi-pi
 
 # read the computed value of pi from the launcher's log
-kubectl logs -n nrp-training-k8s -l training.kubeflow.org/job-name=<username>-mpi-pi,training.kubeflow.org/job-role=launcher
+kubectl logs -n nrp-training-k8s -l training.kubeflow.org/job-name=$NRP_USER-mpi-pi,training.kubeflow.org/job-role=launcher
 
 # clean up
-kubectl delete -n nrp-training-k8s -f yamls/mpi-pi.yaml
+kubectl delete -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
 ```
 
 You should see a line like `pi is approximately 3.1415926...`. The `MPIJob` kind
@@ -310,14 +312,16 @@ limit) so it requires an [NRP resource exception](https://nrp.ai/documentation/u
 and there is currently a single shared Qualcomm node — hence optional.
 
 <details>
-<summary>Run vLLM on a Cloud AI 100 card (`yamls/qaic-vllm-server.yaml`)</summary>
+<summary>Run vLLM on a Cloud AI 100 card (`my-yamls/qaic-vllm-server.yaml`)</summary>
+
+Run the ⚙️ setup cell first — it renders `my-yamls/qaic-vllm-server.yaml` with your name filled in and exports `$NRP_USER` (both used below).
 
 ```bash
 # request a card and start an OpenAI-compatible vLLM server (needs a resource exception)
-kubectl apply -n nrp-training-k8s -f yamls/qaic-vllm-server.yaml
+kubectl apply -n nrp-training-k8s -f my-yamls/qaic-vllm-server.yaml
 
 # wait for the model to compile + load onto the QAIC card (several minutes)
-kubectl logs -n nrp-training-k8s tutorial-<username>-qaic-vllm -f
+kubectl logs -n nrp-training-k8s tutorial-$NRP_USER-qaic-vllm -f
 
 # once it logs "Application startup complete", call it like any OpenAI endpoint
 # (port-forward blocks — run it in a second terminal, then curl from the first)
@@ -327,7 +331,7 @@ curl http://localhost:8000/v1/chat/completions \
   -d '{"model":"TinyLlama/TinyLlama-1.1B-Chat-v1.0","messages":[{"role":"user","content":"Say hi from Qualcomm"}]}'
 
 # clean up
-kubectl delete -n nrp-training-k8s -f yamls/qaic-vllm-server.yaml
+kubectl delete -n nrp-training-k8s -f my-yamls/qaic-vllm-server.yaml
 ```
 
 Same `/v1/chat/completions` API as the managed endpoint and your TGI pod (§5.2) — the
