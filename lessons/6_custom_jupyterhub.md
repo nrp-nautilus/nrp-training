@@ -12,7 +12,11 @@ exercises: 50
 
 The capstone: deploy your **own** JupyterHub with Helm — controlled access, custom images, per-profile resource limits, shared storage — then see how to build custom container images with NRP GitLab CI/CD. This is the recipe instructors and PIs use to stand up course and lab hubs on NRP.
 
-**Conventions.** Each participant has a **pre-created namespace** (handed out by the instructors) — JupyterHub can only be deployed once per namespace, so please stick to yours. Replace `<namespace>` and `<release-name>` (e.g. `jhub-<username>`) below.
+**Conventions.** Each participant has a **pre-created namespace** (handed out by the instructors) — JupyterHub can only be deployed once per namespace, so please stick to yours. Replace `<namespace>` and `<release-name>` (e.g. `jhub-<username>`) below. First, set it once so the commands (and `check.sh 6`) pick it up:
+
+```bash
+export NRP_NAMESPACE=<namespace>   # the number you were handed, e.g. nrp-training-042
+```
 
 > 📘 **Docs:** [Deploy JupyterHub](https://nrp.ai/documentation/userdocs/jupyter/jupyterhub/) · [Build images](https://nrp.ai/documentation/userdocs/tutorial/images/) · [NRP GitLab CI](https://nrp.ai/documentation/userdocs/development/gitlab/) · [Z2JH (upstream)](https://z2jh.jupyter.org)
 

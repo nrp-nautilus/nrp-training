@@ -1,4 +1,4 @@
-# QAIC vLLM OpenAI-compatible server for Part 4 (Milvus RAG on Qualcomm).
+# QAIC vLLM OpenAI-compatible server — Episode 3 §5.5 (optional Qualcomm Cloud AI 100 example).
 # Replace <username> in metadata.name. Pod runs vLLM server on port 8000; other pods
 # (e.g. Milvus RAG) can use http://qaic-vllm-server:8000/v1 for chat completions.
 # Same resource limits as qaic-inference.yaml (namespace exception may be required).
