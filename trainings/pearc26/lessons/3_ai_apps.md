@@ -98,7 +98,10 @@ The client is pre-installed on hub spawns (`pip install openai` elsewhere). As i
 import os
 from openai import OpenAI
 
-client = OpenAI()   # reads OPENAI_API_KEY / OPENAI_API_BASE from the environment
+# OPENAI_API_KEY is read from the environment automatically; the base URL must be
+# passed explicitly — the SDK's own env var is OPENAI_BASE_URL, but NRP exports it
+# as OPENAI_API_BASE, so wire it in by hand (otherwise the client hits api.openai.com).
+client = OpenAI(base_url=os.environ["OPENAI_API_BASE"])
 
 resp = client.chat.completions.create(
     model="minimax-m2",
