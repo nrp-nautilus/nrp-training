@@ -44,7 +44,7 @@ kubectl get pvc -n nrp-training-k8s | grep shared
 <summary>Expected output</summary>
 
 ```text
-jupyterhub-shared-volume   Bound    pvc-…   5Gi   RWX   rook-cephfs   30s
+jupyterhub-shared-volume   Bound    pvc-…   1Gi   RWX   rook-cephfs   30s
 ```
 </details>
 
@@ -64,7 +64,8 @@ kubectl get pod tutorial-<username>-pod -n nrp-training-k8s -w
 Wait for the install loop to log `Done with installs`, then exec in and talk to S3:
 
 ```bash
-kubectl exec -it tutorial-<username>-pod -n nrp-training-k8s -- bash
+# carry your username into the pod (its shell has the S3 keys but not NRP_USER):
+kubectl exec -it tutorial-<username>-pod -n nrp-training-k8s -- env NRP_USER=<username> bash
 
 # inside the pod — the tutorial key is already in the environment
 # ($AWS_ACCESS_KEY_ID / $AWS_SECRET_ACCESS_KEY / $AWS_ENDPOINT_URL / $S3_BUCKET):

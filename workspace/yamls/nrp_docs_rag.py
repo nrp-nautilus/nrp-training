@@ -217,9 +217,11 @@ def retrieve(coll: Collection, embedder: SentenceTransformer, question: str, k: 
 
 def make_llm() -> Tuple[OpenAI, str]:
     base = os.environ.get("OPENAI_API_BASE", "https://ellm.nrp-nautilus.io/v1")
-    key = os.environ.get("OPENAI_API_KEY", "rifgnLi8QEfRECOgFKVFHaeTLBeSogQ4")
+    key = os.environ.get("OPENAI_API_KEY")
+    if not key:
+        sys.exit("OPENAI_API_KEY is not set — mount the nrp-llm-token Secret or export it.")
     if base.startswith("https://ellm.nrp-nautilus.io"):
-        default_model = "gemma"
+        default_model = "minimax-m2"   # fast on the managed endpoint; gemma is ~10x slower
     else:
         default_model = "mistral"
     model = os.environ.get("RAG_MODEL", default_model)

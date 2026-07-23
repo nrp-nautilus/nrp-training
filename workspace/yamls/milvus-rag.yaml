@@ -50,14 +50,7 @@ spec:
         apt update && apt install -y python3 python3-pip wget vim curl zstd git;
         pip3 install --upgrade pip;
         pip3 install -U pymilvus>=2.3.0 sentence-transformers>=2.2.0 torch>=2.0.0 numpy>=1.24.0 langchain>=0.1.0 langchain-community>=0.0.20 langchain-milvus>=0.1.0 langchain-classic>=1.0.0 langchain-text-splitters>=1.0.0 openai>=1.0.0;
-        curl -fsSL https://ollama.com/install.sh | sh;
-        export HOME=/scratch;
-        cd $HOME;
-        nohup ollama serve > /tmp/ollama.log 2>&1 &
-        sleep 5;
-        ollama pull mistral > /tmp/ollama-pull.log 2>&1 &
-        echo "Setup complete! Ollama is starting and mistral model is downloading in background.";
-        echo "Follow instructions in 3_ai_examples.md file to download using wget and run example script ";
+        echo "Setup complete! kubectl cp yamls/nrp_docs_rag.py into /scratch, then run: python3 nrp_docs_rag.py --reindex   (see Episode 3 section 5.3)";
         sleep 3600;
     env:
     - name: MILVUS_HOST
