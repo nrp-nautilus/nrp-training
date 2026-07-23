@@ -55,9 +55,12 @@ Launch and inspect:
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/test-pod.yaml
+kubectl wait --for=condition=Ready pod/test-pod-<username> -n nrp-training-k8s --timeout=60s
 kubectl get pods -n nrp-training-k8s
 kubectl logs test-pod-<username> -n nrp-training-k8s
 ```
+
+The `kubectl wait` line pauses until the pod is actually running — without it, `kubectl logs` fired immediately after `apply` errors with *"container is waiting to start: ContainerCreating"*, because the container doesn't exist yet.
 
 <details>
 <summary>Expected output</summary>
@@ -85,10 +88,9 @@ When something doesn't behave the way you expect:
 ```bash
 kubectl describe pod test-pod-<username> -n nrp-training-k8s          # status + last events
 kubectl get events -n nrp-training-k8s --sort-by=.metadata.creationTimestamp | tail -20
-kubectl logs test-pod-<username> -n nrp-training-k8s --previous        # logs from the prior crash
 ```
 
-`describe` shows scheduling decisions and container state; `get events` shows the namespace timeline; `--previous` is essential for crashlooping pods.
+`describe` shows scheduling decisions and container state; `get events` shows the namespace timeline. For a **crashlooping** pod, add `--previous` to read the dead container's logs — `kubectl logs <pod> -n nrp-training-k8s --previous`. (On a healthy pod it just says *"previous terminated container not found"* — there's no prior crash to show, so only reach for it when a pod is actually restarting.)
 :::
 
 Clean up:
@@ -131,9 +133,11 @@ pvc-pod-<username>   1/1     Running   0          47s
 Prove the data survives pod deletion — delete only the pod, re-apply, and read the file back:
 
 ```bash
+kubectl wait --for=condition=Ready pod/pvc-pod-<username> -n nrp-training-k8s --timeout=90s
 kubectl exec pvc-pod-<username> -n nrp-training-k8s -- cat /data/log.txt
 kubectl delete pod pvc-pod-<username> -n nrp-training-k8s
 kubectl apply -n nrp-training-k8s -f yamls/pvc.yaml
+kubectl wait --for=condition=Ready pod/pvc-pod-<username> -n nrp-training-k8s --timeout=90s
 kubectl exec pvc-pod-<username> -n nrp-training-k8s -- cat /data/log.txt   # previous line still there
 ```
 
@@ -191,8 +195,11 @@ Hard-coding paths, hostnames, or API tokens into images is a recipe for pain. Ku
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/configmap-secret.yaml
+kubectl wait --for=condition=Ready pod/env-pod-<username> -n nrp-training-k8s --timeout=60s
 kubectl logs env-pod-<username> -n nrp-training-k8s
 ```
+
+(The `kubectl wait` pauses until the container is up; without it, `kubectl logs` right after `apply` errors with *"container is waiting to start"*.)
 
 <details>
 <summary>Expected output</summary>
@@ -305,8 +312,11 @@ A **Job** runs pods until a target number complete successfully. Open `yamls/job
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/job.yaml
 kubectl get jobs -n nrp-training-k8s
+kubectl wait --for=condition=complete job/pi-<username> -n nrp-training-k8s --timeout=180s
 kubectl logs -n nrp-training-k8s -l job-name=pi-<username>
 ```
+
+Computing 2000 digits of π takes 50–120s of CPU, so `kubectl wait` holds until the Job reports `complete` before we read the logs.
 
 <details>
 <summary>Expected output (after 50–120s of CPU work)</summary>
