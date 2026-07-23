@@ -282,7 +282,7 @@ workers; the mechanics are identical whether it's π or a 200-node training run.
 
 ```bash
 # submit the job (launcher + 2 workers)
-kubectl apply -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
+kubectl apply -n nrp-training-k8s -f yamls/mpi-pi.yaml
 
 # watch the pods come up (launcher stays Init until the workers' sshd is ready)
 kubectl get pods -n nrp-training-k8s -l training.kubeflow.org/job-name=<username>-mpi-pi
@@ -291,7 +291,7 @@ kubectl get pods -n nrp-training-k8s -l training.kubeflow.org/job-name=<username
 kubectl logs -n nrp-training-k8s -l training.kubeflow.org/job-name=<username>-mpi-pi,training.kubeflow.org/job-role=launcher
 
 # clean up
-kubectl delete -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
+kubectl delete -n nrp-training-k8s -f yamls/mpi-pi.yaml
 ```
 
 You should see a line like `pi is approximately 3.1415926...`. The `MPIJob` kind
@@ -314,19 +314,20 @@ and there is currently a single shared Qualcomm node — hence optional.
 
 ```bash
 # request a card and start an OpenAI-compatible vLLM server (needs a resource exception)
-kubectl apply -n nrp-training-k8s -f my-yamls/qaic-vllm-server.yaml
+kubectl apply -n nrp-training-k8s -f yamls/qaic-vllm-server.yaml
 
 # wait for the model to compile + load onto the QAIC card (several minutes)
 kubectl logs -n nrp-training-k8s tutorial-<username>-qaic-vllm -f
 
 # once it logs "Application startup complete", call it like any OpenAI endpoint
+# (port-forward blocks — run it in a second terminal, then curl from the first)
 kubectl port-forward -n nrp-training-k8s svc/qaic-vllm-server 8000:8000
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"model":"TinyLlama/TinyLlama-1.1B-Chat-v1.0","messages":[{"role":"user","content":"Say hi from Qualcomm"}]}'
 
 # clean up
-kubectl delete -n nrp-training-k8s -f my-yamls/qaic-vllm-server.yaml
+kubectl delete -n nrp-training-k8s -f yamls/qaic-vllm-server.yaml
 ```
 
 Same `/v1/chat/completions` API as the managed endpoint and your TGI pod (§5.2) — the

@@ -85,7 +85,7 @@ aws --endpoint $AWS_ENDPOINT_URL s3 cp /scratch/result.txt s3://$S3_BUCKET/<user
 > an access key / secret from [nrp.ai/s3token](https://nrp.ai/s3token), then use the
 > same `--endpoint` commands. Request your own S3 credentials via the User Portal.
 
-The same works from Python with `boto3` — it reads the same credentials from the environment:
+The same works from Python with `boto3` — it reads the same credentials from the environment. **Run this *inside* the awscli pod** (`kubectl exec … -- python3`), where the `nrp-tutorial-s3` Secret injects `AWS_ENDPOINT_URL`/`S3_BUCKET`; these are not set in your hub notebook, so pasting it into a hub cell raises `KeyError`.
 
 ```python
 import boto3, os
