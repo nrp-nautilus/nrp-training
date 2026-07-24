@@ -8,7 +8,7 @@ exercises: 15
 **[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F4_storage.ipynb)** — every command below is a Shift+Enter cell; manifests are in the workspace's `yamls/` folder.
 :::
 
-**Afternoon session · 12:15 – 12:45 PM**
+**Session 4 · 30 min**
 
 AI and scientific workloads live or die on I/O: where the dataset sits, how fast checkpoints write, and whether ten students can read the same files at once. This episode maps NRP's storage options to those needs and gets hands-on with each from a notebook terminal.
 
@@ -82,6 +82,16 @@ echo "hello from <username>" > /scratch/result.txt
 aws --endpoint $AWS_ENDPOINT_URL s3 cp /scratch/result.txt s3://$S3_BUCKET/<username>/result.txt
 ```
 
+<details>
+<summary>Expected output</summary>
+
+```text
+2026-07-20 18:02:11   10485760 dataset.tar.gz
+download: s3://pearc26-tutorial/dataset.tar.gz to ../scratch/dataset.tar.gz
+upload: ../scratch/result.txt to s3://pearc26-tutorial/alice/result.txt
+```
+</details>
+
 > On your own laptop (outside this pod) you'd first run `aws configure` and paste
 > an access key / secret from [nrp.ai/s3token](https://nrp.ai/s3token), then use the
 > same `--endpoint` commands. Request your own S3 credentials via the User Portal.
@@ -95,6 +105,15 @@ bucket = os.environ["S3_BUCKET"]
 for obj in s3.list_objects_v2(Bucket=bucket).get("Contents", []):
     print(obj["Key"], obj["Size"])
 ```
+
+<details>
+<summary>Expected output</summary>
+
+```text
+alice/result.txt 18
+dataset.tar.gz 10485760
+```
+</details>
 
 ## I/O patterns for AI workloads
 

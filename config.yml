@@ -11,3 +11,12 @@ lessons:
   - 4_storage
   - 5_jupyterhub
   - 6_custom_jupyterhub
+
+# Extra rows for the Schedule table on the index page. Per-lesson durations still
+# come from each lesson's front matter; these add the breaks and the closing segment
+# so the schedule totals the real 6-hour day. Format: "label | minutes"
+# (breaks are placed after the named lesson slug).
+breaks:
+  - "2_kubernetes | 15"
+  - "4_storage | 15"
+closing: "Get your own NRP access + wrap-up / Q&A | 30"

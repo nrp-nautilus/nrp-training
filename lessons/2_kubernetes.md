@@ -8,7 +8,7 @@ exercises: 60
 **[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F2_kubernetes.ipynb)** — every command below is a Shift+Enter cell; the YAML manifests are in the workspace's `yamls/` folder.
 :::
 
-**Morning session · 9:40 – 10:50 AM**
+**Session 2 · 70 min**
 
 This episode is the core Kubernetes hands-on: scheduling pods and jobs, persistent storage, multi-container pods, ConfigMaps and Secrets, Deployments, exposing an HTTPS service, steering pods with taints/tolerations and node affinity, and launching a GPU pod.
 
