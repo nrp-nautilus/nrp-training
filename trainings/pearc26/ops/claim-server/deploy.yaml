@@ -1,0 +1,85 @@
+# Namespace claim server for the PEARC26 tutorial.
+# The server code lives in ConfigMap `nrp-claim-app`, generated from server.py by
+# deploy.sh (single source of truth) — apply that first, or just run ./deploy.sh.
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nrp-claim
+  namespace: nrp-training
+---
+# Minimal cluster access: read all namespaces (to find a free one) and patch the
+# claim annotations. No create/delete — the namespaces are pre-provisioned.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nrp-claim
+rules:
+- apiGroups: [""]
+  resources: ["namespaces"]
+  verbs: ["get", "list", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nrp-claim
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nrp-claim
+subjects:
+- kind: ServiceAccount
+  name: nrp-claim
+  namespace: nrp-training
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrp-claim
+  namespace: nrp-training
+  labels: { app: nrp-claim }
+spec:
+  replicas: 2                 # stateless (claims live in namespace annotations); HA-safe
+  strategy:                   # thanks to optimistic-concurrency CAS in server.py
+    type: RollingUpdate
+    rollingUpdate: { maxUnavailable: 0, maxSurge: 1 }
+  selector:
+    matchLabels: { app: nrp-claim }
+  template:
+    metadata:
+      labels: { app: nrp-claim }
+    spec:
+      serviceAccountName: nrp-claim
+      containers:
+      - name: server
+        image: python:3.12-slim
+        command: ["python", "/app/server.py"]
+        env:
+        - { name: TTL_SECONDS, value: "21600" }   # 6h lease
+        - { name: PORT, value: "8080" }
+        ports:
+        - { containerPort: 8080 }
+        readinessProbe:
+          httpGet: { path: /healthz, port: 8080 }
+          initialDelaySeconds: 3
+        resources:
+          requests: { cpu: "200m", memory: "128Mi" }
+          limits:   { cpu: "200m", memory: "128Mi" }
+        volumeMounts:
+        - { name: app, mountPath: /app }
+      volumes:
+      - name: app
+        configMap: { name: nrp-claim-app }
+---
+# Cluster-internal only — attendee notebooks run inside nrp-training and reach this
+# at http://nrp-claim.nrp-training.svc.cluster.local/. No Ingress: nothing public,
+# no DNS or cert to manage. (Verified reachable under the z2jh `singleuser` NetworkPolicy.)
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrp-claim
+  namespace: nrp-training
+spec:
+  selector: { app: nrp-claim }
+  ports:
+  - { port: 80, targetPort: 8080 }

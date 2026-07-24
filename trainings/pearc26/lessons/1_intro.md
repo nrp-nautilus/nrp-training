@@ -8,7 +8,7 @@ exercises: 0
 **[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab on the training GPU nodes.
 :::
 
-**Morning session · 9:00 – 9:40 AM**
+**Session 1 · 40 min**
 
 Welcome to **Kubernetes for AI-Enabled Scientific Research Computing, and Education** at PEARC26. This full-day tutorial takes you from the concept of batch-oriented HPC to the practical use of service-oriented, Kubernetes-managed resources on the **National Research Platform (NRP)** — interactive AI notebooks, LLM services, GPU workloads, and course-scale JupyterHub deployments.
 
@@ -16,20 +16,37 @@ Run all commands from a JupyterHub terminal unless noted otherwise. Command bloc
 
 ## Schedule — full day at a glance
 
-| Time | Session |
+A **6-hour** day. For the hands-on you work in the shared `nrp-training-k8s` namespace, plus your **own** `nrp-training-NNN` namespace (claimed below) for the JupyterHub capstone. The last 30 minutes help you set up your *own* NRP access to keep going after PEARC.
+
+| Duration | Session |
 | --- | --- |
-| 9:00 – 9:10 | Introduction and welcome |
-| 9:10 – 9:40 | Kubernetes introduction & architecture (this episode) |
-| 9:40 – 10:50 | Basic Docker and Kubernetes hands-on |
-| 10:50 – 11:05 | *Break* |
-| 11:05 – 11:55 | AI & computational science applications |
-| 11:55 – 12:00 | Q&A / discussion |
-| 12:00 – 12:15 | *Break* |
-| 12:15 – 12:45 | Persistent storage & I/O for AI/scientific workloads |
-| 12:45 – 1:25 | JupyterHub on NRP |
-| 1:25 – 1:40 | *Break* |
-| 1:40 – 2:50 | Advanced topics: custom JupyterHub & building images in NRP GitLab |
-| 2:50 – 3:15 | Wrap-up and Q&A |
+| 40 min | Welcome, claim your namespace, Kubernetes & NRP architecture *(this episode)* |
+| 70 min | Basic Docker & Kubernetes hands-on |
+| 15 min | *Break* |
+| 50 min | AI & computational science applications |
+| 30 min | Persistent storage & I/O for AI/scientific workloads |
+| 15 min | *Break* |
+| 40 min | JupyterHub on NRP |
+| 70 min | Advanced: custom JupyterHub & building images in NRP GitLab |
+| 30 min | **Get your own NRP access** + wrap-up / Q&A |
+
+## Claim your namespace for the day
+
+You'll do most exercises in the shared **`nrp-training-k8s`** namespace, but the final JupyterHub capstone needs a namespace of your own. One `curl` — to a small claim service running inside the cluster — reserves one of the pre-created `nrp-training-NNN` namespaces and remembers it's yours. Ask by your hub login and you get the **same** slot back every time:
+
+```bash
+curl -s "http://nrp-claim.nrp-training.svc.cluster.local/claim?user=${JUPYTERHUB_USER:-$NRP_USER}"
+```
+
+<details>
+<summary>Expected output</summary>
+
+```text
+nrp-training-042
+```
+</details>
+
+Jot down the number — Episode 6 claims it again automatically (the `curl` is idempotent), so there's nothing to remember, but it's yours for the day.
 
 ## The National Research Platform
 

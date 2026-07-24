@@ -1113,18 +1113,59 @@ def render_index(config, lessons):
     subtitle = config.get("subtitle", "")
     nav = build_nav(lesson_title, lessons)
 
+    def clock(m):
+        return f"{m // 60:02d}:{m % 60:02d}"
+
+    # optional extra schedule rows from config: breaks after a given lesson, and a
+    # closing segment. Per-lesson durations still come from lesson front matter.
+    # Encoded as "label | minutes" strings (the config parser handles only scalars
+    # and string lists); a break's label is the lesson slug it follows.
+    def split_mins(s):
+        label, _, mins = str(s).rpartition("|")
+        try:
+            return label.strip(), int(mins.strip())
+        except ValueError:
+            return label.strip(), 0
+
+    breaks = {}
+    for b in config.get("breaks", []) or []:
+        slug, mins = split_mins(b)
+        if slug:
+            breaks[slug] = mins
+    closing_raw = config.get("closing")
+    closing = None
+    if isinstance(closing_raw, str) and closing_raw.strip():
+        title, mins = split_mins(closing_raw)
+        closing = {"title": title, "minutes": mins}
+
     rows = []
     cumulative = 0
     for lesson in lessons:
         mins = lesson["teaching"] + lesson["exercises"]
-        start = f"{cumulative // 60:02d}:{cumulative % 60:02d}"
+        start = clock(cumulative)
         cumulative += mins
         rows.append(
             f"<tr><td>{start}</td>"
             f'<td><a href="{lesson["slug"]}.html">{html.escape(lesson["title"])}</a></td>'
             f"<td>{mins} min</td></tr>"
         )
-    finish = f"{cumulative // 60:02d}:{cumulative % 60:02d}"
+        brk = breaks.get(lesson["slug"])
+        if brk:
+            start = clock(cumulative)
+            cumulative += brk
+            rows.append(
+                f'<tr class="brk"><td>{start}</td><td>Break</td><td>{brk} min</td></tr>'
+            )
+    if closing:
+        cmins = int(closing.get("minutes", 0) or 0)
+        start = clock(cumulative)
+        cumulative += cmins
+        rows.append(
+            f"<tr><td>{start}</td>"
+            f'<td>{html.escape(closing.get("title", "Wrap-up"))}</td>'
+            f"<td>{cmins} min</td></tr>"
+        )
+    finish = clock(cumulative)
 
     schedule = (
         '<table class="schedule"><thead><tr><th>Start</th><th>Lesson</th>'
@@ -1790,6 +1831,7 @@ img { max-width: 100%; }
 .md-table th, .md-table td { border: 1px solid var(--border); padding: 8px 12px; text-align: left; vertical-align: top; }
 .schedule thead, .md-table thead { background: var(--panel); }
 .schedule tr.finish { font-weight: 600; background: var(--panel); }
+.schedule tr.brk td { font-style: italic; color: var(--muted); }
 .resources-note { border-left: 4px solid var(--accent); background: var(--accent-weak);
   border-radius: 8px; margin: 1.2em 0; padding: 10px 14px; }
 .hint { color: var(--muted); font-size: .9rem; }

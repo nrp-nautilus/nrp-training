@@ -8,7 +8,7 @@ exercises: 10
 **[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F5_jupyterhub.ipynb)** — you have been using the thing this episode explains all day.
 :::
 
-**Afternoon session · 12:45 – 1:25 PM**
+**Session 5 · 40 min**
 
 You've spent the morning *inside* a JupyterHub. This episode opens the hood: what JupyterHub actually is, how it runs on Kubernetes, why it has become the standard for reproducible classroom and research computing, and the features you'd lean on when running your own course — before the final episode, where you deploy one yourself.
 

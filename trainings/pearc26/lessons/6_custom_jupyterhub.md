@@ -8,15 +8,27 @@ exercises: 50
 **[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F6_custom_jupyterhub.ipynb)** — `yamls/jhub-values.yaml` for this episode is in the workspace.
 :::
 
-**Afternoon session · 1:40 – 2:50 PM**
+**Session 6 · 70 min**
 
 The capstone: deploy your **own** JupyterHub with Helm — controlled access, custom images, per-profile resource limits, shared storage — then see how to build custom container images with NRP GitLab CI/CD. This is the recipe instructors and PIs use to stand up course and lab hubs on NRP.
 
-**Conventions.** Each participant has a **pre-created namespace** (handed out by the instructors) — JupyterHub can only be deployed once per namespace, so please stick to yours. Replace `<namespace>` and `<release-name>` (e.g. `jhub-<username>`) below. First, set it once so the commands (and `check.sh 6`) pick it up:
+**Conventions.** Each participant works in their **own pre-created namespace** (`nrp-training-000` … `nrp-training-099`) — JupyterHub can only be deployed once per namespace. Claim yours now; the request is keyed by your hub login, so it's idempotent — you get the **same** slot back every time, and re-running this cell after a break is safe:
 
 ```bash
-export NRP_NAMESPACE=<namespace>   # the number you were handed, e.g. nrp-training-042
+export NRP_NAMESPACE=$(curl -s "http://nrp-claim.nrp-training.svc.cluster.local/claim?user=${JUPYTERHUB_USER:-$NRP_USER}")
+export NRP_RELEASE=jhub-$NRP_USER
+echo "namespace=$NRP_NAMESPACE release=$NRP_RELEASE"
 ```
+
+<details>
+<summary>Expected output</summary>
+
+```text
+namespace=nrp-training-042 release=jhub-alice
+```
+</details>
+
+`$NRP_NAMESPACE` and `$NRP_RELEASE` are what the commands below (and `check.sh 6`) pick up — no hand-editing. Replace `<namespace>`/`<release-name>` in any manifest with these.
 
 > 📘 **Docs:** [Deploy JupyterHub](https://nrp.ai/documentation/userdocs/jupyter/jupyterhub/) · [Build images](https://nrp.ai/documentation/userdocs/tutorial/images/) · [NRP GitLab CI](https://nrp.ai/documentation/userdocs/development/gitlab/) · [Z2JH (upstream)](https://z2jh.jupyter.org)
 
@@ -313,10 +325,33 @@ kubectl delete pvc -n <namespace> -l app=jupyterhub,component=singleuser-storage
 > It's the `jupyterhub-shared-volume` claim from the storage episode — RWX means all user pods mount it simultaneously. Instructors drop a dataset in once; the whole class sees it instantly (mount it read-only for students in production).
 :::
 
-## Where to go from here
+## Get your own NRP access — for after PEARC
 
-- **Keep using NRP** — get a real account via [CILogon getting started](https://nrp.ai/documentation/userdocs/start/getting-started/); the tutorial credentials stop working after PEARC26.
-- **Request a course hub** or namespace: [nrp.ai/contact](https://nrp.ai/contact/) (Matrix chat — the same channel for live help today).
-- **All materials** stay online at [training.nrp-nautilus.io](https://training.nrp-nautilus.io/) and on [GitHub](https://github.com/nrp-nautilus/nrp-training), archived for reproducibility.
+Everything today ran on the tutorial's shared training cluster and a namespace we handed you; that access **stops working after PEARC26**. Let's spend the last part of the session getting you set up with your *own* NRP access so you can keep going. Instructors are circulating — grab one if any step stalls.
+
+**1. Register your identity.** NRP authenticates through **CILogon**, so you sign in with your existing campus/institutional account — no new password.
+
+- Go to **[portal.nrp.ai](https://portal.nrp.ai)** and log in with CILogon (pick your institution).
+- Follow [Getting started](https://nrp.ai/documentation/userdocs/start/getting-started/) to complete your profile.
+
+**2. Get into a namespace.** Compute on NRP lives in a namespace tied to a PI/project.
+
+- **Have a PI or project already?** Ask them to add you — an admin runs `kubectl` to bind you to their namespace. Send them your CILogon identity (the email shown in the portal).
+- **Starting your own?** Request a namespace/allocation via **[nrp.ai/contact](https://nrp.ai/contact/)** — the same **Matrix** channel we've used for live help today ([element.nrp-nautilus.io](https://element.nrp-nautilus.io)). Say what you're doing and roughly what resources you need.
+
+**3. Point `kubectl` at NRP.** Once you're in a namespace:
+
+- Grab your personal kubeconfig from the portal ([get-config](https://nrp.ai/documentation/userdocs/start/get-config/)) and drop it at `~/.kube/config`.
+- Verify: `kubectl config get-contexts` then `kubectl get pods -n <your-namespace>`.
+- Everything you did today — pods, jobs, GPUs, PVCs, S3, LLM services, Helm-deployed hubs — works the same against your own namespace.
+
+**4. Keep the materials.** This whole tutorial stays online, archived for reproducibility:
+
+- Lessons + runnable notebooks: **[training.nrp-nautilus.io](https://training.nrp-nautilus.io/)** and **[GitHub](https://github.com/nrp-nautilus/nrp-training)**.
+- Docs home: **[nrp.ai/documentation](https://nrp.ai/documentation/)**. Live community help: the Matrix channel above.
+
+::: callout Questions?
+This is also the open **Q&A** — anything from today's exercises, your own use case, getting a course hub for your students, or GPU/allocation policy. Ask away.
+:::
 
 Thanks for spending the day with us — go build something on the National Research Platform.

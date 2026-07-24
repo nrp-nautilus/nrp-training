@@ -8,7 +8,7 @@ exercises: 35
 **[▶ Open the runnable notebook for this episode](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace%2Fnotebooks%2F3_ai_apps.ipynb)** — every command below is a Shift+Enter cell; manifests are in the workspace's `yamls/` folder.
 :::
 
-**Morning session · 11:05 – 11:55 AM**
+**Session 3 · 50 min**
 
 NRP runs hundreds of NVIDIA GPUs (and Qualcomm Cloud AI 100 cards) across the country. A subset of those GPUs power a community-shared, **OpenAI-compatible LLM inference endpoint** at `https://ellm.nrp-nautilus.io/v1`. This episode walks the full path: talk to the managed LLM from Jupyter AI, `curl`, and Python; then bring up your own GPU pod for training, self-hosted inference, and a RAG pipeline against NRP's managed [Milvus](https://milvus.io) vector database.
 
@@ -64,6 +64,34 @@ curl -s -H "Authorization: Bearer $OPENAI_API_KEY" \
      "$OPENAI_API_BASE/models" | python3 -m json.tool | head -30
 ```
 
+<details>
+<summary>Expected output (catalog rotates)</summary>
+
+```json
+{
+    "object": "list",
+    "data": [
+        {
+            "id": "gemma",
+            "object": "model",
+            "created": 1730000000,
+            "owned_by": "nrp"
+        },
+        {
+            "id": "gpt-oss",
+            "object": "model",
+            "owned_by": "nrp"
+        },
+        {
+            "id": "minimax-m2",
+            "object": "model",
+            "owned_by": "nrp"
+        }
+    ]
+}
+```
+</details>
+
 **Send a chat completion:**
 
 ```bash
@@ -79,6 +107,14 @@ curl -s -X POST "$OPENAI_API_BASE/chat/completions" \
   }' | python3 -c 'import json,sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"])'
 ```
 
+<details>
+<summary>Expected output (LLM replies vary)</summary>
+
+```text
+The National Research Platform is a distributed, open cyberinfrastructure built on a Kubernetes cluster called Nautilus that gives researchers and educators across 50+ institutions shared access to GPUs, storage, and AI services.
+```
+</details>
+
 **Stream tokens** (add `"stream": true` and watch SSE chunks arrive):
 
 ```bash
@@ -87,6 +123,19 @@ curl -sN -X POST "$OPENAI_API_BASE/chat/completions" \
   -H "Content-Type: application/json" \
   -d '{"model":"minimax-m2","stream":true,"messages":[{"role":"user","content":"Count 1 to 5 with a brief reason for each."}]}'
 ```
+
+<details>
+<summary>Expected output (Server-Sent Events — one token per chunk)</summary>
+
+```text
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"1"}}]}
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":":"}}]}
+...
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+data: [DONE]
+```
+</details>
 
 **What you learn.** `curl` is the universal smoke test — if it works here, anything OpenAI-compatible (LangChain, openai-python, your own app) works.
 
@@ -113,6 +162,14 @@ resp = client.chat.completions.create(
 print(resp.choices[0].message.content)
 ```
 
+<details>
+<summary>Expected output (LLM replies vary)</summary>
+
+```text
+A Kubernetes namespace is a virtual partition of a cluster that scopes resource names, quotas, and access control, so many teams can share one physical cluster without colliding. On NRP each project gets its own namespace, which is why your pods live in `nrp-training-k8s` today.
+```
+</details>
+
 **Streaming:**
 
 ```python
@@ -126,6 +183,16 @@ for chunk in stream:
         print(chunk.choices[0].delta.content, end="", flush=True)
 print()
 ```
+
+<details>
+<summary>Expected output (prints token-by-token; LLM replies vary)</summary>
+
+```text
+Silicon cores ignite—
+tensors race through parallel light,
+night yields to the dawn.
+```
+</details>
 
 **What you learn.** The exact same code targets the OpenAI cloud, NRP's managed LLM, or any vLLM/TGI server you bring up yourself — only `base_url` changes. This portability is the entire point of the OpenAI-compatible API.
 
@@ -186,6 +253,14 @@ curl -s http://127.0.0.1:8080/generate \
   -d '{"inputs":"Why are penguins black and white?","parameters":{"max_new_tokens":60}}'
 ```
 
+<details>
+<summary>Expected output (generation varies)</summary>
+
+```json
+{"generated_text":"Penguins are black and white as a form of camouflage called countershading: seen from above the black back blends with the dark ocean, and from below the white belly blends with the bright surface, hiding them from predators and prey."}
+```
+</details>
+
 And the punchline — TGI exposes an OpenAI-compatible `/v1`, so the §4 code works against **your own GPU** by changing only the base URL:
 
 ```python
@@ -196,6 +271,14 @@ print(client.chat.completions.create(
     messages=[{"role":"user","content":"Hi from my own GPU."}],
 ).choices[0].message.content)
 ```
+
+<details>
+<summary>Expected output (LLM replies vary)</summary>
+
+```text
+Hello from your own GPU! It's great to be running right here on your A10. What would you like to work on?
+```
+</details>
 
 Cleanup:
 
@@ -230,7 +313,7 @@ cd /scratch
 python3 nrp_docs_rag.py --reindex
 ```
 
-Chunking is instant, embedding ~960 chunks takes ~25 s on the A10, and the collection **persists in Milvus across runs** — later invocations answer in seconds.
+Chunking is instant, embedding ~1,100 chunks takes ~25 s on the A10, and the collection **persists in Milvus across runs** — later invocations answer in seconds.
 
 **Stage 3 — ask questions:**
 
@@ -261,6 +344,18 @@ Also try a question whose answer is **not** in the docs — a well-grounded pipe
 python3 nrp_docs_rag.py --only-ask \
   --ask "What does the cluster do if a pod has no CPU or memory limits?"
 ```
+
+<details>
+<summary>Expected output — the pipeline declines (grounding working)</summary>
+
+```text
+Q: What does the cluster do if a pod has no CPU or memory limits?
+------------------------------------------------------------------------------
+The provided context doesn't contain information about what the cluster does
+when a pod has no CPU or memory limits, so I can't answer from the NRP
+documentation retrieved here.
+```
+</details>
 
 **What you learn.** Same code, same retriever, same prompt — the inference backend is swappable (managed endpoint, your own TGI pod, a local Ollama). Pick per deployment context: cost, latency, privacy.
 
