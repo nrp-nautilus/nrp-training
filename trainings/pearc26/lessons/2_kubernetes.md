@@ -57,10 +57,14 @@ Launch and inspect:
 kubectl apply -n nrp-training-k8s -f yamls/test-pod.yaml
 kubectl wait --for=condition=Ready pod/test-pod-<username> -n nrp-training-k8s --timeout=60s
 kubectl get pods -n nrp-training-k8s
+```
+
+```bash
+sleep 5
 kubectl logs test-pod-<username> -n nrp-training-k8s
 ```
 
-The `kubectl wait` line pauses until the pod is actually running — without it, `kubectl logs` fired immediately after `apply` errors with *"container is waiting to start: ContainerCreating"*, because the container doesn't exist yet.
+The `kubectl wait` line pauses until the pod is actually running. We still sleep briefly before reading logs since `Ready` doesn't guarantee the container has flushed its first line of stdout.
 
 <details>
 <summary>Expected output</summary>
@@ -79,6 +83,9 @@ Run a command inside it, then open an interactive shell (Ctrl-D to exit):
 
 ```bash
 kubectl exec test-pod-<username> -n nrp-training-k8s -- echo 'Command executed successfully'
+```
+
+```bash
 kubectl exec -it test-pod-<username> -n nrp-training-k8s -- /bin/bash
 ```
 
@@ -87,6 +94,9 @@ When something doesn't behave the way you expect:
 
 ```bash
 kubectl describe pod test-pod-<username> -n nrp-training-k8s          # status + last events
+```
+
+```bash
 kubectl get events -n nrp-training-k8s --sort-by=.metadata.creationTimestamp | tail -20
 ```
 
@@ -115,6 +125,9 @@ Open `yamls/pvc.yaml` — it contains a 1 GiB PVC and a writer pod that mounts i
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/pvc.yaml
 kubectl get pvc -n nrp-training-k8s
+```
+
+```bash
 kubectl get pod pvc-pod-<username> -n nrp-training-k8s
 ```
 
@@ -135,9 +148,15 @@ Prove the data survives pod deletion — delete only the pod, re-apply, and read
 ```bash
 kubectl wait --for=condition=Ready pod/pvc-pod-<username> -n nrp-training-k8s --timeout=90s
 kubectl exec pvc-pod-<username> -n nrp-training-k8s -- cat /data/log.txt
+```
+
+```bash
 kubectl delete pod pvc-pod-<username> -n nrp-training-k8s
 kubectl apply -n nrp-training-k8s -f yamls/pvc.yaml
 kubectl wait --for=condition=Ready pod/pvc-pod-<username> -n nrp-training-k8s --timeout=90s
+```
+
+```bash
 kubectl exec pvc-pod-<username> -n nrp-training-k8s -- cat /data/log.txt   # previous line still there
 ```
 
@@ -152,13 +171,20 @@ A pod can hold more than one container — they share the network namespace (sam
 ```bash
 kubectl delete pod pvc-pod-<username> -n nrp-training-k8s --ignore-not-found
 kubectl apply -n nrp-training-k8s -f yamls/multicontainer.yaml
+```
+
+```bash
 kubectl get pod sidecar-<username> -n nrp-training-k8s
 ```
 
 Read each container's log stream separately with `-c`:
 
 ```bash
+sleep 5
 kubectl logs sidecar-<username> -c writer -n nrp-training-k8s --tail=5
+```
+
+```bash
 kubectl logs sidecar-<username> -c reader -n nrp-training-k8s --tail=5
 ```
 
@@ -196,10 +222,12 @@ Hard-coding paths, hostnames, or API tokens into images is a recipe for pain. Ku
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/configmap-secret.yaml
 kubectl wait --for=condition=Ready pod/env-pod-<username> -n nrp-training-k8s --timeout=60s
-kubectl logs env-pod-<username> -n nrp-training-k8s
 ```
 
-(The `kubectl wait` pauses until the container is up; without it, `kubectl logs` right after `apply` errors with *"container is waiting to start"*.)
+```bash
+sleep 5
+kubectl logs env-pod-<username> -n nrp-training-k8s
+```
 
 <details>
 <summary>Expected output</summary>
@@ -215,6 +243,9 @@ Look inside each object:
 
 ```bash
 kubectl get configmap app-config-<username> -n nrp-training-k8s -o yaml | grep -A2 '^data:'
+```
+
+```bash
 kubectl get secret    app-secret-<username> -n nrp-training-k8s -o jsonpath='{.data.API_TOKEN}' | base64 -d ; echo
 ```
 
@@ -250,6 +281,9 @@ A **Deployment** keeps a set of identical pods running: it restarts them when th
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/deployment.yaml
+```
+
+```bash
 kubectl get deploy,rs,pod -n nrp-training-k8s -l app=hello-deploy-<username>
 ```
 
@@ -275,6 +309,7 @@ Pick one pod from the Deployment:
 
 ```bash
 POD=$(kubectl get pod -n nrp-training-k8s -l app=hello-deploy-<username> -o jsonpath='{.items[0].metadata.name}')
+echo "$POD"
 ```
 
 Copy files in and out:
@@ -282,6 +317,9 @@ Copy files in and out:
 ```bash
 echo "training data v1" > /tmp/dataset.txt
 kubectl cp /tmp/dataset.txt nrp-training-k8s/"$POD":/tmp/dataset.txt
+```
+
+```bash
 kubectl exec "$POD" -n nrp-training-k8s -- cat /tmp/dataset.txt
 ```
 
@@ -312,7 +350,14 @@ A **Job** runs pods until a target number complete successfully. Open `yamls/job
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/job.yaml
 kubectl get jobs -n nrp-training-k8s
+```
+
+```bash
 kubectl wait --for=condition=complete job/pi-<username> -n nrp-training-k8s --timeout=180s
+```
+
+```bash
+sleep 5
 kubectl logs -n nrp-training-k8s -l job-name=pi-<username>
 ```
 
@@ -339,6 +384,9 @@ Open `yamls/ingress-demo.yaml` and replace **every** `<username>` (the hostname 
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/ingress-demo.yaml
+```
+
+```bash
 kubectl get deploy,svc,ingress -n nrp-training-k8s -l k8s-app=hello-web-<username>
 ```
 
@@ -388,6 +436,9 @@ Explore the pool:
 
 ```bash
 kubectl get nodes -l nrp-training=true -L nvidia.com/gpu.product
+```
+
+```bash
 kubectl get nodes -l nrp-training=true \
   -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.taints}{"\n"}{end}'
 ```
@@ -450,6 +501,9 @@ Launch it, exec in, and run `nvidia-smi`:
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/gpu-pod.yaml
 kubectl get pods -n nrp-training-k8s
+```
+
+```bash
 kubectl exec -it tutorial-<username>-gpu-pod -n nrp-training-k8s -- nvidia-smi
 ```
 
@@ -551,7 +605,9 @@ kubectl delete -f yamls/deployment.yaml           -n nrp-training-k8s --ignore-n
 kubectl delete -f yamls/job.yaml                  -n nrp-training-k8s --ignore-not-found
 kubectl delete -f yamls/ingress-demo.yaml         -n nrp-training-k8s --ignore-not-found
 kubectl delete pod tutorial-<username>-gpu-pod    -n nrp-training-k8s --ignore-not-found
+```
 
+```bash
 # what did I leave running?
 kubectl get all -n nrp-training-k8s
 ```

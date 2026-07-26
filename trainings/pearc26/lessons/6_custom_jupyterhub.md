@@ -134,7 +134,13 @@ Inspect what the chart created — everything is an object you met this morning:
 
 ```bash
 kubectl get pods -n <namespace>
+```
+
+```bash
 kubectl get services -n <namespace>
+```
+
+```bash
 kubectl get pvc -n <namespace>
 ```
 
@@ -162,7 +168,9 @@ helm upgrade <release-name> jupyterhub/jupyterhub \
   --namespace <namespace> \
   --values yamls/jhub-values.yaml \
   --wait --timeout=10m
+```
 
+```bash
 kubectl get ingress -n <namespace>
 ```
 
@@ -238,9 +246,16 @@ For production, replace the Dummy authenticator with institutional login. `yamls
 ## 6. Operating your hub
 
 ```bash
-helm list -n <namespace>                                              # releases + chart versions
-kubectl logs -n <namespace> -l app=jupyterhub,component=hub --tail=50 # hub logs
-kubectl get pods -n <namespace> -l app=jupyterhub,component=singleuser-server  # active users
+helm list -n <namespace>
+```
+
+```bash
+sleep 5
+kubectl logs -n <namespace> -l app=jupyterhub,component=hub --tail=50
+```
+
+```bash
+kubectl get pods -n <namespace> -l app=jupyterhub,component=singleuser-server
 ```
 
 Troubleshooting follows the Episode 2 debugging trio: `describe` the failing pod, read namespace `events`, check hub/proxy `logs`.
