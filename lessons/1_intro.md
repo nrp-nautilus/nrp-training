@@ -189,6 +189,9 @@ Verify your access:
 
 ```bash
 kubectl auth whoami
+```
+
+```bash
 kubectl get pods -n nrp-training-k8s
 ```
 

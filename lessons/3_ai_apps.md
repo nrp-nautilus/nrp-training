@@ -206,12 +206,16 @@ The managed LLM is convenient but constrained: you don't pick the weights, versi
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/pytorch-training.yaml
+```
+
+```bash
 kubectl get pod -n nrp-training-k8s tutorial-<username>-gp3 -w
 ```
 
 Once `Completed`:
 
 ```bash
+sleep 5
 kubectl logs -n nrp-training-k8s tutorial-<username>-gp3 | tail -25
 ```
 
@@ -240,6 +244,9 @@ Same pattern with HuggingFace's [Text Generation Inference](https://github.com/h
 
 ```bash
 kubectl apply -n nrp-training-k8s -f yamls/tgi-inference.yaml
+```
+
+```bash
 kubectl get pod -n nrp-training-k8s tutorial-<username>-tgi -w
 ```
 
@@ -301,6 +308,9 @@ The pod mounts two pre-loaded Secrets from `nrp-training-k8s`:
 
 ```bash
 kubectl apply  -n nrp-training-k8s -f yamls/milvus-rag.yaml
+```
+
+```bash
 kubectl get pod -n nrp-training-k8s tutorial-<username>-vectordb -w
 ```
 
@@ -383,13 +393,20 @@ Run the ⚙️ setup cell first — it renders `my-yamls/mpi-pi.yaml` with your 
 ```bash
 # submit the job (launcher + 2 workers)
 kubectl apply -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
+```
 
+```bash
 # watch the pods come up (launcher stays Init until the workers' sshd is ready)
 kubectl get pods -n nrp-training-k8s -l training.kubeflow.org/job-name=$NRP_USER-mpi-pi
+```
 
+```bash
 # read the computed value of pi from the launcher's log
+sleep 10
 kubectl logs -n nrp-training-k8s -l training.kubeflow.org/job-name=$NRP_USER-mpi-pi,training.kubeflow.org/job-role=launcher
+```
 
+```bash
 # clean up
 kubectl delete -n nrp-training-k8s -f my-yamls/mpi-pi.yaml
 ```
