@@ -10,7 +10,7 @@ exercises: 0
 
 ## Intro slides
 
-::: PEARC26 Intro Slides
+::: slides PEARC26 Intro Slides
 @include slides/Pearc26-nrp-hats.pdf
 :::
 
