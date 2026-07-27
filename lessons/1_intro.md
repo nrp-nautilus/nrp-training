@@ -8,6 +8,13 @@ exercises: 0
 **[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fpearc26&targetpath=pearc26&urlpath=lab%2Ftree%2Fpearc26%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab on the training GPU nodes.
 :::
 
+## Intro slides
+
+::: PEARC26 Intro Slides
+@include slides/Pearc26-nrp-hats.pdf
+:::
+
+
 **Session 1 · 40 min**
 
 Welcome to **Kubernetes for AI-Enabled Scientific Research Computing, and Education** at PEARC26. This full-day tutorial takes you from the concept of batch-oriented HPC to the practical use of service-oriented, Kubernetes-managed resources on the **National Research Platform (NRP)** — interactive AI notebooks, LLM services, GPU workloads, and course-scale JupyterHub deployments.
