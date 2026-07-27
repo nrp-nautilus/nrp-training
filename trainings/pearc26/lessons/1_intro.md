@@ -16,19 +16,22 @@ Run all commands from a JupyterHub terminal unless noted otherwise. Command bloc
 
 ## Schedule — full day at a glance
 
-A **6-hour** day. For the hands-on you work in the shared `nrp-training-k8s` namespace, plus your **own** `nrp-training-NNN` namespace (claimed below) for the JupyterHub capstone. The last 30 minutes help you set up your *own* NRP access to keep going after PEARC.
+**6 hours** of material, plus a morning coffee break, a lunch, and an afternoon coffee break at fixed times. For the hands-on you work in the shared `nrp-training-k8s` namespace, plus your **own** `nrp-training-NNN` namespace (claimed below) for the JupyterHub capstone. The last hour helps you set up your *own* NRP access to keep going after PEARC.
+
+Session lengths below are approximate — the three breaks are the only fixed clock times in the day.
 
 | Duration | Session |
 | --- | --- |
 | 40 min | Welcome, claim your namespace, Kubernetes & NRP architecture *(this episode)* |
 | 70 min | Basic Docker & Kubernetes hands-on |
-| 15 min | *Break* |
+| 30 min (10:30 – 11:00) | *Coffee break* |
 | 50 min | AI & computational science applications |
 | 30 min | Persistent storage & I/O for AI/scientific workloads |
-| 15 min | *Break* |
+| 60 min (12:30 – 1:30) | *Lunch* |
 | 40 min | JupyterHub on NRP |
 | 70 min | Advanced: custom JupyterHub & building images in NRP GitLab |
-| 30 min | **Get your own NRP access** + wrap-up / Q&A |
+| 30 min (3:00 – 3:30) | *Coffee break* |
+| 60 min | **Get your own NRP access** + wrap-up / Q&A |
 
 ## Claim your namespace for the day
 
