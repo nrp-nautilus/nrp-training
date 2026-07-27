@@ -607,11 +607,6 @@ kubectl delete -f yamls/ingress-demo.yaml         -n nrp-training-k8s --ignore-n
 kubectl delete pod tutorial-<username>-gpu-pod    -n nrp-training-k8s --ignore-not-found
 ```
 
-```bash
-# what did I leave running?
-kubectl get all -n nrp-training-k8s
-```
-
 Then verify: `bash check.sh 2` in the workspace (or the last cell of the notebook).
 
 ::: quiz Quick check — before the break

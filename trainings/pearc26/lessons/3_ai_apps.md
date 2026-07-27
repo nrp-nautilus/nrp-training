@@ -115,25 +115,32 @@ The National Research Platform is a distributed, open cyberinfrastructure built 
 ```
 </details>
 
-**Stream tokens** (add `"stream": true` and watch SSE chunks arrive):
+**Stream tokens** (watch tokens arrive one at a time):
 
 ```bash
-curl -sN -X POST "$OPENAI_API_BASE/chat/completions" \
-  -H "Authorization: Bearer $OPENAI_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"model":"minimax-m2","stream":true,"messages":[{"role":"user","content":"Count 1 to 5 with a brief reason for each."}]}'
+python3 -c "
+import os
+from openai import OpenAI
+client = OpenAI(api_key=os.environ['OPENAI_API_KEY'], base_url=os.environ['OPENAI_API_BASE'])
+for chunk in client.chat.completions.create(
+    model='minimax-m2', stream=True,
+    messages=[{'role':'user','content':'Count 1 to 5 with a brief reason for each.'}]
+):
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end='', flush=True)
+print()
+"
 ```
 
 <details>
-<summary>Expected output (Server-Sent Events — one token per chunk)</summary>
+<summary>Expected output — tokens stream as they arrive, model reply varies</summary>
 
 ```text
-data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"role":"assistant","content":""}}]}
-data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"1"}}]}
-data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":":"}}]}
-...
-data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
-data: [DONE]
+1. **One** – the first positive integer; it represents unity or a single unit.
+2. **Two** – the smallest even number; it forms the basic pair (binary) used in many systems.
+3. **Three** – the first odd prime; often seen as a symbol of completeness or balance in many cultures.
+4. **Four** – the smallest composite number (2 × 2); it's the basis of many geometric and structural patterns.
+5. **Five** – the number of fingers on a human hand and the traditional count of the senses.
 ```
 </details>
 
