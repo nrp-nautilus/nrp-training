@@ -264,6 +264,9 @@ Key takeaways from this session:
 extract the relevant formula, and generate analysis code that implements it. Stay
 tuned.
 
+**Next:** [Build a Simple Agent](4_agent.html) — open the hood and build the
+tool-calling loop that powers these tools yourself, in ~30 lines of Python.
+
 ---
 
 ## References
