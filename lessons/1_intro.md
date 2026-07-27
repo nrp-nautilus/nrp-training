@@ -24,13 +24,13 @@ Session lengths below are approximate — the three breaks are the only fixed cl
 | --- | --- |
 | 40 min | Welcome, claim your namespace, Kubernetes & NRP architecture *(this episode)* |
 | 70 min | Basic Docker & Kubernetes hands-on |
-| 30 min (10:30 – 11:00) | *Coffee break* |
+| 30 min (10:30 – 11:00 a.m.) | *Coffee break* |
 | 50 min | AI & computational science applications |
 | 30 min | Persistent storage & I/O for AI/scientific workloads |
-| 60 min (12:30 – 1:30) | *Lunch* |
+| 60 min (12:30 – 1:30 p.m.) | *Lunch* |
 | 40 min | JupyterHub on NRP |
 | 70 min | Advanced: custom JupyterHub & building images in NRP GitLab |
-| 30 min (3:00 – 3:30) | *Coffee break* |
+| 30 min (3:00 – 3:30 p.m.) | *Coffee break* |
 | 60 min | **Get your own NRP access** + wrap-up / Q&A |
 
 ## Claim your namespace for the day
