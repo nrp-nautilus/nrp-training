@@ -14,9 +14,13 @@ lessons:
 
 # Extra rows for the Schedule table on the index page. Per-lesson durations still
 # come from each lesson's front matter; these add the breaks and the closing segment
-# so the schedule totals the real 6-hour day. Format: "label | minutes"
-# (breaks are placed after the named lesson slug).
+# so the schedule totals the full 8-hour day (6 hours of material + 2 hours of
+# breaks: 30 min coffee, 60 min lunch, 30 min coffee). Format: "label | minutes"
+# (breaks are placed after the named lesson slug; this table shows elapsed time
+# from a prompt start, not real clock time — see the "Schedule — full day at a
+# glance" table in lessons/1_intro.md for the wall-clock version attendees see).
 breaks:
-  - "2_kubernetes | 15"
-  - "4_storage | 15"
-closing: "Get your own NRP access + wrap-up / Q&A | 30"
+  - "2_kubernetes | 30"
+  - "3_ai_apps | 60"
+  - "5_jupyterhub | 30"
+closing: "Get your own NRP access + wrap-up / Q&A | 60"
