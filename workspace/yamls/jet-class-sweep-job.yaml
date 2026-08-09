@@ -1,0 +1,52 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-sweep-<username>
+  namespace: us-cms
+spec:
+  completions: 4
+  parallelism: 2
+  completionMode: Indexed
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-sweep
+        image: <YOUR_IMAGE>
+        command: ["bash", "-c"]
+        args:
+        - |
+          WIDTHS=("512,256" "1024,1024,512" "2048,2048,1024,512" "4096,4096,2048,1024")
+          export MODEL_WIDTHS="${WIDTHS[$JOB_COMPLETION_INDEX]}"
+          echo "Sweep index $JOB_COMPLETION_INDEX -> MODEL_WIDTHS=$MODEL_WIDTHS"
+          exec python /workspace/jet_class.py
+        env:
+        - name: EPOCHS
+          value: "50"
+        - name: BATCH_SIZE
+          value: "8192"
+        - name: MIXED_PRECISION
+          value: "1"
+        resources:
+          requests:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>

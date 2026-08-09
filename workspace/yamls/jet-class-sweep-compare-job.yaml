@@ -1,0 +1,87 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-sweep-compare-<username>
+  namespace: us-cms
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-sweep-compare
+        image: <YOUR_IMAGE>
+        command: ["python", "-c"]
+        args:
+        - |
+          import glob
+          import json
+
+          import matplotlib
+          matplotlib.use("Agg")
+          import matplotlib.pyplot as plt
+
+          rows = []
+          for path in sorted(glob.glob("/training/jet-class/run-*/metrics.json")):
+              m = json.load(open(path))
+              if not m["run_id"].isdigit():
+                  continue
+              rows.append(m)
+          rows.sort(key=lambda m: int(m["run_id"]))
+
+          if not rows:
+              raise SystemExit("No sweep runs found under /training/jet-class/run-<index>/metrics.json")
+
+          print(f"{'run':>4}  {'widths':<28} {'params':>10}  {'seconds':>8}  accuracy")
+          for m in rows:
+              secs = m.get("training_seconds")
+              secs_str = f"{secs:.1f}" if secs is not None else "n/a"
+              print(f"{m['run_id']:>4}  {','.join(str(w) for w in m['model_widths']):<28} "
+                    f"{m['model_parameters']:>10,}  {secs_str:>8}  {m['accuracy']:.4f}")
+
+          fig, ax = plt.subplots(figsize=(7, 5))
+          ax.plot([m["model_parameters"] for m in rows], [m["accuracy"] for m in rows], "o-")
+          ax.set_xscale("log")
+          ax.set_xlabel("Model parameters")
+          ax.set_ylabel("Test accuracy")
+          ax.set_title("Jet classifier sweep: accuracy vs model size")
+          for m in rows:
+              ax.annotate(f"run {m['run_id']}", (m["model_parameters"], m["accuracy"]))
+          fig.tight_layout()
+          fig.savefig("/training/jet-class/sweep_comparison.png", dpi=150)
+          print("Wrote /training/jet-class/sweep_comparison.png")
+
+          if all(m.get("training_seconds") is not None for m in rows):
+              fig, ax = plt.subplots(figsize=(7, 5))
+              ax.plot([m["training_seconds"] for m in rows], [m["accuracy"] for m in rows], "o-")
+              ax.set_xlabel("Training time [s]")
+              ax.set_ylabel("Test accuracy")
+              ax.set_title("Jet classifier sweep: accuracy vs training time")
+              for m in rows:
+                  ax.annotate(f"run {m['run_id']}", (m["training_seconds"], m["accuracy"]))
+              fig.tight_layout()
+              fig.savefig("/training/jet-class/sweep_time_comparison.png", dpi=150)
+              print("Wrote /training/jet-class/sweep_time_comparison.png")
+          else:
+              print("Skipping accuracy-vs-time plot: some runs are missing training_seconds "
+                    "(rebuild your image from the current jet_class.py to get it)")
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
