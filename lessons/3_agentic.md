@@ -28,8 +28,9 @@ runs unchanged against NRP's managed inference — no API key handoff theater, n
 per-user billing.
 
 ::: callout Where to run these exercises
-You can work from either:
-- A **JupyterHub terminal** on [jupyterhub-west.nrp-nautilus.io](https://jupyterhub-west.nrp-nautilus.io) (open a terminal from the Launcher)
+This episode is terminal- and IDE-driven rather than notebook-driven — there's no
+`3_agentic.ipynb`. You can work from either:
+- A **JupyterHub terminal** on the [NRP USCMS Analysis Hub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace) (opens JupyterLab — start a terminal from the Launcher)
 - Your **local machine** (macOS or Linux)
 
 All commands are the same either way.

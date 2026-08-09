@@ -17,6 +17,10 @@ keypoints:
   - The same `openai` Python SDK works against NRP, commercial providers, and your own GPU pods.
 ---
 
+::: callout Launch the workspace in JupyterHub
+**[▶ Launch the workspace in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace)** — signs you in at uscms-af.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab with the notebooks for this training.
+:::
+
 ## Overview
 
 The National Research Platform (NRP) makes large language models available to the entire US-CMS community through a managed, OpenAI-compatible inference endpoint. You do **not** need to rent cloud credits, install model weights, or request a GPU — you just point any OpenAI-compatible tool at NRP's URL and authenticate with a personal token.
@@ -87,7 +91,7 @@ Go to [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) and click **Get LLM tok
 Treat your personal token like a password. Do not commit it to git or share it publicly. In notebooks and scripts, read it from an environment variable (`OPENAI_API_KEY`) rather than hard-coding it.
 :::
 
-On the training JupyterHub (`jupyterhub-west.nrp-nautilus.io`), a shared workshop token is pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you do not need to do anything for the exercises. After the workshop, replace the shared token with your personal one.
+On the training JupyterHub (`uscms-af.nrp-nautilus.io`), a shared workshop token is pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you do not need to do anything for the exercises. After the workshop, replace the shared token with your personal one.
 
 ### Step 3: Verify Access
 
