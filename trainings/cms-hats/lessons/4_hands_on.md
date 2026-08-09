@@ -66,8 +66,13 @@ files out of a pod — but the training and analysis Jobs' pods are done
 running by now, and `kubectl cp` needs a *live* container to copy through, so
 those pods no longer work as a source.
 
-`yamls/test-pod.yaml` solves that: a small pod that mounts the same PVC and
-just sleeps, so you have something running to copy through.
+`yamls/test-pod.yaml`, already prepared as `/tmp/pvc-browser-${USER}.yaml`
+back in [Hands-On Prep](3_prep.html#6-prepare-the-pvc-browser-pod), solves
+that: a small pod that mounts the same PVC and just sleeps, so you have
+something running to copy through.
+
+<details>
+<summary><code>yamls/test-pod.yaml</code></summary>
 
 ```yaml
 apiVersion: v1
@@ -95,11 +100,11 @@ spec:
         claimName: cms-nrp-hats-<username>
 ```
 
-Render it and wait for it to be ready:
+</details>
+
+Apply it and wait for it to be ready:
 
 ```bash
-cp yamls/test-pod.yaml /tmp/pvc-browser-${USER}.yaml
-perl -pi -e 's/<username>/$ENV{USER}/g' /tmp/pvc-browser-${USER}.yaml
 kubectl apply -n us-cms -f /tmp/pvc-browser-${USER}.yaml
 kubectl wait --for=condition=Ready pod/test-pod-${USER}-pvc -n us-cms --timeout=60s
 ```
@@ -138,16 +143,11 @@ to pick up the change. Without it, the sweep still runs and still compares
 accuracy vs. model size — it just skips the accuracy-vs-time plot.
 :::
 
-### Prepare the sweep manifests
-
-Same pattern as [Hands-On Prep](3_prep.html): set `IMAGE` again (it's not
-still set from lesson 3 — separate lessons run in separate kernels), then
-template each manifest.
-
-```bash
-export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
-cd ~/cms-hats/workspace
-```
+All three manifests below were already prepared as `/tmp/jet-class-sweep-${USER}.yaml`,
+`/tmp/jet-class-sweep-analysis-${USER}.yaml`, and
+`/tmp/jet-class-sweep-compare-${USER}.yaml` back in [Hands-On
+Prep](3_prep.html#7-prepare-the-sweep-manifests-optional) — shown here for
+reference.
 
 `yamls/jet-class-sweep-job.yaml`. `completions: 4` runs indices `0`-`3`, one
 per model size; `parallelism: 2` caps it at two GPUs in use at once — raise
@@ -155,6 +155,9 @@ or lower that to match how many GPUs your namespace can actually claim at
 the same time. Kubernetes sets `JOB_COMPLETION_INDEX` in each pod
 automatically; the script picks a `MODEL_WIDTHS` value based on it and
 otherwise runs exactly like the single-run Job:
+
+<details>
+<summary><code>yamls/jet-class-sweep-job.yaml</code></summary>
 
 ```yaml
 apiVersion: batch/v1
@@ -175,6 +178,20 @@ spec:
         runAsGroup: 100
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+      - key: nautilus.io/reservation
+        operator: Equal
+        value: nrp
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: nrp-training
+                operator: In
+                values: ["true"]
       containers:
       - name: jet-class-sweep
         image: <YOUR_IMAGE>
@@ -215,10 +232,15 @@ spec:
           claimName: cms-nrp-hats-<username>
 ```
 
+</details>
+
 `yamls/jet-class-sweep-analysis-job.yaml` — same Indexed Job pattern, but
 CPU-only and reusing `analyze_jet_class.py` completely unmodified: it already
 falls back to `JOB_COMPLETION_INDEX` for `RUN_ID`, so each of the 4 pods
 analyzes its own run:
+
+<details>
+<summary><code>yamls/jet-class-sweep-analysis-job.yaml</code></summary>
 
 ```yaml
 apiVersion: batch/v1
@@ -239,6 +261,20 @@ spec:
         runAsGroup: 100
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+      - key: nautilus.io/reservation
+        operator: Equal
+        value: nrp
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: nrp-training
+                operator: In
+                values: ["true"]
       containers:
       - name: jet-class-sweep-analysis
         image: <YOUR_IMAGE>
@@ -260,9 +296,14 @@ spec:
           claimName: cms-nrp-hats-<username>
 ```
 
+</details>
+
 `yamls/jet-class-sweep-compare-job.yaml` — a single CPU job that reads all
 four `metrics.json` files and plots accuracy against model size (and against
 training time, if available):
+
+<details>
+<summary><code>yamls/jet-class-sweep-compare-job.yaml</code></summary>
 
 ```yaml
 apiVersion: batch/v1
@@ -280,6 +321,20 @@ spec:
         runAsGroup: 100
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+      - key: nautilus.io/reservation
+        operator: Equal
+        value: nrp
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: nrp-training
+                operator: In
+                values: ["true"]
       containers:
       - name: jet-class-sweep-compare
         image: <YOUR_IMAGE>
@@ -301,6 +356,9 @@ spec:
               rows.append(m)
           rows.sort(key=lambda m: int(m["run_id"]))
 
+          if not rows:
+              raise SystemExit("No sweep runs found under /training/jet-class/run-<index>/metrics.json")
+
           print(f"{'run':>4}  {'widths':<28} {'params':>10}  {'seconds':>8}  accuracy")
           for m in rows:
               secs = m.get("training_seconds")
@@ -313,16 +371,27 @@ spec:
           ax.set_xscale("log")
           ax.set_xlabel("Model parameters")
           ax.set_ylabel("Test accuracy")
+          ax.set_title("Jet classifier sweep: accuracy vs model size")
+          for m in rows:
+              ax.annotate(f"run {m['run_id']}", (m["model_parameters"], m["accuracy"]))
           fig.tight_layout()
           fig.savefig("/training/jet-class/sweep_comparison.png", dpi=150)
+          print("Wrote /training/jet-class/sweep_comparison.png")
 
           if all(m.get("training_seconds") is not None for m in rows):
               fig, ax = plt.subplots(figsize=(7, 5))
               ax.plot([m["training_seconds"] for m in rows], [m["accuracy"] for m in rows], "o-")
               ax.set_xlabel("Training time [s]")
               ax.set_ylabel("Test accuracy")
+              ax.set_title("Jet classifier sweep: accuracy vs training time")
+              for m in rows:
+                  ax.annotate(f"run {m['run_id']}", (m["training_seconds"], m["accuracy"]))
               fig.tight_layout()
               fig.savefig("/training/jet-class/sweep_time_comparison.png", dpi=150)
+              print("Wrote /training/jet-class/sweep_time_comparison.png")
+          else:
+              print("Skipping accuracy-vs-time plot: some runs are missing training_seconds "
+                    "(rebuild your image from the current jet_class.py to get it)")
         resources:
           requests:
             cpu: "1"
@@ -340,17 +409,7 @@ spec:
           claimName: cms-nrp-hats-<username>
 ```
 
-Template all three:
-
-```bash
-cp yamls/jet-class-sweep-job.yaml /tmp/jet-class-sweep-${USER}.yaml
-cp yamls/jet-class-sweep-analysis-job.yaml /tmp/jet-class-sweep-analysis-${USER}.yaml
-cp yamls/jet-class-sweep-compare-job.yaml /tmp/jet-class-sweep-compare-${USER}.yaml
-perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' \
-  /tmp/jet-class-sweep-${USER}.yaml \
-  /tmp/jet-class-sweep-analysis-${USER}.yaml \
-  /tmp/jet-class-sweep-compare-${USER}.yaml
-```
+</details>
 
 ### Run the sweep
 
@@ -390,14 +449,14 @@ any logged param or metric, no `kubectl cp` needed.
 
 ### Copy the comparison plots locally
 
-Reuses the same PVC-browser pattern as the single-run copy step above — if
-`test-pod-${USER}-pvc` isn't still running, recreate it first:
+Reuses the same PVC-browser pod (and the `/tmp/pvc-browser-${USER}.yaml`
+prepared back in [Hands-On Prep](3_prep.html#6-prepare-the-pvc-browser-pod))
+as the single-run copy step above — if `test-pod-${USER}-pvc` isn't still
+running, recreate it from the same file:
 
 ```bash
 kubectl get pod -n us-cms test-pod-${USER}-pvc || \
-  (cp yamls/test-pod.yaml /tmp/pvc-browser-${USER}.yaml && \
-   perl -pi -e 's/<username>/$ENV{USER}/g' /tmp/pvc-browser-${USER}.yaml && \
-   kubectl apply -n us-cms -f /tmp/pvc-browser-${USER}.yaml && \
+  (kubectl apply -n us-cms -f /tmp/pvc-browser-${USER}.yaml && \
    kubectl wait --for=condition=Ready pod/test-pod-${USER}-pvc -n us-cms --timeout=60s)
 ```
 

@@ -11,7 +11,7 @@ This section introduces NRP as a resource for US-CMS researchers. We will cover 
 ## Get the training materials
 
 **Skip this if you're on the NRP USCMS Analysis Hub** — the hub's launch link
-already clones the repo for you. This step is only for Method 1 (your own
+already clones the repo for you. This step is only for Method 2 (your own
 machine).
 
 Clone the branch containing the files for this training:

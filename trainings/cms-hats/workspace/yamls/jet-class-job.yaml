@@ -12,6 +12,20 @@ spec:
         runAsGroup: 100
         fsGroup: 100
         fsGroupChangePolicy: OnRootMismatch
+      tolerations:
+      - key: nautilus.io/reservation
+        operator: Equal
+        value: nrp
+        effect: NoSchedule
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - key: nrp-training
+                operator: In
+                values: ["true"]
       containers:
       - name: jet-class
         image: <YOUR_IMAGE>
@@ -49,11 +63,3 @@ spec:
       - name: training-storage
         persistentVolumeClaim:
           claimName: cms-nrp-hats-<username>
-
-      # NRP training GPU nodes are reserved/tainted.
-      # This line lets the job run on those nodes.
-      #tolerations:
-      #- key: nautilus.io/reservation
-      #  operator: Equal
-      #  value: nrp
-      #  effect: NoSchedule

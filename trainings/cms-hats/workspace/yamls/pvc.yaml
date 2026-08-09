@@ -4,9 +4,9 @@ metadata:
   name: cms-nrp-hats-<username>
   namespace: us-cms
 spec:
-  storageClassName: rook-ceph-block
+  storageClassName: rook-cephfs
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   resources:
     requests:
       storage: 5Gi

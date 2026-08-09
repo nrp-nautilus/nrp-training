@@ -12,8 +12,10 @@ exercises: 15
 
 This lesson uses the **NRP USCMS Analysis Hub**
 ([uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io)) — the
-JupyterHub-based environment introduced as "Method 2" on the [setup
-page](0_setup.html). CMS data lives on grid storage (EOS, dCache, and
+JupyterHub-based environment introduced as "Method 1" on the [setup
+page](0_setup.html). If you've been using your own machine for the rest of
+this training, this is the lesson where you switch over — there's no local
+install for the tools below. CMS data lives on grid storage (EOS, dCache, and
 friends) protected by the same CERN grid-certificate infrastructure used
 across WLCG. `kubectl` (covered on the setup page via `grid-kube-setup`) gets
 you onto the Nautilus cluster; a **grid certificate** and the short-lived
