@@ -79,6 +79,81 @@ The script uses this file:
 root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root
 ```
 
+`yamls/cms-uproot-job.yaml`:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: cms-uproot-<username>
+  namespace: us-cms
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 0
+        fsGroup: 0
+        fsGroupChangePolicy: OnRootMismatch
+      initContainers:
+      - name: prepare-x509
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - cp /secret/proxy /x509/proxy && chmod 600 /x509/proxy
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: x509-secret
+          mountPath: /secret
+          readOnly: true
+        - name: x509-work
+          mountPath: /x509
+      containers:
+      - name: cms-uproot
+        image: <YOUR_IMAGE>
+        command: ["python3", "/home/jovyan/work/cms_uproot_example.py"]
+        env:
+        - name: X509_USER_PROXY
+          value: /tmp/x509/proxy
+        - name: X509_CERT_DIR
+          value: /etc/grid-security/certificates
+        - name: LOCAL_ROOT_FILE
+          value: /training/cms-data/nanoout_1.root
+        - name: SUMMARY_FILE
+          value: /training/cms-data/cms_uproot_summary.json
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        volumeMounts:
+        - name: x509-work
+          mountPath: /tmp/x509
+          readOnly: true
+        - name: training-storage
+          mountPath: /training
+      volumes:
+      - name: x509-secret
+        secret:
+          secretName: cms-x509-proxy-<username>
+      - name: x509-work
+        emptyDir: {}
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
+```
+
 Create a temporary copy of the Job manifest and replace the placeholders:
 
 ```bash
@@ -111,6 +186,79 @@ container image: [ML/Jupyter pod](https://nrp.ai/documentation/userdocs/jupyter/
 The Jupyter pod uses the same image and X.509 Secret as the Job. This is useful
 for interactively editing the example notebook, but the batch Job above is the
 preferred path for a reproducible tutorial run.
+
+`yamls/cms-jupyter-pod.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cms-jupyter-<username>
+  namespace: us-cms
+spec:
+  restartPolicy: Never
+  securityContext:
+    runAsUser: 1000
+    runAsGroup: 0
+    fsGroup: 0
+    fsGroupChangePolicy: OnRootMismatch
+  initContainers:
+  - name: prepare-x509
+    image: busybox:1.36
+    command:
+    - sh
+    - -c
+    - cp /secret/proxy /x509/proxy && chmod 600 /x509/proxy
+    resources:
+      requests:
+        cpu: 10m
+        memory: 32Mi
+      limits:
+        cpu: 100m
+        memory: 64Mi
+    volumeMounts:
+    - name: x509-secret
+      mountPath: /secret
+      readOnly: true
+    - name: x509-work
+      mountPath: /x509
+  containers:
+  - name: cms-jupyter
+    image: <YOUR_IMAGE>
+    ports:
+    - containerPort: 8888
+    env:
+    - name: X509_USER_PROXY
+      value: /tmp/x509/proxy
+    - name: X509_CERT_DIR
+      value: /etc/grid-security/certificates
+    - name: LOCAL_ROOT_FILE
+      value: /training/cms-data/notebook/nanoout_1.root
+    - name: SUMMARY_FILE
+      value: /training/cms-data/notebook/cms_uproot_summary.json
+    resources:
+      requests:
+        cpu: "2"
+        memory: 4Gi
+      limits:
+        cpu: "2"
+        memory: 4Gi
+    volumeMounts:
+    - name: x509-work
+      mountPath: /tmp/x509
+      readOnly: true
+    - name: training-storage
+      mountPath: /training
+  volumes:
+  - name: x509-secret
+    secret:
+      secretName: cms-x509-proxy-<username>
+  - name: x509-work
+    emptyDir: {}
+  - name: training-storage
+    persistentVolumeClaim:
+      claimName: cms-nrp-hats-<username>
+```
 
 Create a temporary copy of the pod manifest and replace the placeholders:
 

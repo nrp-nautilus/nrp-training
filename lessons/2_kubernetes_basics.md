@@ -12,10 +12,22 @@ exercises: 15
 
 The rest of this training runs Kubernetes Jobs for you — you `kubectl apply` a
 manifest and read the logs. Before that, it helps to see the basic unit those
-Jobs are built from: a **pod**. This short exercise launches a single pod by
-hand and walks through the commands you'll reach for constantly: reading logs,
-running a command inside it, opening an interactive shell, and — when
-something doesn't behave — `describe` and `get events`.
+Jobs are built from: a **pod**, and get comfortable with the handful of
+commands you'll use on every pod and Job for the rest of the day.
+
+**In this exercise you will:**
+
+1. Launch a single pod from a YAML manifest.
+2. Read its logs.
+3. Run a one-off command inside it, then open an interactive shell.
+4. Practice the two commands you reach for the moment something looks
+   wrong — `describe` and `get events`.
+5. Clean up.
+
+Everything here is deliberately small — one pod, no PVC, no image to build —
+so the mechanics stay visible. The jet-classifier exercise later in this
+training reuses every command you learn here, just aimed at a Job instead of
+a bare pod.
 
 ## kubectl flags you'll reach for constantly
 
@@ -107,11 +119,14 @@ kubectl describe pod pod-basics-${USER} -n us-cms          # status + last event
 ```
 
 ```bash
-kubectl get events -n us-cms --sort-by=.metadata.creationTimestamp | tail -20
+kubectl get events -n us-cms --field-selector involvedObject.name=pod-basics-${USER} --sort-by=.metadata.creationTimestamp
 ```
 
-`describe` shows scheduling decisions and container state; `get events` shows
-the namespace timeline. For a **crashlooping** pod, add `--previous` to read
+`describe` shows scheduling decisions and container state; `get events`
+(filtered to just this pod with `--field-selector`) shows its scheduling
+timeline — pulling the image, mounting volumes, starting the container. Drop
+the `--field-selector` to see every event in the namespace instead. For a
+**crashlooping** pod, add `--previous` to read
 the dead container's logs — `kubectl logs <pod> -n us-cms --previous`. On a
 healthy pod it just says *"previous terminated container not found"* — that's
 expected, not an error.
