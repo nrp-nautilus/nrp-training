@@ -5,7 +5,7 @@ exercises: 15
 ---
 
 ::: callout Open the runnable notebook for this episode
-**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F5_cms_data.ipynb)** — most of the certificate setup is interactive terminal work (password prompts), so the notebook mostly points you to a terminal; the data-access steps at the end are runnable cells.
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F5_cms_data.ipynb)** — unlike the rest of this training, this notebook uses a **Python kernel**, not bash, so the uproot/matplotlib analysis at the end plots directly inline instead of saving a file. Shell commands are prefixed with `!`. Most of the certificate setup is interactive terminal work (password prompts), so the notebook mostly points you to a terminal.
 :::
 
 **Time:** 00:00-00:30
@@ -119,45 +119,54 @@ expected and not a failure.
 
 ![Grid certificate import and proxy creation in a hub terminal](images/grid-cert.png)
 
-### 4. Verify it
-
-```bash
-xrdcp root://cmsxrootd.fnal.gov//store/group/lpclonglived/B-ParkingLLPs/keep.txt .
-```
-
-If the copy succeeds, your proxy is good — `~/.globus/x509up` is the default
-location `xrdcp` (and everything below) looks for a proxy, so you don't need
-to set anything explicitly.
-
 ## Access CMS data with uproot
 
-The `xrdcp` step above proved your proxy works. Now use it from Python:
-pull down one real CMS NanoAOD-style file and plot something from it with
-[uproot](https://uproot.readthedocs.io/).
+Use your proxy from Python: pull down one real CMS NanoAOD-style file from
+grid storage and plot something from it with
+[uproot](https://uproot.readthedocs.io/). This also doubles as your proxy
+verification — if the copy below succeeds, your proxy is good.
 
-Copy the file down with `xrdcp`, same as the verification step above:
+🖥️ **Terminal step** — `xrdcp` needs a real terminal here, not a notebook
+cell; run it in the same JupyterLab terminal as the steps above:
 
 ```bash
 xrdcp -f root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root nanoout_1.root
 ```
 
-Open it with uproot and histogram the jet transverse momenta. The hub image
-isn't guaranteed to have the HEP Python stack installed, so this installs
-anything missing into your user site-packages before importing it:
+`~/.globus/x509up` is the default location `xrdcp` looks for a proxy, so you
+don't need to set anything explicitly.
 
-```bash
-python3 <<'PY'
-import importlib
+The notebook for this episode uses a **Python kernel** (unlike the rest of
+this training), so the check below and the plot after it are both plain
+Python cells — no `python3 <<'PY' ... PY` wrapper needed. The hub image
+isn't guaranteed to have the HEP Python stack installed, so check first and
+install into your user site-packages if it's missing:
+
+```python
+import importlib.util
+import os
 import subprocess
 import sys
 
+# cwd=~ avoids a pip bug where it crashes if the process's working directory
+# no longer exists (os.getcwd() -> FileNotFoundError), which can happen on some
+# JupyterHub setups.
+home = os.path.expanduser("~")
 for pkg in ("uproot", "awkward", "matplotlib"):
     if importlib.util.find_spec(pkg) is None:
-        subprocess.run([sys.executable, "-m", "pip", "install", "--user", "--quiet", pkg], check=True)
+        subprocess.run(
+            [sys.executable, "-m", "pip", "install", "--user", "--quiet", pkg],
+            check=True, cwd=home,
+        )
+print("Dependencies ready")
+```
 
+Open it with uproot and histogram the jet transverse momenta, right here in
+the notebook:
+
+```python
+%matplotlib inline
 import awkward as ak
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import uproot
 
@@ -168,14 +177,11 @@ plt.hist(jet_pt, bins=50, range=(0, 200))
 plt.xlabel("Jet $p_T$ [GeV]")
 plt.ylabel("Jets / bin")
 plt.title(f"Jet $p_T$ spectrum ({len(jet_pt)} jets, first 5000 events)")
-plt.savefig("jet_pt.png", dpi=150)
-print(f"Wrote jet_pt.png from {len(jet_pt)} jets")
-PY
+plt.show()
 ```
 
-Open `jet_pt.png` from the JupyterLab file browser on the left to see the
-plot. `Events` is the standard NanoAOD tree name; `uproot.open(...).keys()`
-lists every tree/branch in the file if you want to plot something else
+`Events` is the standard NanoAOD tree name; `uproot.open(...).keys()` lists
+every tree/branch in the file if you want to plot something else
 (`Muon_pt`, `MET_pt`, and similar branches are also in this file).
 
 ## Sharing your proxy with another namespace
