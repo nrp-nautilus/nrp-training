@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # CMS HATS tutorial — check your work.
 #
-#   bash check.sh <episode 1-6> [username]
+#   bash check.sh <episode 1-5> [username]
 #
-# Username comes from $USER, or the second argument. Episode 6 also needs a
+# Username comes from $USER, or the second argument. Episode 5 also needs a
 # .p12 certificate already imported (grid-cert-import) before grid-proxy-init
 # will have anything to check. Resources you already cleaned up show as
 # "not found" — that is fine once you have finished that section.
@@ -80,15 +80,7 @@ case "$EP" in
   ;;
 
 5)
-  need_user
-  echo "Episode 5 — CMS data access ($U)"
-  if kubectl get secret "cms-x509-proxy-$U" -n $NS >/dev/null 2>&1; then ok "secret/cms-x509-proxy-$U exists"
-  else skip "secret/cms-x509-proxy-$U (create it from your X.509 proxy file)"; fi
-  job_check "cms-uproot-$U" "kubectl logs -n $NS job/cms-uproot-$U -f"
-  ;;
-
-6)
-  echo "Episode 6 — NRP USCMS Analysis Hub (grid certificate)"
+  echo "Episode 5 — CMS data access (grid certificate)"
   if [ -f "$HOME/.globus/usercert.pem" ]; then ok "grid certificate imported (~/.globus/usercert.pem)"
   else skip "~/.globus/usercert.pem (run grid-cert-import)"; fi
   if [ -s "$HOME/.globus/x509up" ]; then
@@ -96,10 +88,12 @@ case "$EP" in
       ok "grid proxy present and not yet expired (~/.globus/x509up)"
     else ok "grid proxy present (~/.globus/x509up) — run grid-proxy-init again if it's expired"; fi
   else skip "~/.globus/x509up (run grid-proxy-init)"; fi
+  if [ -f "$HOME/jet_pt.png" ] || [ -f jet_pt.png ]; then ok "jet_pt.png plot created"
+  else skip "jet_pt.png (run the uproot plotting step)"; fi
   ;;
 
 *)
-  echo "usage: bash check.sh <episode 1-6> [username]"; exit 1;;
+  echo "usage: bash check.sh <episode 1-5> [username]"; exit 1;;
 esac
 
 echo

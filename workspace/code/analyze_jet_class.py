@@ -23,6 +23,32 @@ def load_json(path):
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def log_to_mlflow(metadata, accuracy, plot_paths):
+    """Best-effort: resume the run jet_class.py created (if any) and attach
+    the test accuracy plus plots. A down/misconfigured MLflow server should
+    never fail the analysis job itself."""
+    run_id = metadata.get("mlflow_run_id")
+    tracking_uri = metadata.get("mlflow_tracking_uri")
+    if not run_id or not tracking_uri:
+        return
+    try:
+        # Bound how long a dead/unreachable server can stall the job before
+        # the except block below takes over.
+        os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "10")
+        os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "2")
+
+        import mlflow
+
+        mlflow.set_tracking_uri(tracking_uri)
+        with mlflow.start_run(run_id=run_id):
+            mlflow.log_metric("test_accuracy", accuracy)
+            for path in plot_paths:
+                mlflow.log_artifact(str(path))
+        print(f"Logged analysis results to MLflow run {run_id}")
+    except Exception as exc:  # noqa: BLE001 - any MLflow failure must not break analysis
+        print(f"MLflow logging unavailable, continuing without it: {exc}")
+
+
 def plot_feature_distributions(features, labels, classes, feature_names, output):
     fig, axs = plt.subplots(4, 4, figsize=(24, 24))
 
@@ -128,19 +154,28 @@ def main():
     print(f"Accuracy: {accuracy:.4f}")
 
     feature_data = RUN_DIR / "feature_data.npz"
+    plot_paths = []
     if feature_data.is_file():
+        path = RUN_DIR / "feature_distributions.png"
         features = np.load(feature_data)
         plot_feature_distributions(
             features["X"],
             features["y"],
             classes,
             metadata["feature_names"],
-            RUN_DIR / "feature_distributions.png",
+            path,
         )
+        plot_paths.append(path)
 
-    plot_model_history(history, RUN_DIR / "training_history.png")
-    plot_confusion_matrix(y_test, y_pred, classes, RUN_DIR / "confusion_matrix.png")
-    plot_roc(y_test, y_pred, classes, RUN_DIR / "roc_curve.png")
+    history_plot = RUN_DIR / "training_history.png"
+    confusion_plot = RUN_DIR / "confusion_matrix.png"
+    roc_plot = RUN_DIR / "roc_curve.png"
+    plot_model_history(history, history_plot)
+    plot_confusion_matrix(y_test, y_pred, classes, confusion_plot)
+    plot_roc(y_test, y_pred, classes, roc_plot)
+    plot_paths += [history_plot, confusion_plot, roc_plot]
+
+    log_to_mlflow(metadata, accuracy, plot_paths)
 
     metrics = {
         "dataset": metadata["dataset"],
@@ -151,6 +186,8 @@ def main():
         "batch_size": metadata["batch_size"],
         "model_widths": metadata["model_widths"],
         "model_parameters": metadata["model_parameters"],
+        "training_seconds": metadata.get("training_seconds"),
+        "mlflow_run_id": metadata.get("mlflow_run_id"),
         "outputs": sorted(path.name for path in RUN_DIR.iterdir()),
     }
     (RUN_DIR / "metrics.json").write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")

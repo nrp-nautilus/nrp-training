@@ -302,7 +302,7 @@ The login lasts for the rest of your hub session — you don't need to repeat
 this for every new terminal, only after `grid-kube-setup` re-installs the
 kubeconfig or your token expires.
 
-The final lesson of this training, [NRP USCMS Analysis Hub](6_analysis_hub.html),
+The final lesson of this training, [CMS Data Access on NRP](5_cms_data.html),
 covers the hub in more depth, including setting up a grid certificate for
 accessing CMS data.
 

@@ -9,6 +9,8 @@ Credit: Javier Duarte, UCSD, 2023.
 import json
 import os
 import random
+import time
+from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
@@ -42,6 +44,9 @@ MIXED_PRECISION = os.environ.get("MIXED_PRECISION", "1").lower() not in ("0", "f
 TEST_FRACTION = float(os.environ.get("TEST_FRACTION", "0.2"))
 VALIDATION_FRACTION = float(os.environ.get("VALIDATION_FRACTION", "0.25"))
 SAVE_FEATURE_DATA = os.environ.get("SAVE_FEATURE_DATA", "1").lower() not in ("0", "false", "no")
+
+MLFLOW_TRACKING_URI = os.environ.get("MLFLOW_TRACKING_URI", "")
+MLFLOW_EXPERIMENT_NAME = os.environ.get("MLFLOW_EXPERIMENT_NAME", "jet-classifier")
 
 
 def set_reproducible_seed(seed):
@@ -95,6 +100,47 @@ def serializable_history(history):
         name: [float(value) for value in values]
         for name, values in history.history.items()
     }
+
+
+@contextmanager
+def optional_mlflow_run():
+    """Best-effort MLflow run: yields the active run, or None if tracking is
+    unset or unreachable. A down/misconfigured MLflow server should never
+    fail the training job itself."""
+    if not MLFLOW_TRACKING_URI:
+        yield None
+        return
+    try:
+        # Bound how long a dead/unreachable server can stall the job before
+        # the except block below takes over.
+        os.environ.setdefault("MLFLOW_HTTP_REQUEST_TIMEOUT", "10")
+        os.environ.setdefault("MLFLOW_HTTP_REQUEST_MAX_RETRIES", "2")
+
+        import mlflow
+
+        mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+        mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
+        # silent=True: MLflow's autologging is exception-safe by design (a
+        # logging-side failure inside the patched fit() won't break training
+        # itself), but it can also print noisy version-compatibility
+        # warnings we don't need cluttering the training log.
+        mlflow.tensorflow.autolog(log_models=False, silent=True)
+        with mlflow.start_run(run_name=f"run-{RUN_ID}") as run:
+            mlflow.log_params(
+                {
+                    "run_id": RUN_ID,
+                    "seed": SEED,
+                    "epochs": EPOCHS,
+                    "batch_size": BATCH_SIZE,
+                    "learning_rate": LEARNING_RATE,
+                    "model_widths": ",".join(str(w) for w in MODEL_WIDTHS),
+                    "mixed_precision": MIXED_PRECISION,
+                }
+            )
+            yield run
+    except Exception as exc:  # noqa: BLE001 - any MLflow failure must not break training
+        print(f"MLflow logging unavailable, continuing without it: {exc}")
+        yield None
 
 
 def main():
@@ -171,12 +217,20 @@ def main():
     model = build_model(X_train.shape[1], y_onehot.shape[1])
     model.summary()
 
-    history = model.fit(
-        train_ds,
-        epochs=EPOCHS,
-        validation_data=val_ds,
-        verbose=2,
-    )
+    mlflow_run_id = None
+    with optional_mlflow_run() as run:
+        if run is not None:
+            mlflow_run_id = run.info.run_id
+            print(f"MLflow run: {MLFLOW_EXPERIMENT_NAME}/{mlflow_run_id} ({MLFLOW_TRACKING_URI})")
+
+        train_start = time.time()
+        history = model.fit(
+            train_ds,
+            epochs=EPOCHS,
+            validation_data=val_ds,
+            verbose=2,
+        )
+        training_seconds = time.time() - train_start
 
     y_pred = model.predict(test_ds, verbose=0)
     model_path = RUN_DIR / "jet_classifier.keras"
@@ -207,9 +261,13 @@ def main():
         "learning_rate": LEARNING_RATE,
         "model_widths": list(MODEL_WIDTHS),
         "model_parameters": int(model.count_params()),
+        "training_seconds": round(training_seconds, 1),
         "mixed_precision": mixed_precision.global_policy().name,
         "tensorflow_version": tf.__version__,
         "gpus": gpus,
+        "mlflow_tracking_uri": MLFLOW_TRACKING_URI or None,
+        "mlflow_experiment": MLFLOW_EXPERIMENT_NAME if mlflow_run_id else None,
+        "mlflow_run_id": mlflow_run_id,
         "outputs": sorted(path.name for path in RUN_DIR.iterdir()),
     }
     (RUN_DIR / "metadata.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")

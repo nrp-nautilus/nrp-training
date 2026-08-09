@@ -87,8 +87,7 @@ cd ~/cms-hats/workspace
 The hands-on jobs write their outputs to one persistent volume claim (PVC) for
 the whole training. You only need to create this PVC once. If you need more
 space later, the storage request can be increased, but it cannot be decreased.
-The jet classifier examples write under `/training/jet-class`; the CMS data
-access example writes under `/training/cms-data`.
+The jet classifier examples write under `/training/jet-class`.
 
 `yamls/pvc.yaml`:
 
@@ -227,6 +226,10 @@ spec:
           value: "4096,4096,2048,1024"
         - name: MIXED_PRECISION
           value: "1"
+        - name: MLFLOW_TRACKING_URI
+          value: http://mlflow.us-cms-af.svc.cluster.local:5000
+        - name: MLFLOW_EXPERIMENT_NAME
+          value: jet-classifier-<username>
         resources:
           requests:
             cpu: "4"
@@ -245,6 +248,49 @@ spec:
         persistentVolumeClaim:
           claimName: cms-nrp-hats-<username>
 ```
+
+### MLflow tracking
+
+The training and analysis scripts log to the shared
+[MLflow](https://us-cms-mlflow.nrp-nautilus.io) instance running in the
+cluster — the Job manifest above points at its **in-cluster** address
+(`http://mlflow.us-cms-af.svc.cluster.local:5000`), which reaches the
+tracking server directly and skips the SSO login the external URL requires.
+Params (model widths, batch size, learning rate, ...), per-epoch loss and
+accuracy, final test accuracy, and the analysis plots all show up under an
+experiment named `jet-classifier-<your username>`, so runs from different
+people in the training don't mix together. Open the [MLflow
+UI](https://us-cms-mlflow.nrp-nautilus.io) (this one does need your SSO
+login) in a browser to see them.
+
+This is entirely best-effort: if `MLFLOW_TRACKING_URI` is unset or the
+server is unreachable, both scripts print a warning and keep going — a
+flaky or down MLflow instance never fails the actual exercise.
+
+### Training parameters
+
+`jet_class.py` reads all of these from environment variables. The Job manifest
+above sets the ones that matter most for GPU utilization explicitly; the rest
+fall back to the script's defaults. The full ~830,000-jet dataset is always
+loaded in every run — there's no sampling or truncation, so "run on the full
+dataset" isn't a separate mode to switch on.
+
+| Variable | Default | Description |
+| --- | --- | --- |
+| `DATASET` | `hls4ml_lhc_jets_hlf` | OpenML dataset name. Always fetched in full — no row limit. |
+| `EPOCHS` | `50` | Passes over the full training split. |
+| `BATCH_SIZE` | `8192` | Rows per gradient step. Larger batches mean fewer, bigger matmuls per epoch. |
+| `LEARNING_RATE` | `0.001` | Adam optimizer step size. |
+| `MODEL_WIDTHS` | `4096,4096,2048,1024` | Comma-separated hidden layer sizes for the dense classifier — the main lever on model size (and GPU work per step). |
+| `MIXED_PRECISION` | `1` | Trains in `mixed_float16` when truthy; set to `0` to force full `float32`. |
+| `SEED` | `42` | Base random seed; offset by `RUN_ID` when `RUN_ID` is numeric (used for multi-run sweeps). |
+| `TEST_FRACTION` | `0.2` | Fraction of jets held out as the test split. |
+| `VALIDATION_FRACTION` | `0.25` | Fraction of the remaining train+val jets held out for validation. |
+| `SAVE_FEATURE_DATA` | `1` | Also writes the raw feature/label arrays to `feature_data.npz`, used by the analysis job's feature-distribution plot. |
+| `MLFLOW_TRACKING_URI` | unset (disabled) | MLflow tracking server URL. Unset or unreachable disables tracking entirely — training still runs and writes local outputs either way. |
+| `MLFLOW_EXPERIMENT_NAME` | `jet-classifier` | MLflow experiment name runs are grouped under. |
+| `RUN_ID` | `single` (falls back to `JOB_COMPLETION_INDEX`) | Names the run's output subdirectory (`run-<RUN_ID>`) and offsets `SEED` when numeric. |
+| `OUTPUT_DIR` | `/training/jet-class` | Where run directories are written on the shared PVC. |
 
 Make a temporary copy of the training manifest and replace the placeholders:
 

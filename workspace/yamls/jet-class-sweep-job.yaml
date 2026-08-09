@@ -33,6 +33,10 @@ spec:
           value: "8192"
         - name: MIXED_PRECISION
           value: "1"
+        - name: MLFLOW_TRACKING_URI
+          value: http://mlflow.us-cms-af.svc.cluster.local:5000
+        - name: MLFLOW_EXPERIMENT_NAME
+          value: jet-classifier-sweep-<username>
         resources:
           requests:
             cpu: "4"
