@@ -201,8 +201,8 @@ spec:
           runAsGroup: 0
         resources:
           requests:
-            cpu: 10m
-            memory: 32Mi
+            cpu: 100m
+            memory: 64Mi
           limits:
             cpu: 100m
             memory: 64Mi
@@ -301,8 +301,8 @@ spec:
           runAsGroup: 0
         resources:
           requests:
-            cpu: 10m
-            memory: 32Mi
+            cpu: 100m
+            memory: 64Mi
           limits:
             cpu: 100m
             memory: 64Mi
@@ -378,8 +378,8 @@ spec:
           runAsGroup: 0
         resources:
           requests:
-            cpu: 10m
-            memory: 32Mi
+            cpu: 100m
+            memory: 64Mi
           limits:
             cpu: 100m
             memory: 64Mi
