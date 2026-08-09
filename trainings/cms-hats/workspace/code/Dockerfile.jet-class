@@ -5,7 +5,9 @@ WORKDIR /workspace
 
 COPY code/jet_class.py code/analyze_jet_class.py /workspace/
 
-RUN chmod +x /workspace/jet_class.py /workspace/analyze_jet_class.py \
+RUN pip install --no-cache-dir mlflow \
+    && pip install --no-cache-dir "protobuf>=3.20.3,<5" \
+    && chmod +x /workspace/jet_class.py /workspace/analyze_jet_class.py \
     && mkdir -p /training/jet-class /tmp/openml \
     && chown -R 1000:100 /workspace /training /tmp/openml
 

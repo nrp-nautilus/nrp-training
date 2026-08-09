@@ -1,333 +1,221 @@
 ---
 title: CMS Data Access on NRP
-teaching: 20
-exercises: 20
+teaching: 15
+exercises: 15
 ---
 
 ::: callout Open the runnable notebook for this episode
-**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F5_cms_data.ipynb)** — every command below is a Shift+Enter cell.
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F5_cms_data.ipynb)** — most of the certificate setup is interactive terminal work (password prompts), so the notebook mostly points you to a terminal; the data-access steps at the end are runnable cells.
 :::
 
-**Time:** 00:00-00:40
+**Time:** 00:00-00:30
 
-In this section we will run a CMS-focused Kubernetes Job on NRP, mount an X.509
-proxy as a Kubernetes Secret, use `xrdcp` to access a CMS ROOT file, and inspect
-the file with `uproot`.
+This lesson uses the **NRP USCMS Analysis Hub**
+([uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io)) — the
+JupyterHub-based environment introduced as "Method 2" on the [setup
+page](0_setup.html). CMS data lives on grid storage (EOS, dCache, and
+friends) protected by the same CERN grid-certificate infrastructure used
+across WLCG. `kubectl` (covered on the setup page via `grid-kube-setup`) gets
+you onto the Nautilus cluster; a **grid certificate** and the short-lived
+**X.509 proxy** derived from it are what get *you* into CMS data. This lesson
+sets one up, then uses it to pull a real CMS file and make a plot.
 
-## Create an X.509 proxy secret
+## Setting up your grid certificate
 
-Start with an X.509 proxy file you copied from Fermilab LPC or CERN lxplus onto
-the machine where you run `kubectl`. If you don't already have one, the final
-lesson, [NRP USCMS Analysis Hub](6_analysis_hub.html), covers generating a
-proxy directly from your grid certificate on the hub instead.
+You'll need your CERN grid certificate exported as a **`.p12`** file (from CERN's
+certificate portal or your browser's certificate manager — this is the same
+file you'd use to set up a browser certificate for CERN SSO).
 
-```bash
-export USER=<username>
-export X509_PROXY_FILE=/tmp/<x509-proxy-file>
-```
+### 1. Upload the `.p12` file
 
-Create or update a Kubernetes Secret containing the proxy:
+Drag your `.p12` file into the JupyterLab file browser on the left (or use the
+**Upload** button). It only needs to live there for the import step below —
+you can delete it from the file browser afterward.
 
-```bash
-kubectl create secret generic cms-x509-proxy-${USER} \
-  --from-file=proxy="${X509_PROXY_FILE}" \
-  -n us-cms \
-  --dry-run=client -o yaml | kubectl apply -f -
-```
+### 2. Import the certificate
 
-The Job template mounts this secret and copies it to `/tmp/x509/proxy`, which is
-then exposed to tools through:
+🖥️ **Terminal step** — open a terminal in JupyterLab and run:
 
 ```bash
-export X509_USER_PROXY=/tmp/x509/proxy
+grid-cert-import
 ```
 
-## Build the CMS data image
+You'll be asked for two things:
 
-The image starts from Rocky Linux 9, installs OSG CA certificates and the XRootD
-client tools, then installs Python packages for ROOT-file inspection. The same
-image also includes JupyterLab for the optional interactive example below.
+1. **The import password** — the one you chose when exporting the `.p12` file.
+2. **A PEM pass phrase** — this protects the key at rest on the hub. You'll type
+   it every time you create a proxy, so keeping it the same as the import
+   password is fine and avoids confusion.
 
-From `workspace/`, build and push the image:
-
-```bash
-export IMAGE=ghcr.io/<github-user-or-org>/cms-xrootd-uproot:0.1
-docker build --platform linux/amd64 -f code/Dockerfile.cms-data -t "$IMAGE" .
-docker push "$IMAGE"
-```
-
-If the image is hosted on GHCR, make sure the package is public or create an
-image pull secret. For this tutorial, a public image is simpler.
-
-## Run the CMS data Job
-
-This Job uses the shared training PVC created in the hands-on prep lesson:
-
-```bash
-kubectl get pvc -n us-cms cms-nrp-hats-${USER}
-```
-
-The Job runs `cms_uproot_example.py`. The script checks the mounted X.509 proxy,
-copies the CMS ROOT file into the container with `xrdcp`, opens the local copy
-with `uproot`, prints the ROOT keys, identifies a tree, and reads a small set of
-branches. The Job mounts the shared training PVC at `/training` and writes the
-ROOT file plus summary under `/training/cms-data`.
-
-The script uses this file:
+<details>
+<summary>Expected output</summary>
 
 ```text
-root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root
+jovyan@jupyter-...:~$ grid-cert-import
+Importing: /home/jovyan/myCertificate.p12
+  existing usercert.pem -> usercert.pem.20260804150152.bak
+  existing userkey.pem -> userkey.pem.20260804150152.bak
+
+You will be asked for:
+  1. the import password  -- the one you chose when exporting the .p12
+  2. a PEM pass phrase    -- this protects the key at rest on NRP.
+     You will type it every time you create a proxy. Keeping it the same
+     as the import password is fine and avoids confusion.
+
+Enter Import Password:
+Enter Import Password:
+Enter PEM pass phrase:
+Verifying - Enter PEM pass phrase:
+
+Installed:
+  subject=DC=ch, DC=cern, OU=Organic Units, OU=Users, CN=ddiaz, CN=821822, CN=Daniel Diaz
+  notBefore=Aug  4 05:43:37 2026 GMT
+  notAfter=Sep  8 05:43:37 2027 GMT
+
+Next:   grid-proxy-init
 ```
+</details>
 
-`yamls/cms-uproot-job.yaml`:
+### 3. Create your proxy
 
-```yaml
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: cms-uproot-<username>
-  namespace: us-cms
-spec:
-  backoffLimit: 0
-  template:
-    spec:
-      restartPolicy: Never
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 0
-        fsGroup: 0
-        fsGroupChangePolicy: OnRootMismatch
-      initContainers:
-      - name: prepare-x509
-        image: busybox:1.36
-        command:
-        - sh
-        - -c
-        - cp /secret/proxy /x509/proxy && chmod 600 /x509/proxy
-        resources:
-          requests:
-            cpu: 10m
-            memory: 32Mi
-          limits:
-            cpu: 100m
-            memory: 64Mi
-        volumeMounts:
-        - name: x509-secret
-          mountPath: /secret
-          readOnly: true
-        - name: x509-work
-          mountPath: /x509
-      containers:
-      - name: cms-uproot
-        image: <YOUR_IMAGE>
-        command: ["python3", "/home/jovyan/work/cms_uproot_example.py"]
-        env:
-        - name: X509_USER_PROXY
-          value: /tmp/x509/proxy
-        - name: X509_CERT_DIR
-          value: /etc/grid-security/certificates
-        - name: LOCAL_ROOT_FILE
-          value: /training/cms-data/nanoout_1.root
-        - name: SUMMARY_FILE
-          value: /training/cms-data/cms_uproot_summary.json
-        resources:
-          requests:
-            cpu: "2"
-            memory: 4Gi
-          limits:
-            cpu: "2"
-            memory: 4Gi
-        volumeMounts:
-        - name: x509-work
-          mountPath: /tmp/x509
-          readOnly: true
-        - name: training-storage
-          mountPath: /training
-      volumes:
-      - name: x509-secret
-        secret:
-          secretName: cms-x509-proxy-<username>
-      - name: x509-work
-        emptyDir: {}
-      - name: training-storage
-        persistentVolumeClaim:
-          claimName: cms-nrp-hats-<username>
-```
-
-Create a temporary copy of the Job manifest and replace the placeholders:
+🖥️ **Terminal step**:
 
 ```bash
-cd ~/cms-hats/workspace
-cp yamls/cms-uproot-job.yaml /tmp/cms-uproot-${USER}.yaml
-perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' /tmp/cms-uproot-${USER}.yaml
+grid-proxy-init
 ```
 
-Apply the Job and watch the logs:
+This prompts for the PEM pass phrase from the step above, contacts the CMS
+VOMS server, and writes a short-lived proxy to `~/.globus/x509up`.
 
-```bash
-kubectl delete job -n us-cms cms-uproot-${USER} --ignore-not-found
-kubectl apply -n us-cms -f /tmp/cms-uproot-${USER}.yaml
-kubectl get jobs,pods -n us-cms
-kubectl logs -n us-cms job/cms-uproot-${USER} -f
-```
-
-Check the final Job state:
-
-```bash
-kubectl get job -n us-cms cms-uproot-${USER}
-```
-
-## Experimental: Jupyter pod
-
-The NRP documentation generally recommends JupyterHub for quick interactive
-work, but also documents running your own Jupyter pod when you need a custom
-container image: [ML/Jupyter pod](https://nrp.ai/documentation/userdocs/jupyter/jupyter-pod/).
-
-The Jupyter pod uses the same image and X.509 Secret as the Job. This is useful
-for interactively editing the example notebook, but the batch Job above is the
-preferred path for a reproducible tutorial run.
-
-`yamls/cms-jupyter-pod.yaml`:
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-  name: cms-jupyter-<username>
-  namespace: us-cms
-spec:
-  restartPolicy: Never
-  securityContext:
-    runAsUser: 1000
-    runAsGroup: 0
-    fsGroup: 0
-    fsGroupChangePolicy: OnRootMismatch
-  initContainers:
-  - name: prepare-x509
-    image: busybox:1.36
-    command:
-    - sh
-    - -c
-    - cp /secret/proxy /x509/proxy && chmod 600 /x509/proxy
-    resources:
-      requests:
-        cpu: 10m
-        memory: 32Mi
-      limits:
-        cpu: 100m
-        memory: 64Mi
-    volumeMounts:
-    - name: x509-secret
-      mountPath: /secret
-      readOnly: true
-    - name: x509-work
-      mountPath: /x509
-  containers:
-  - name: cms-jupyter
-    image: <YOUR_IMAGE>
-    ports:
-    - containerPort: 8888
-    env:
-    - name: X509_USER_PROXY
-      value: /tmp/x509/proxy
-    - name: X509_CERT_DIR
-      value: /etc/grid-security/certificates
-    - name: LOCAL_ROOT_FILE
-      value: /training/cms-data/notebook/nanoout_1.root
-    - name: SUMMARY_FILE
-      value: /training/cms-data/notebook/cms_uproot_summary.json
-    resources:
-      requests:
-        cpu: "2"
-        memory: 4Gi
-      limits:
-        cpu: "2"
-        memory: 4Gi
-    volumeMounts:
-    - name: x509-work
-      mountPath: /tmp/x509
-      readOnly: true
-    - name: training-storage
-      mountPath: /training
-  volumes:
-  - name: x509-secret
-    secret:
-      secretName: cms-x509-proxy-<username>
-  - name: x509-work
-    emptyDir: {}
-  - name: training-storage
-    persistentVolumeClaim:
-      claimName: cms-nrp-hats-<username>
-```
-
-Create a temporary copy of the pod manifest and replace the placeholders:
-
-```bash
-cd ~/cms-hats/workspace
-cp yamls/cms-jupyter-pod.yaml /tmp/cms-jupyter-${USER}.yaml
-perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' /tmp/cms-jupyter-${USER}.yaml
-```
-
-Apply the pod:
-
-```bash
-kubectl delete pod -n us-cms cms-jupyter-${USER} --ignore-not-found
-kubectl apply -n us-cms -f /tmp/cms-jupyter-${USER}.yaml
-kubectl wait -n us-cms --for=condition=Ready pod/cms-jupyter-${USER} --timeout=10m
-kubectl get pods -n us-cms
-```
-
-Start port forwarding:
-
-```bash
-kubectl port-forward -n us-cms pod/cms-jupyter-${USER} 8888:8888
-```
-
-In another terminal, get the Jupyter token from the pod logs:
-
-```bash
-kubectl logs -n us-cms pod/cms-jupyter-${USER}
-```
-
-Open `http://localhost:8888` in your browser and paste the token from the logs.
-
-### Inspect the CMS file interactively
-
-Open `cms_uproot_example.ipynb` in JupyterLab. The notebook uses this file:
+<details>
+<summary>Expected output</summary>
 
 ```text
-root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root
+jovyan@jupyter-...:~$ grid-proxy-init
+Enter GRID pass phrase for this identity:
+Contacting  voms2-cms-auth.cern.ch:443 [/DC=ch/DC=cern/OU=computers/CN=voms2-cms-auth.cern.ch] "cms"...
+Error contacting  voms-cms-auth.cern.ch:443 for VO cms: voms-cms-auth.cern.ch
+Contacting  voms2-cms-auth.cern.ch:443 [/DC=ch/DC=cern/OU=computers/CN=cms-auth.cern.ch] "cms"...
+Remote VOMS server contacted succesfully.
+
+Created proxy in /home/jovyan/.globus/x509up.
+
+Your proxy is valid until Wed Aug 12 15:02:24 UTC 2026
+
+  /DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=ddiaz/CN=821822/CN=Daniel Diaz/CN=1734779629
+  691198
+  cms
+
+Proxy written to /home/jovyan/.globus/x509up
+To use it from pods in other namespaces:  grid-proxy-publish <namespace> [...]
 ```
+</details>
 
-The notebook first copies the file into the pod with `xrdcp`, then opens the
-local copy with `uproot`.
+A `voms2-...` server occasionally times out on the first attempt (as in the
+transcript above) — `grid-proxy-init` retries automatically, so this is
+expected and not a failure.
 
-You can also test from a terminal in the Jupyter pod:
+![Grid certificate import and proxy creation in a hub terminal](images/grid-cert.png)
+
+### 4. Verify it
 
 ```bash
-echo "$X509_USER_PROXY"
-ls -l "$X509_USER_PROXY"
-xrdcp -f root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root /training/cms-data/notebook/nanoout_1.root
+xrdcp root://cmsxrootd.fnal.gov//store/group/lpclonglived/B-ParkingLLPs/keep.txt .
 ```
+
+If the copy succeeds, your proxy is good — `~/.globus/x509up` is the default
+location `xrdcp` (and everything below) looks for a proxy, so you don't need
+to set anything explicitly.
+
+## Access CMS data with uproot
+
+The `xrdcp` step above proved your proxy works. Now use it from Python:
+pull down one real CMS NanoAOD-style file and plot something from it with
+[uproot](https://uproot.readthedocs.io/).
+
+Copy the file down with `xrdcp`, same as the verification step above:
+
+```bash
+xrdcp -f root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root nanoout_1.root
+```
+
+Open it with uproot and histogram the jet transverse momenta. The hub image
+isn't guaranteed to have the HEP Python stack installed, so this installs
+anything missing into your user site-packages before importing it:
+
+```bash
+python3 <<'PY'
+import importlib
+import subprocess
+import sys
+
+for pkg in ("uproot", "awkward", "matplotlib"):
+    if importlib.util.find_spec(pkg) is None:
+        subprocess.run([sys.executable, "-m", "pip", "install", "--user", "--quiet", pkg], check=True)
+
+import awkward as ak
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import uproot
+
+events = uproot.open("nanoout_1.root")["Events"]
+jet_pt = ak.flatten(events["Jet_pt"].array(entry_stop=5000))
+
+plt.hist(jet_pt, bins=50, range=(0, 200))
+plt.xlabel("Jet $p_T$ [GeV]")
+plt.ylabel("Jets / bin")
+plt.title(f"Jet $p_T$ spectrum ({len(jet_pt)} jets, first 5000 events)")
+plt.savefig("jet_pt.png", dpi=150)
+print(f"Wrote jet_pt.png from {len(jet_pt)} jets")
+PY
+```
+
+Open `jet_pt.png` from the JupyterLab file browser on the left to see the
+plot. `Events` is the standard NanoAOD tree name; `uproot.open(...).keys()`
+lists every tree/branch in the file if you want to plot something else
+(`Muon_pt`, `MET_pt`, and similar branches are also in this file).
+
+## Sharing your proxy with another namespace
+
+Your proxy lives at `~/.globus/x509up` on the hub, but Kubernetes Jobs run in a
+namespace and can't reach your home directory directly. `grid-proxy-publish`
+copies your proxy into a namespace as a Secret, so Jobs there can mount it and
+use it the same way you just used it from the terminal:
+
+```bash
+grid-proxy-publish <namespace>
+```
+
+::: danger[Only publish to your own personal namespace]
+**Never** run `grid-proxy-publish` against a shared or team namespace — only
+your own personal one.
+
+Any member of a namespace can read that namespace's Secrets. If you publish
+your proxy to a shared namespace, every other member can use *your* proxy —
+acting as you against CMS grid storage — without your knowledge. Since a grid
+proxy is tied to your personal identity and the CERN Certificate Authority's
+usage policy holds *you* responsible for whatever it's used for, sharing
+access this way is a policy violation even if nothing goes wrong technically.
+
+If a Job in a shared namespace needs grid data access, have the person who
+runs that Job publish their **own** proxy there — don't publish yours on
+their behalf.
+:::
 
 ## Clean up
 
-Delete the batch Job:
+Proxies are short-lived by design (the transcript above expires in about a
+week), so there's nothing to revoke. Remove the file you copied down:
 
 ```bash
-kubectl delete job -n us-cms cms-uproot-${USER}
+rm -f nanoout_1.root
 ```
 
-If you started the experimental Jupyter pod, stop the port-forward with
-`Ctrl-C`, then delete the pod:
-
-
-```bash
-kubectl delete pod -n us-cms cms-jupyter-${USER}
-```
-
-Keep or delete the secret depending on whether you plan to reuse it:
+If you published a proxy to a namespace you don't want it in anymore, find
+the Secret `grid-proxy-publish` created and delete it:
 
 ```bash
-kubectl delete secret -n us-cms cms-x509-proxy-${USER}
+kubectl get secrets -n <namespace>
+kubectl delete secret -n <namespace> <secret-name>
 ```

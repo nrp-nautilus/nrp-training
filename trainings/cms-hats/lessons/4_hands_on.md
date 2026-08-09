@@ -116,3 +116,303 @@ You should now have `jet_classifier.keras`, the metrics/history JSON files,
 and the PNG plots (`confusion_matrix.png`, `roc_curve.png`,
 `training_history.png`, `feature_distributions.png`) sitting in
 `./jet-class-results-${USER}` on your own machine.
+
+## Extension: hyperparameter sweep (optional)
+
+The run above uses one fixed model size. This extension runs the *same*
+training script four times in parallel — as one Kubernetes
+[Indexed Job](https://kubernetes.io/docs/tasks/job/indexed-parallel-processing-static/)
+— at four different model sizes, then compares accuracy against how much GPU
+work each size actually took. It's a better demonstration of GPU utilization
+than the single run above: instead of one job finishing quickly, you get
+multiple GPUs training in parallel and a direct look at the accuracy/compute
+tradeoff.
+
+::: important
+This extension records each run's wall-clock training time in
+`metadata.json`/`metrics.json`. The prebuilt
+`ghcr.io/ddiaz006/cms-hats-jet-class:0.2` image already includes this. If
+you built your own image earlier (before this note was added), rebuild and
+push it again (see [step 4 of Hands-On Prep](3_prep.html#4-the-container-image))
+to pick up the change. Without it, the sweep still runs and still compares
+accuracy vs. model size — it just skips the accuracy-vs-time plot.
+:::
+
+### Prepare the sweep manifests
+
+Same pattern as [Hands-On Prep](3_prep.html): set `IMAGE` again (it's not
+still set from lesson 3 — separate lessons run in separate kernels), then
+template each manifest.
+
+```bash
+export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
+cd ~/cms-hats/workspace
+```
+
+`yamls/jet-class-sweep-job.yaml`. `completions: 4` runs indices `0`-`3`, one
+per model size; `parallelism: 2` caps it at two GPUs in use at once — raise
+or lower that to match how many GPUs your namespace can actually claim at
+the same time. Kubernetes sets `JOB_COMPLETION_INDEX` in each pod
+automatically; the script picks a `MODEL_WIDTHS` value based on it and
+otherwise runs exactly like the single-run Job:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-sweep-<username>
+  namespace: us-cms
+spec:
+  completions: 4
+  parallelism: 2
+  completionMode: Indexed
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-sweep
+        image: <YOUR_IMAGE>
+        command: ["bash", "-c"]
+        args:
+        - |
+          WIDTHS=("512,256" "1024,1024,512" "2048,2048,1024,512" "4096,4096,2048,1024")
+          export MODEL_WIDTHS="${WIDTHS[$JOB_COMPLETION_INDEX]}"
+          echo "Sweep index $JOB_COMPLETION_INDEX -> MODEL_WIDTHS=$MODEL_WIDTHS"
+          exec python /workspace/jet_class.py
+        env:
+        - name: EPOCHS
+          value: "50"
+        - name: BATCH_SIZE
+          value: "8192"
+        - name: MIXED_PRECISION
+          value: "1"
+        - name: MLFLOW_TRACKING_URI
+          value: http://mlflow.us-cms-af.svc.cluster.local:5000
+        - name: MLFLOW_EXPERIMENT_NAME
+          value: jet-classifier-sweep-<username>
+        resources:
+          requests:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
+```
+
+`yamls/jet-class-sweep-analysis-job.yaml` — same Indexed Job pattern, but
+CPU-only and reusing `analyze_jet_class.py` completely unmodified: it already
+falls back to `JOB_COMPLETION_INDEX` for `RUN_ID`, so each of the 4 pods
+analyzes its own run:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-sweep-analysis-<username>
+  namespace: us-cms
+spec:
+  completions: 4
+  parallelism: 4
+  completionMode: Indexed
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-sweep-analysis
+        image: <YOUR_IMAGE>
+        command: ["python", "/workspace/analyze_jet_class.py"]
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
+```
+
+`yamls/jet-class-sweep-compare-job.yaml` — a single CPU job that reads all
+four `metrics.json` files and plots accuracy against model size (and against
+training time, if available):
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-sweep-compare-<username>
+  namespace: us-cms
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-sweep-compare
+        image: <YOUR_IMAGE>
+        command: ["python", "-c"]
+        args:
+        - |
+          import glob
+          import json
+
+          import matplotlib
+          matplotlib.use("Agg")
+          import matplotlib.pyplot as plt
+
+          rows = []
+          for path in sorted(glob.glob("/training/jet-class/run-*/metrics.json")):
+              m = json.load(open(path))
+              if not m["run_id"].isdigit():
+                  continue
+              rows.append(m)
+          rows.sort(key=lambda m: int(m["run_id"]))
+
+          print(f"{'run':>4}  {'widths':<28} {'params':>10}  {'seconds':>8}  accuracy")
+          for m in rows:
+              secs = m.get("training_seconds")
+              secs_str = f"{secs:.1f}" if secs is not None else "n/a"
+              print(f"{m['run_id']:>4}  {','.join(str(w) for w in m['model_widths']):<28} "
+                    f"{m['model_parameters']:>10,}  {secs_str:>8}  {m['accuracy']:.4f}")
+
+          fig, ax = plt.subplots(figsize=(7, 5))
+          ax.plot([m["model_parameters"] for m in rows], [m["accuracy"] for m in rows], "o-")
+          ax.set_xscale("log")
+          ax.set_xlabel("Model parameters")
+          ax.set_ylabel("Test accuracy")
+          fig.tight_layout()
+          fig.savefig("/training/jet-class/sweep_comparison.png", dpi=150)
+
+          if all(m.get("training_seconds") is not None for m in rows):
+              fig, ax = plt.subplots(figsize=(7, 5))
+              ax.plot([m["training_seconds"] for m in rows], [m["accuracy"] for m in rows], "o-")
+              ax.set_xlabel("Training time [s]")
+              ax.set_ylabel("Test accuracy")
+              fig.tight_layout()
+              fig.savefig("/training/jet-class/sweep_time_comparison.png", dpi=150)
+        resources:
+          requests:
+            cpu: "1"
+            memory: 2Gi
+          limits:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
+```
+
+Template all three:
+
+```bash
+cp yamls/jet-class-sweep-job.yaml /tmp/jet-class-sweep-${USER}.yaml
+cp yamls/jet-class-sweep-analysis-job.yaml /tmp/jet-class-sweep-analysis-${USER}.yaml
+cp yamls/jet-class-sweep-compare-job.yaml /tmp/jet-class-sweep-compare-${USER}.yaml
+perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' \
+  /tmp/jet-class-sweep-${USER}.yaml \
+  /tmp/jet-class-sweep-analysis-${USER}.yaml \
+  /tmp/jet-class-sweep-compare-${USER}.yaml
+```
+
+### Run the sweep
+
+```bash
+kubectl delete job -n us-cms jet-class-sweep-${USER} --ignore-not-found  # precaution: Jobs are immutable
+kubectl apply -n us-cms -f /tmp/jet-class-sweep-${USER}.yaml
+kubectl get jobs,pods -n us-cms
+```
+
+```bash
+kubectl wait -n us-cms --for=condition=Complete job/jet-class-sweep-${USER} --timeout=30m
+```
+
+Then the per-run analysis, then the comparison:
+
+```bash
+kubectl delete job -n us-cms jet-class-sweep-analysis-${USER} --ignore-not-found
+kubectl apply -n us-cms -f /tmp/jet-class-sweep-analysis-${USER}.yaml
+kubectl wait -n us-cms --for=condition=Complete job/jet-class-sweep-analysis-${USER} --timeout=10m
+
+kubectl delete job -n us-cms jet-class-sweep-compare-${USER} --ignore-not-found
+kubectl apply -n us-cms -f /tmp/jet-class-sweep-compare-${USER}.yaml
+kubectl wait -n us-cms --for=condition=Complete job/jet-class-sweep-compare-${USER} --timeout=5m
+kubectl logs -n us-cms job/jet-class-sweep-compare-${USER}
+```
+
+The logged table shows model size, parameter count, training time (if
+available), and accuracy side by side for all four runs.
+
+If you set `MLFLOW_TRACKING_URI` (see [MLflow tracking](3_prep.html#mlflow-tracking)
+in Hands-On Prep), all four sweep runs land in the
+`jet-classifier-sweep-<your username>` experiment. Open the [MLflow
+UI](https://us-cms-mlflow.nrp-nautilus.io) and use its built-in **Compare
+Runs** view for the same accuracy-vs-model-size comparison the
+`sweep_comparison.png` plot above gives you, but interactively — sortable by
+any logged param or metric, no `kubectl cp` needed.
+
+### Copy the comparison plots locally
+
+Reuses the same PVC-browser pattern as the single-run copy step above — if
+`test-pod-${USER}-pvc` isn't still running, recreate it first:
+
+```bash
+kubectl get pod -n us-cms test-pod-${USER}-pvc || \
+  (cp yamls/test-pod.yaml /tmp/pvc-browser-${USER}.yaml && \
+   perl -pi -e 's/<username>/$ENV{USER}/g' /tmp/pvc-browser-${USER}.yaml && \
+   kubectl apply -n us-cms -f /tmp/pvc-browser-${USER}.yaml && \
+   kubectl wait --for=condition=Ready pod/test-pod-${USER}-pvc -n us-cms --timeout=60s)
+```
+
+```bash
+kubectl cp us-cms/test-pod-${USER}-pvc:/training/jet-class/sweep_comparison.png ./sweep_comparison-${USER}.png
+kubectl cp us-cms/test-pod-${USER}-pvc:/training/jet-class/sweep_time_comparison.png ./sweep_time_comparison-${USER}.png 2>/dev/null || true
+kubectl delete pod -n us-cms test-pod-${USER}-pvc
+```
+
+The second `kubectl cp` is expected to fail (and is ignored) if you're on the
+prebuilt image without `training_seconds` — you'll still have
+`sweep_comparison.png`.
+
+### Clean up
+
+```bash
+kubectl delete job -n us-cms jet-class-sweep-${USER} jet-class-sweep-analysis-${USER} jet-class-sweep-compare-${USER} --ignore-not-found
+```

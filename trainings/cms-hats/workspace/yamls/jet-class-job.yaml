@@ -28,6 +28,10 @@ spec:
           value: "4096,4096,2048,1024"
         - name: MIXED_PRECISION
           value: "1"
+        - name: MLFLOW_TRACKING_URI
+          value: http://mlflow.us-cms-af.svc.cluster.local:5000
+        - name: MLFLOW_EXPERIMENT_NAME
+          value: jet-classifier-<username>
         resources:
           requests:
             cpu: "4"

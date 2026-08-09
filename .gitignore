@@ -1,5 +1,6 @@
 # Generated site — CI rebuilds it on every push, so don't commit it.
 /site/
+trainings/cms-hats/slides/intro.md
 
 # Python cruft
 __pycache__/

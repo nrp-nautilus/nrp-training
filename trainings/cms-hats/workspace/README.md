@@ -4,8 +4,8 @@ Files attendees open or run during the training, launched via nbgitpuller on
 the NRP USCMS Analysis Hub.
 
 - `notebooks/` — the runnable Jupyter notebook for each lesson, plus
-  `cms_uproot_example.ipynb` (opened inside the optional CMS-data Jupyter pod,
-  not launched from the hub directly).
+  `dask_hep_example.ipynb` (exploratory, Python kernel — not yet a numbered
+  lesson, not launched from the setup/lesson pages).
 - `code/` — Dockerfiles and the Python scripts they package
-  (`jet_class.py`, `analyze_jet_class.py`, `cms_uproot_example.py`).
+  (`jet_class.py`, `analyze_jet_class.py`).
 - `yamls/` — Kubernetes manifests, Helm values, and related YAML files.
