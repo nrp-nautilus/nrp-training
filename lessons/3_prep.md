@@ -158,7 +158,7 @@ Docker image, so the image needs a registry name that the cluster can pull.
 
 You can use the prepare image 
 ```bash
-export IMAGE=ghcr.io/ddiaz006/cms-hats-jet-class:0.2
+export IMAGE=ghcr.io/ddiaz006/cms-hats-jet-class:0.3
 ```
 
 Or, you can build your own. 
@@ -168,13 +168,13 @@ Or, you can build your own.
 Use a name like:
 
 ```text
-ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
+ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.3
 ```
 
 From the `workspace/` directory, set the image name:
 
 ```bash
-export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
+export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.3
 ```
 
 For most Linux/Intel systems:
@@ -213,7 +213,7 @@ Set the image name. Use the same `USER` value from the previous step so your Job
 uses the shared PVC you created above.
 
 ```bash
-export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
+export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.3
 cd ~/cms-hats/workspace
 ```
 
@@ -274,6 +274,8 @@ spec:
           value: single
         - name: OUTPUT_DIR
           value: /training/jet-class
+        - name: OPENML_CACHE_DIR
+          value: /training/openml-cache
         - name: EPOCHS
           value: "50"
         - name: BATCH_SIZE
@@ -325,6 +327,32 @@ This is entirely best-effort: if `MLFLOW_TRACKING_URI` is unset or the
 server is unreachable, both scripts print a warning and keep going — a
 flaky or down MLflow instance never fails the actual exercise.
 
+### What to look at in the MLflow UI
+
+The MLflow UI has a lot of surface area for what this exercise actually
+uses, so here's specifically where to look, once you've run the training
+and analysis Jobs in the next lesson:
+
+1. Open the [MLflow UI](https://us-cms-mlflow.nrp-nautilus.io) and click
+   your `jet-classifier-<your username>` experiment in the left sidebar —
+   this lists one row per run.
+2. Click a run's name to open it. The **Overview** tab shows the params
+   (model widths, batch size, learning rate, ...) and status (`FINISHED`
+   once both the training and analysis Jobs have completed for it).
+3. The **Model metrics** tab is where the actual training curves are —
+   `loss`, `accuracy`, `val_loss`, `val_accuracy` per epoch, plus
+   `test_accuracy` once the analysis Job has run. This is the equivalent of
+   `training_history.png`, just interactive.
+4. The **Artifacts** tab has the same plots the analysis Job saves to the
+   PVC (`confusion_matrix.png`, `roc_curve.png`, ...) — useful if you'd
+   rather browse them here than `kubectl cp` them down.
+
+If **Model metrics** looks empty, either the analysis Job for that run
+hasn't finished yet, or MLflow logging failed silently somewhere (check the
+training/analysis Job logs for a `MLflow logging unavailable` or `MLflow
+metric logging failed` line — both are non-fatal by design, so training
+still succeeds either way).
+
 ### Training parameters
 
 `jet_class.py` reads all of these from environment variables. The Job manifest
@@ -349,6 +377,7 @@ dataset" isn't a separate mode to switch on.
 | `MLFLOW_EXPERIMENT_NAME` | `jet-classifier` | MLflow experiment name runs are grouped under. |
 | `RUN_ID` | `single` (falls back to `JOB_COMPLETION_INDEX`) | Names the run's output subdirectory (`run-<RUN_ID>`) and offsets `SEED` when numeric. |
 | `OUTPUT_DIR` | `/training/jet-class` | Where run directories are written on the shared PVC. |
+| `OPENML_CACHE_DIR` | `/training/openml-cache` | Where the ~830,000-jet dataset is cached, on the shared PVC. Every run reuses it once one run has fetched it — without this, each pod would re-download the full dataset into ephemeral pod storage, which can dominate wall-clock time for smaller models and looks like "0% GPU utilization" while it's happening. |
 
 Make a temporary copy of the training manifest and replace the placeholders:
 
@@ -510,7 +539,7 @@ work each size actually took.
 ::: important
 This extension records each run's wall-clock training time in
 `metadata.json`/`metrics.json`. The prebuilt
-`ghcr.io/ddiaz006/cms-hats-jet-class:0.2` image already includes this. If
+`ghcr.io/ddiaz006/cms-hats-jet-class:0.3` image already includes this. If
 you built your own image earlier (before this note was added), rebuild and
 push it again (see [step 4](#4-the-container-image) above) to pick up the
 change. Without it, the sweep still runs and still compares accuracy vs.
@@ -588,6 +617,8 @@ spec:
           echo "Sweep index $JOB_COMPLETION_INDEX -> MODEL_WIDTHS=$MODEL_WIDTHS"
           exec python /workspace/jet_class.py
         env:
+        - name: OPENML_CACHE_DIR
+          value: /training/openml-cache
         - name: EPOCHS
           value: "50"
         - name: BATCH_SIZE

@@ -13,6 +13,37 @@ exercises: 0
 In this section we will use what we learned to run a simple jet classifer training job as a hands-on exercise.
 We will then look at how we can view the results of this jetr classification job and then we will utilize batch jobs to do training sweeps. 
 
+## What makes a Job different from a Pod
+
+Everything from here on runs as a **Job**, not a bare pod like [Kubernetes
+Basics](2_kubernetes_basics.html). The distinction matters:
+
+- A **Pod** you create directly (like `pod-basics.yaml`) runs until you
+  delete it — nothing restarts it, nothing expects it to ever finish.
+- A **Deployment** actively maintains a desired number of replicas forever —
+  if a pod dies, a new one replaces it, indefinitely.
+- A **Job** runs its pod(s) to **completion** and then stops. "Complete"
+  means the container process exited with status 0. Once a Job has as many
+  successful completions as `.spec.completions` asks for (1, unless stated
+  otherwise — the sweep extension later uses 4), the Job is done; it doesn't
+  spin up more pods.
+
+`kubectl get jobs` shows this directly in the `COMPLETIONS` column — `1/1`
+once our training Job below finishes, `0/1` while it's still running.
+
+Two consequences worth knowing before you hit them:
+
+- Every Job manifest here sets `restartPolicy: Never` and `backoffLimit: 0`.
+  If the container fails, Kubernetes does **not** restart it in place — it
+  would normally create a *new* pod to retry, up to `backoffLimit` times;
+  we set that to `0` so a failure surfaces immediately instead of quietly
+  retrying.
+- A finished Job's pod isn't cleaned up automatically — it sticks around in
+  `Completed` phase so you can still read its logs. That's exactly why every
+  `kubectl apply` below is preceded by `kubectl delete job ... --ignore-not-found`:
+  re-applying a Job with the same name while the old (completed) one still
+  exists is a name collision, not an update.
+
 ## Run training and analysis
 
 Run the GPU training job first:
@@ -124,19 +155,54 @@ and the PNG plots (`confusion_matrix.png`, `roc_curve.png`,
 
 ## Extension: hyperparameter sweep (optional)
 
-The run above uses one fixed model size. This extension runs the *same*
-training script four times in parallel — as one Kubernetes
-[Indexed Job](https://kubernetes.io/docs/tasks/job/indexed-parallel-processing-static/)
-— at four different model sizes, then compares accuracy against how much GPU
-work each size actually took. It's a better demonstration of GPU utilization
-than the single run above: instead of one job finishing quickly, you get
-multiple GPUs training in parallel and a direct look at the accuracy/compute
-tradeoff.
+::: important
+**This takes a while — plan around it, don't wait on it.** Even with the
+dataset cached (see [OPENML_CACHE_DIR](3_prep.html#5-prepare-the-yaml) in
+Hands-On Prep), you're training four models across shared cluster GPUs.
+Start it now if you want to see it through, but expect it to still be
+running after the tutorial session ends — that's normal, not a sign
+something is stuck. Everything it produces stays on the PVC either way, so
+you can come back to it later.
+:::
+
+**The objective:** the run above trained one fixed model size and told you
+its accuracy, but not whether that size was actually necessary. This
+extension trains **four** different model sizes on the *same* data and
+compares accuracy against how much GPU work each size cost — so instead of
+"here's a number," you get "here's the accuracy/compute tradeoff across a
+range of sizes," which is closer to what model selection actually looks
+like.
+
+**What changes, and how:** all four runs use the exact same `jet_class.py`
+you already ran — nothing about the training code changes. Only
+`MODEL_WIDTHS` differs between them, from a small `512,256` up to the
+`4096,4096,2048,1024` the single run above used. The four values live in a
+bash array in the Job manifest; each pod picks its own entry using
+`$JOB_COMPLETION_INDEX`, a variable Kubernetes injects automatically into
+every pod of an **Indexed Job** ([Kubernetes
+docs](https://kubernetes.io/docs/tasks/job/indexed-parallel-processing-static/)) —
+index `0` gets the first array entry, index `1` the second, and so on. No
+Python code is different between the four runs, only which array entry the
+shell script exports before calling `python /workspace/jet_class.py`.
+
+**What to expect on the cluster:** three separate Jobs run in sequence,
+producing **9 pods total**:
+
+| Job | Pods | Why |
+| --- | --- | --- |
+| `jet-class-sweep-<username>` (training) | 4 | `completions: 4` — one per model size. `parallelism: 2` runs them two at a time, so two waves of two, not all four GPUs at once. |
+| `jet-class-sweep-analysis-<username>` (analysis) | 4 | `completions: 4`, `parallelism: 4` — CPU-only and cheap, so all four run together instead of waiting in waves. |
+| `jet-class-sweep-compare-<username>` (comparison) | 1 | A single ordinary Job — no `completions`/`parallelism` set, so it defaults to one pod. |
+
+Each Job is **complete** exactly like the single run above: `kubectl get
+jobs` shows `COMPLETIONS` reach `4/4` (or `1/1` for the comparison Job) once
+every pod's container has exited 0 — see [What makes a Job different from a
+Pod](#what-makes-a-job-different-from-a-pod) above if you skipped it.
 
 ::: important
-This extension records each run's wall-clock training time in
+This extension also records each run's wall-clock training time in
 `metadata.json`/`metrics.json`. The prebuilt
-`ghcr.io/ddiaz006/cms-hats-jet-class:0.2` image already includes this. If
+`ghcr.io/ddiaz006/cms-hats-jet-class:0.3` image already includes this. If
 you built your own image earlier (before this note was added), rebuild and
 push it again (see [step 4 of Hands-On Prep](3_prep.html#4-the-container-image))
 to pick up the change. Without it, the sweep still runs and still compares
@@ -220,6 +286,8 @@ spec:
           echo "Sweep index $JOB_COMPLETION_INDEX -> MODEL_WIDTHS=$MODEL_WIDTHS"
           exec python /workspace/jet_class.py
         env:
+        - name: OPENML_CACHE_DIR
+          value: /training/openml-cache
         - name: EPOCHS
           value: "50"
         - name: BATCH_SIZE
@@ -490,13 +558,21 @@ kubectl logs -n us-cms job/jet-class-sweep-compare-${USER}
 The logged table shows model size, parameter count, training time (if
 available), and accuracy side by side for all four runs.
 
-If you set `MLFLOW_TRACKING_URI` (see [MLflow tracking](3_prep.html#mlflow-tracking)
-in Hands-On Prep), all four sweep runs land in the
-`jet-classifier-sweep-<your username>` experiment. Open the [MLflow
-UI](https://us-cms-mlflow.nrp-nautilus.io) and use its built-in **Compare
-Runs** view for the same accuracy-vs-model-size comparison the
-`sweep_comparison.png` plot above gives you, but interactively — sortable by
-any logged param or metric, no `kubectl cp` needed.
+If you set `MLFLOW_TRACKING_URI` (see [What to look at in the MLflow
+UI](3_prep.html#what-to-look-at-in-the-mlflow-ui) in Hands-On Prep), all four
+sweep runs land in the `jet-classifier-sweep-<your username>` experiment —
+the same place, separate from the single run's `jet-classifier-<your
+username>` experiment. To get the same accuracy-vs-model-size comparison the
+`sweep_comparison.png` plot above gives you, but interactive:
+
+1. Open the [MLflow UI](https://us-cms-mlflow.nrp-nautilus.io) and click
+   into `jet-classifier-sweep-<your username>`.
+2. Check the box next to each of the four `run-0` through `run-3` rows.
+3. Click **Compare** above the run list.
+4. On the comparison page, the **Chart** view lets you plot any logged
+   metric (e.g. `test_accuracy`) against any logged param (e.g.
+   `model_widths`) across all four selected runs at once — sortable, no
+   `kubectl cp` needed.
 
 ### Copy the comparison plots locally
 

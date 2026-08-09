@@ -51,6 +51,8 @@ spec:
           value: single
         - name: OUTPUT_DIR
           value: /training/jet-class
+        - name: OPENML_CACHE_DIR
+          value: /training/openml-cache
         - name: EPOCHS
           value: "50"
         - name: BATCH_SIZE
