@@ -10,8 +10,42 @@ exercises: 0
 
 **Time:** 00:00-00:25
 
-In this section we will prepare to run the hands-on exercise 
+In this section we will prepare to run the hands-on exercise: training and
+evaluating a **jet classifier** on NRP GPUs.
 
+## What you're building: a jet classifier
+
+At the LHC, quarks and gluons produced in a collision don't fly out as free
+particles — they fragment and hadronize into a collimated spray of particles
+called a **jet**. Different progenitors leave different fingerprints on that
+spray: gluon and light-quark jets are mostly unstructured, while jets seeded
+by a boosted **W**, **Z**, or top quark carry visible substructure (at least
+one "prong") from the heavier particle's decay products landing inside a
+single jet. Telling these apart — **jet tagging** — is a standard part of
+many LHC analyses, e.g. finding boosted W/Z bosons or top quarks in
+high-energy events.
+
+This exercise trains a classifier to do exactly that, using the
+[`hls4ml_lhc_jets_hlf`](https://www.openml.org/search?type=data&id=42468)
+dataset: roughly 830,000 simulated jets, each labeled as one of five classes
+— gluon (**g**), light quark (**q**), **W**, **Z**, or top quark (**t**) —
+and described by 16 high-level features (energy correlation functions, jet
+mass, particle multiplicity, and related substructure variables) rather than
+raw detector images. That keeps the input small enough to train a plain
+fully-connected neural network directly on tabular data — no convolutions,
+no jet images.
+
+`jet_class.py` scales the network up from a teaching-sized 64→32→32 model to
+`4096→4096→2048→1024` and trains with mixed precision on a GPU, so you'll see
+a real (if short) GPU training job rather than a CPU toy. `analyze_jet_class.py`
+then evaluates the trained model: accuracy, a confusion matrix, ROC curves,
+and feature-distribution plots.
+
+This material is adapted from [Javier Duarte's PHYS 139/239 course at
+UCSD](https://jduarte.physics.ucsd.edu/phys139_239/03_Tabular_Data_NN.html),
+which covers the same exercise — and its extensions, like regularization,
+learning rate, and optimizer choice — in much more depth if you want to go
+further.
 
 ## 1. Clone the training materials
 
@@ -55,6 +89,23 @@ the whole training. You only need to create this PVC once. If you need more
 space later, the storage request can be increased, but it cannot be decreased.
 The jet classifier examples write under `/training/jet-class`; the CMS data
 access example writes under `/training/cms-data`.
+
+`yamls/pvc.yaml`:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: cms-nrp-hats-<username>
+  namespace: us-cms
+spec:
+  storageClassName: rook-ceph-block
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+```
 
 Make a temporary copy of the PVC manifest and replace the username placeholder:
 
@@ -143,6 +194,58 @@ export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
 cd ~/cms-hats/workspace
 ```
 
+`yamls/jet-class-job.yaml`:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-<username>
+  namespace: us-cms
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class
+        image: <YOUR_IMAGE>
+        env:
+        - name: RUN_ID
+          value: single
+        - name: OUTPUT_DIR
+          value: /training/jet-class
+        - name: EPOCHS
+          value: "50"
+        - name: BATCH_SIZE
+          value: "8192"
+        - name: MODEL_WIDTHS
+          value: "4096,4096,2048,1024"
+        - name: MIXED_PRECISION
+          value: "1"
+        resources:
+          requests:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: "4"
+            memory: 8Gi
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
+```
+
 Make a temporary copy of the training manifest and replace the placeholders:
 
 ```bash
@@ -152,3 +255,55 @@ perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' /tmp/jet-c
 
 The manifest creates the GPU training Job, mounts the shared PVC at
 `/training`, and writes jet classifier outputs under `/training/jet-class`.
+
+Do the same for the CPU analysis manifest you'll use once training finishes —
+preparing both now, while `$USER` and `$IMAGE` are set, means the next
+episode is just `kubectl apply`:
+
+`yamls/jet-class-analysis-job.yaml`:
+
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-analysis-<username>
+  namespace: us-cms
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-analysis
+        image: <YOUR_IMAGE>
+        command: ["python", "/workspace/analyze_jet_class.py"]
+        env:
+        - name: RUN_ID
+          value: single
+        - name: OUTPUT_DIR
+          value: /training/jet-class
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
+```
+
+```bash
+cp yamls/jet-class-analysis-job.yaml /tmp/jet-class-analysis-${USER}.yaml
+perl -pi -e 's/<username>/$ENV{USER}/g; s|<YOUR_IMAGE>|$ENV{IMAGE}|g' /tmp/jet-class-analysis-${USER}.yaml
+```

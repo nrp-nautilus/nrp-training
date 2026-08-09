@@ -200,6 +200,26 @@ kubectl config set-context nautilus --namespace <YOUR_NAMESPACE>
 
 </details>
 
+<details>
+<summary><strong>6. Clone the training materials</strong></summary>
+
+Clone the branch containing the files for this training:
+
+```bash
+git clone --branch materials/cms-hats --single-branch https://github.com/nrp-nautilus/nrp-training.git ~/cms-hats
+cd ~/cms-hats/workspace
+```
+
+If you already cloned the training materials, update your local copy instead:
+
+```bash
+cd ~/cms-hats
+git pull
+cd workspace
+```
+
+</details>
+
 </div>
 
 ### CLI Tools

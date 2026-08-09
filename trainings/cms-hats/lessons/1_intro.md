@@ -8,6 +8,26 @@ exercises: 0
 
 This section introduces NRP as a resource for US-CMS researchers. We will cover how to gain access and the basics of how to interact with the cluster. 
 
+## Get the training materials
+
+**Skip this if you're on the NRP USCMS Analysis Hub** — the hub's launch link
+already clones the repo for you. This step is only for Method 1 (your own
+machine).
+
+Clone the branch containing the files for this training:
+
+```bash
+git clone --branch materials/cms-hats --single-branch https://github.com/nrp-nautilus/nrp-training.git ~/cms-hats
+cd ~/cms-hats/workspace
+```
+
+If you already cloned the training materials, update your local copy instead:
+
+```bash
+cd ~/cms-hats
+git pull
+cd workspace
+```
 
 ## Intro slides
 
