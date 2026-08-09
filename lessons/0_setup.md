@@ -11,22 +11,25 @@ Before attending the training session, please ensure you have completed the foll
 
 There are two ways to run the hands-on exercises in this training:
 
-1. **Your own machine (preferred).** You run `kubectl` locally against the Nautilus
-   cluster. This only works if you've completed the setup steps below **before**
-   the session — `kubectl`, `kubelogin`, and your kubeconfig all need to be
-   installed and verified in advance. Do this first if at all possible.
-2. **NRP USCMS Analysis Hub (experimental).** A JupyterHub-based environment with
+1. **NRP USCMS Analysis Hub (recommended).** A JupyterHub-based environment with
    the training materials, `kubectl`, and `kubelogin` already installed — nothing
    to set up on your laptop ahead of time. It still needs one login step done at
-   the start of the session (see below), and it's newer and less battle-tested
-   than running locally, so treat it as a fallback if local setup didn't work out
-   or you're joining last-minute.
+   the start of the session (see below). This is also the only path that works
+   for the whole training: the later CMS Data Access lesson uses hub-only tools
+   (`grid-cert-import`, `grid-proxy-init`) with no local equivalent, so anyone on
+   their own machine ends up switching over for that lesson anyway.
+2. **Your own machine (alternative).** You run `kubectl` locally against the
+   Nautilus cluster. This only works if you've completed the setup steps below
+   **before** the session — `kubectl`, `kubelogin`, and your kubeconfig all need
+   to be installed and verified in advance. Useful if you prefer working in your
+   own local environment, but see the caveats in that section below before
+   committing to it.
 
 Everything past this setup page — namespaces, `kubectl` commands, YAML manifests —
 is identical either way.
 
-Jump to: [Your own machine (preferred)](#method-1-your-own-machine-preferred) ·
-[NRP USCMS Analysis Hub (experimental)](#method-2-nrp-uscms-analysis-hub-experimental)
+Jump to: [NRP USCMS Analysis Hub (recommended)](#method-1-nrp-uscms-analysis-hub-recommended) ·
+[Your own machine (alternative)](#method-2-your-own-machine-alternative)
 
 ### 1. NRP Access Requirements
 
@@ -48,9 +51,93 @@ Jump to: [Your own machine (preferred)](#method-1-your-own-machine-preferred) ·
    Ask Daniel or Martin to add you if you have not been added already
 :::
 
-## Method 1: Your own machine (preferred)
+## Method 1: NRP USCMS Analysis Hub (recommended)
+
+You still need the account and namespace access from
+[NRP Access Requirements](#1-nrp-access-requirements) above — this method just
+skips installing anything on your laptop. `kubectl` and `kubelogin` are
+already installed on the hub image; you only need to point `kubectl` at the
+cluster and log in once per session.
+
+::: callout Launch the workspace in JupyterHub
+**[▶ Launch the workspace on the NRP USCMS Analysis Hub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace)** — signs you in at [uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io), pulls the tutorial workspace, and opens JupyterLab.
+:::
+
+### Get kubectl working in the hub terminal
+
+Open a terminal in JupyterLab (**File → New → Terminal**) and run:
+
+```bash
+grid-kube-setup
+```
+
+This fetches a fresh kubeconfig from `https://nrp.ai/config` and installs it at
+`~/.kube/config` (backing up anything already there). It doesn't log you in by
+itself — the next `kubectl` command you run triggers a device-code login:
+
+```bash
+kubectl get pods -n us-cms
+```
+
+`kubelogin` prints a URL and a short code. Open the URL **on your laptop**,
+enter the code, and the hub terminal picks up the token automatically —
+nothing more to click on the hub side.
+
+<details>
+<summary>Expected output</summary>
+
+```text
+jovyan@jupyter-...:~$ grid-kube-setup
+Fetching   https://nrp.ai/config
+user 'oidc':
+    + --grant-type=device-code
+    + --skip-open-browser
+
+Backed up  /home/jovyan/.kube/config.xxxxxxxxxxx.bak
+Updated    /home/jovyan/.kube/config
+
+Next: run any kubectl command to trigger the login, e.g.
+
+  kubectl get pods
+
+kubelogin will print a URL and a code. Open the URL on your laptop, enter the
+code, and this terminal will pick up the token.
+
+jovyan@jupyter-...:~$ kubectl get pods -n us-cms
+Please visit the following URL in your browser: https://authentik.nrp-nautilus.io/device?code=XXXXXXXXX
+NAME                      READY   STATUS    RESTARTS   AGE
+mlflow-667f8c984c-thzsr   2/2     Running   0          2d22h
+mlflow-postgres-0         1/1     Running   0          10d
+```
+</details>
+
+The login lasts for the rest of your hub session — you don't need to repeat
+this for every new terminal, only after `grid-kube-setup` re-installs the
+kubeconfig or your token expires.
+
+[Kubernetes Basics](2_kubernetes_basics.html), the first hands-on lesson,
+starts with a one-time callout covering the rest of the hub setup (grid
+certificate, proxy, username) — do that once and the rest of the training
+just works.
+
+## Method 2: Your own machine (alternative)
 
 Complete these steps **before** the session — they can't be done live.
+
+::: important
+**You'll still need the Analysis Hub for the last lesson.** [CMS Data Access
+on NRP](5_cms_data.html) uses `grid-cert-import` and `grid-proxy-init`, tools
+built into the Analysis Hub's image with no local install path. If you use
+your own machine for the rest of the training, plan to switch to the Analysis
+Hub for that lesson.
+
+Also watch out for `~`: it means a different directory in each place. On
+your own machine it's your local home directory; in the Analysis Hub's
+JupyterLab terminal it's `/home/jovyan`. A command like `cd ~/cms-hats/workspace`
+lands somewhere different depending on which terminal you're actually typing
+it into — don't copy a command you ran in one context straight into the
+other without checking where it actually points.
+:::
 
 ::: callout tl;dr
 Get an NRP account and namespace access → install `kubectl` → install
@@ -230,81 +317,6 @@ Below are two tools which reduce the amount of kubernetes commands you need to t
 - [Lens](https://k8slens.dev/): More of a GUI CLI tool
 
 These are not required. All parts of the tutorial and using Kubernetes in general can be done via the command line, however these tools make things easier. If you wish to use these PLEASE INSTALL PRIOR TO THE EXERCISE.
-
-## Method 2: NRP USCMS Analysis Hub (experimental)
-
-::: important
-This path is **experimental**. It's here so you can start the training with
-zero local setup, but it's newer and less tested than running `kubectl` from
-your own machine. If something about it doesn't work, fall back to Method 1
-or ask for help — don't spend the whole session debugging the hub itself.
-:::
-
-You still need the account and namespace access from
-[NRP Access Requirements](#1-nrp-access-requirements) above — this method just
-skips installing anything on your laptop. `kubectl` and `kubelogin` are
-already installed on the hub image; you only need to point `kubectl` at the
-cluster and log in once per session.
-
-::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace on the NRP USCMS Analysis Hub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace)** — signs you in at [uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io), pulls the tutorial workspace, and opens JupyterLab.
-:::
-
-### Get kubectl working in the hub terminal
-
-Open a terminal in JupyterLab (**File → New → Terminal**) and run:
-
-```bash
-grid-kube-setup
-```
-
-This fetches a fresh kubeconfig from `https://nrp.ai/config` and installs it at
-`~/.kube/config` (backing up anything already there). It doesn't log you in by
-itself — the next `kubectl` command you run triggers a device-code login:
-
-```bash
-kubectl get pods -n us-cms
-```
-
-`kubelogin` prints a URL and a short code. Open the URL **on your laptop**,
-enter the code, and the hub terminal picks up the token automatically —
-nothing more to click on the hub side.
-
-<details>
-<summary>Expected output</summary>
-
-```text
-jovyan@jupyter-...:~$ grid-kube-setup
-Fetching   https://nrp.ai/config
-user 'oidc':
-    + --grant-type=device-code
-    + --skip-open-browser
-
-Backed up  /home/jovyan/.kube/config.xxxxxxxxxxx.bak
-Updated    /home/jovyan/.kube/config
-
-Next: run any kubectl command to trigger the login, e.g.
-
-  kubectl get pods
-
-kubelogin will print a URL and a code. Open the URL on your laptop, enter the
-code, and this terminal will pick up the token.
-
-jovyan@jupyter-...:~$ kubectl get pods -n us-cms
-Please visit the following URL in your browser: https://authentik.nrp-nautilus.io/device?code=XXXXXXXXX
-NAME                      READY   STATUS    RESTARTS   AGE
-mlflow-667f8c984c-thzsr   2/2     Running   0          2d22h
-mlflow-postgres-0         1/1     Running   0          10d
-```
-</details>
-
-The login lasts for the rest of your hub session — you don't need to repeat
-this for every new terminal, only after `grid-kube-setup` re-installs the
-kubeconfig or your token expires.
-
-The final lesson of this training, [CMS Data Access on NRP](5_cms_data.html),
-covers the hub in more depth, including setting up a grid certificate for
-accessing CMS data.
 
 ## Getting Help
 

@@ -70,6 +70,14 @@ case "$EP" in
   else skip "/tmp/jet-class-$U.yaml (run the 'Prepare the YAML' step)"; fi
   if [ -f "/tmp/jet-class-analysis-$U.yaml" ]; then ok "analysis manifest prepared (/tmp/jet-class-analysis-$U.yaml)"
   else skip "/tmp/jet-class-analysis-$U.yaml (run the 'Prepare the YAML' step)"; fi
+  if [ -f "/tmp/pvc-browser-$U.yaml" ]; then ok "PVC browser manifest prepared (/tmp/pvc-browser-$U.yaml)"
+  else skip "/tmp/pvc-browser-$U.yaml (run the 'Prepare the PVC browser pod' step)"; fi
+  if [ -f "/tmp/jet-class-sweep-$U.yaml" ]; then ok "sweep training manifest prepared (/tmp/jet-class-sweep-$U.yaml)"
+  else skip "/tmp/jet-class-sweep-$U.yaml (optional — only needed for the sweep extension)"; fi
+  if [ -f "/tmp/jet-class-sweep-analysis-$U.yaml" ]; then ok "sweep analysis manifest prepared (/tmp/jet-class-sweep-analysis-$U.yaml)"
+  else skip "/tmp/jet-class-sweep-analysis-$U.yaml (optional — only needed for the sweep extension)"; fi
+  if [ -f "/tmp/jet-class-sweep-compare-$U.yaml" ]; then ok "sweep compare manifest prepared (/tmp/jet-class-sweep-compare-$U.yaml)"
+  else skip "/tmp/jet-class-sweep-compare-$U.yaml (optional — only needed for the sweep extension)"; fi
   ;;
 
 4)
