@@ -103,6 +103,16 @@ CephFS supports multiple pods reading and writing concurrently, and works
 identically to RBD for the single-pod case too, so there's no downside to
 using it everywhere.
 
+One catch: this cluster's CSI drivers report `fsGroupPolicy:
+ReadWriteOnceWithFSType`, meaning Kubernetes only auto-`chown`s a volume to
+match the pod's `fsGroup` for `ReadWriteOnce` volumes — it skips that step
+entirely for `ReadWriteMany` ones like this PVC. Without it, the training
+container (running as a non-root user) can't write to a freshly-provisioned
+CephFS volume at all. Every Job manifest that mounts this PVC — training,
+analysis, and the sweep variants — works around this with a small
+`fix-permissions` init container that `chown`s the mount before the main
+container starts; you'll see it at the top of each manifest below.
+
 `yamls/pvc.yaml`:
 
 ```yaml
@@ -239,6 +249,23 @@ spec:
               - key: nrp-training
                 operator: In
                 values: ["true"]
+      initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: ["sh", "-c", "chown -R 1000:100 /training"]
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
       containers:
       - name: jet-class
         image: <YOUR_IMAGE>
@@ -369,6 +396,23 @@ spec:
               - key: nrp-training
                 operator: In
                 values: ["true"]
+      initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: ["sh", "-c", "chown -R 1000:100 /training"]
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
       containers:
       - name: jet-class-analysis
         image: <YOUR_IMAGE>
@@ -516,6 +560,23 @@ spec:
               - key: nrp-training
                 operator: In
                 values: ["true"]
+      initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: ["sh", "-c", "chown -R 1000:100 /training"]
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
       containers:
       - name: jet-class-sweep
         image: <YOUR_IMAGE>
@@ -599,6 +660,23 @@ spec:
               - key: nrp-training
                 operator: In
                 values: ["true"]
+      initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: ["sh", "-c", "chown -R 1000:100 /training"]
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
       containers:
       - name: jet-class-sweep-analysis
         image: <YOUR_IMAGE>
@@ -659,6 +737,23 @@ spec:
               - key: nrp-training
                 operator: In
                 values: ["true"]
+      initContainers:
+      - name: fix-permissions
+        image: busybox:1.36
+        command: ["sh", "-c", "chown -R 1000:100 /training"]
+        securityContext:
+          runAsUser: 0
+          runAsGroup: 0
+        resources:
+          requests:
+            cpu: 10m
+            memory: 32Mi
+          limits:
+            cpu: 100m
+            memory: 64Mi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
       containers:
       - name: jet-class-sweep-compare
         image: <YOUR_IMAGE>
