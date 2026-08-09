@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-basics-<username>
+  namespace: us-cms
+spec:
+  containers:
+  - name: mypod
+    image: ubuntu:22.04
+    command: ["sh", "-c", "echo 'Hello from NRP!' && sleep 3600"]
+    resources:
+      limits:   { memory: 100Mi, cpu: 100m }
+      requests: { memory: 100Mi, cpu: 100m }

@@ -4,6 +4,10 @@ teaching: 20
 exercises: 20
 ---
 
+::: callout Open the runnable notebook for this episode
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F5_cms_data.ipynb)** — every command below is a Shift+Enter cell.
+:::
+
 **Time:** 00:00-00:40
 
 In this section we will run a CMS-focused Kubernetes Job on NRP, mount an X.509
@@ -13,7 +17,9 @@ the file with `uproot`.
 ## Create an X.509 proxy secret
 
 Start with an X.509 proxy file you copied from Fermilab LPC or CERN lxplus onto
-the machine where you run `kubectl`.
+the machine where you run `kubectl`. If you don't already have one, the final
+lesson, [NRP USCMS Analysis Hub](6_analysis_hub.html), covers generating a
+proxy directly from your grid certificate on the hub instead.
 
 ```bash
 export USER=<username>
@@ -46,7 +52,7 @@ From `workspace/`, build and push the image:
 
 ```bash
 export IMAGE=ghcr.io/<github-user-or-org>/cms-xrootd-uproot:0.1
-docker build --platform linux/amd64 -f Dockerfile.cms-data -t "$IMAGE" .
+docker build --platform linux/amd64 -f code/Dockerfile.cms-data -t "$IMAGE" .
 docker push "$IMAGE"
 ```
 

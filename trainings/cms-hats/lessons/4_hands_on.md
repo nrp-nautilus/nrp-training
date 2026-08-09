@@ -4,6 +4,10 @@ teaching: 10
 exercises: 0
 ---
 
+::: callout Open the runnable notebook for this episode
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F4_hands_on.ipynb)** — every command below is a Shift+Enter cell. Continues from the previous [Hands-On Prep](3_prep.html) episode.
+:::
+
 **Time:** 00:00-00:25
 
 In this section we will use what we learned to run a simple jet classifer training job as a hands-on exercise.

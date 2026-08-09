@@ -25,8 +25,8 @@ RUN useradd -m -u 1000 -g 0 jovyan \
     && chmod -R g=u /home/jovyan
 
 WORKDIR /home/jovyan/work
-COPY --chown=1000:0 cms_uproot_example.ipynb /home/jovyan/work/
-COPY --chown=1000:0 cms_uproot_example.py /home/jovyan/work/
+COPY --chown=1000:0 notebooks/cms_uproot_example.ipynb /home/jovyan/work/
+COPY --chown=1000:0 code/cms_uproot_example.py /home/jovyan/work/
 
 USER 1000
 

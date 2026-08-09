@@ -415,6 +415,52 @@ def render_code_block(raw_lang, code):
     return f'<div class="code-block">{label_html}<pre><code{cls}>{body}</code></pre></div>'
 
 
+def list_item_marker(line):
+    """Match a list-item marker line. Returns (indent, ordered, start_num, rest) or None."""
+    m = re.match(r"^(\s*)([-*+]|(\d+)\.)\s+(.*)$", line)
+    if not m:
+        return None
+    indent, _marker, num, rest = m.groups()
+    ordered = num is not None
+    return len(indent), ordered, (int(num) if ordered else None), rest
+
+
+def render_list(lines, i, n):
+    """Render a (possibly nested) list starting at lines[i]. Returns (html, next_i).
+
+    Nesting is indentation-based: a line indented further than the current
+    item's marker either continues that item's paragraph text, or — if it is
+    itself a list marker — starts a nested list inside that <li>. A blank
+    line, a dedent, or a marker-type change at the same indent ends the list.
+    """
+    base_indent, ordered, start_num, _ = list_item_marker(lines[i])
+    items = []
+    while i < n:
+        parsed = list_item_marker(lines[i])
+        if not parsed or parsed[0] != base_indent or parsed[1] != ordered:
+            break
+        _, _, _, first_text = parsed
+        item_lines = [first_text]
+        i += 1
+        nested_html = ""
+        while i < n and lines[i].strip():
+            deeper = list_item_marker(lines[i])
+            cur_indent = len(lines[i]) - len(lines[i].lstrip())
+            if deeper and deeper[0] > base_indent:
+                nested_html, i = render_list(lines, i, n)
+                break
+            if cur_indent > base_indent and not deeper:
+                item_lines.append(lines[i].strip())
+                i += 1
+                continue
+            break
+        text = inline(html.escape(" ".join(item_lines)))
+        items.append(f"<li>{text}{nested_html}</li>")
+    tag = "ol" if ordered else "ul"
+    start_attr = f' start="{start_num}"' if ordered and start_num != 1 else ""
+    return f"<{tag}{start_attr}>{''.join(items)}</{tag}>", i
+
+
 def render_blocks(lines, base_dir=None):
     """Render a list of Markdown lines (no callouts) into HTML."""
     out = []
@@ -478,20 +524,13 @@ def render_blocks(lines, base_dir=None):
             out.append("<blockquote>" + render_blocks(quote, base_dir) + "</blockquote>")
             continue
 
-       # lists (ordered / unordered)
+        # lists (ordered / unordered), with indentation-based nesting. A line
+        # indented further than its parent item's marker is either a
+        # continuation of that item's text (joined into the same <li>) or,
+        # if it's itself a list marker, a nested list inside that <li>.
         if re.match(r"^\s*([-*+]|\d+\.)\s+", line):
-            first_ordered = re.match(r"^\s*(\d+)\.\s+", line)
-            ordered = bool(first_ordered)
-            start = int(first_ordered.group(1)) if first_ordered else 1
-            items = []
-            while i < n and re.match(r"^\s*([-*+]|\d+\.)\s+", lines[i]):
-                item = re.sub(r"^\s*([-*+]|\d+\.)\s+", "", lines[i])
-                items.append(inline(html.escape(item)))
-                i += 1
-            tag = "ol" if ordered else "ul"
-            lis = "".join(f"<li>{it}</li>" for it in items)
-            start_attr = f' start="{start}"' if ordered and start != 1 else ""
-            out.append(f"<{tag}{start_attr}>{lis}</{tag}>")
+            list_html, i = render_list(lines, i, n)
+            out.append(list_html)
             continue
 
         # GFM pipe table: a header row followed by a |---|---| separator
@@ -965,7 +1004,7 @@ def as_list(value):
     return [value]
 
 
-def page(title, lesson_title, body, nav_html):
+def page(title, lesson_title, body, nav_html, wide=False):
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -991,7 +1030,7 @@ def page(title, lesson_title, body, nav_html):
 <nav id="lesson-nav" class="lesson-nav" aria-label="Lesson navigation">
   <div class="lesson-nav-inner">{nav_html}</div>
 </nav>
-<main class="content">{body}</main>
+<main class="content{' content-wide' if wide else ''}">{body}</main>
 {PAGE_SCRIPT}
 </body>
 </html>
@@ -1067,6 +1106,7 @@ def load_lessons(config):
             "questions": as_list(fm.get("questions")),
             "objectives": as_list(fm.get("objectives")),
             "keypoints": as_list(fm.get("keypoints")),
+            "wide": bool(fm.get("wide", False)),
             "body": body,
         })
     return lessons
@@ -1105,7 +1145,7 @@ def render_lesson(lesson, lesson_title, lessons, index):
         f'<h1>{html.escape(lesson["title"])}</h1>{meta}{top}{content}{bottom}'
         f'<div class="pager">{prev_html}{next_html}</div>'
     )
-    return page(lesson["title"], lesson_title, body, nav)
+    return page(lesson["title"], lesson_title, body, nav, wide=lesson["wide"])
 
 
 def render_index(config, lessons):
@@ -1586,9 +1626,29 @@ PAGE_SCRIPT = """\
     });
   }
 
+  function initExpandAllGroups() {
+    document.querySelectorAll("[data-details-group]").forEach((group) => {
+      const btn = group.querySelector("[data-expand-all]");
+      const items = Array.from(group.querySelectorAll("details"));
+      if (!btn || !items.length) return;
+      const sync = () => {
+        const allOpen = items.every((d) => d.open);
+        btn.textContent = allOpen ? "Collapse all" : "Expand all";
+      };
+      btn.addEventListener("click", () => {
+        const allOpen = items.every((d) => d.open);
+        items.forEach((d) => { d.open = !allOpen; });
+        sync();
+      });
+      items.forEach((d) => d.addEventListener("toggle", sync));
+      sync();
+    });
+  }
+
   initCodeCopyButtons();
   initSlideshows();
   initQuizzes();
+  initExpandAllGroups();
 })();
 </script>
 """
@@ -1705,9 +1765,29 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
   color: var(--accent); font-weight: 700; }
 .nav-hidden .lesson-nav { display: none; }
 .content { max-width: var(--max); margin: 0 auto; min-width: 0; padding: 32px 24px 28px; }
+.content-wide { max-width: calc(var(--max) * 1.4); }
+.details-group { margin: 1em 0; }
+.details-group [data-expand-all] { display: inline-block; margin-bottom: .6em; padding: 6px 14px;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--surface);
+  color: var(--accent); font: inherit; font-weight: 600; font-size: .92rem; cursor: pointer; }
+.details-group [data-expand-all]:hover { background: var(--panel); border-color: var(--accent); }
+.details-group [data-expand-all]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.details-group details { margin: .6em 0; border: 1px solid var(--border); border-radius: 8px;
+  padding: 4px 16px; background: var(--surface); }
+.details-group summary { cursor: pointer; font-size: 1.12rem; font-weight: 700; padding: 10px 4px;
+  list-style: none; }
+.details-group summary::-webkit-details-marker { display: none; }
+.details-group summary::before { content: "▸"; display: inline-block; margin-right: 8px;
+  color: var(--accent); transition: transform .15s ease; }
+.details-group details[open] summary::before { transform: rotate(90deg); }
 .content h1 { margin-top: 0; line-height: 1.2; }
 .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: -8px; }
 .lesson-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
+.content li > ol, .content li > ul { margin: .3em 0 .3em 1.4em; }
+.content ol { list-style-type: decimal; }
+.content ol ol { list-style-type: lower-alpha; }
+.content ol ol ol { list-style-type: lower-roman; }
+.content ol ol ol ol { list-style-type: decimal; }
 .code-block { margin: 1em 0; border: 1px solid var(--keypoints); border-radius: 6px;
   overflow: hidden; background: var(--panel); }
 .code-label { padding: 6px 10px; background: color-mix(in srgb, var(--keypoints) 8%, var(--panel));

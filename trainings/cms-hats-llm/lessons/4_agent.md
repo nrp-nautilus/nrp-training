@@ -22,7 +22,7 @@ keypoints:
 ---
 
 ::: callout Open the notebook in JupyterHub
-**[▶ Open notebook in JupyterHub](https://jupyterhub-west.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace%2F4_agent.ipynb)** — clones the training repo and opens `workspace/4_agent.ipynb` on jupyterhub-west.nrp-nautilus.io.
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace%2Fnotebooks%2F4_agent.ipynb)** — clones the training repo and opens `workspace/notebooks/4_agent.ipynb` on uscms-af.nrp-nautilus.io.
 :::
 
 In Part 2 you *called* the model; in Part 3 you *used* pre-built agents
