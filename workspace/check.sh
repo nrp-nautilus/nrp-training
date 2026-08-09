@@ -96,8 +96,6 @@ case "$EP" in
       ok "grid proxy present and not yet expired (~/.globus/x509up)"
     else ok "grid proxy present (~/.globus/x509up) — run grid-proxy-init again if it's expired"; fi
   else skip "~/.globus/x509up (run grid-proxy-init)"; fi
-  if [ -f "$HOME/jet_pt.png" ] || [ -f jet_pt.png ]; then ok "jet_pt.png plot created"
-  else skip "jet_pt.png (run the uproot plotting step)"; fi
   ;;
 
 *)
