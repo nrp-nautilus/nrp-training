@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jet-class-sweep-analysis-<username>
+  namespace: us-cms
+spec:
+  completions: 4
+  parallelism: 4
+  completionMode: Indexed
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 100
+        fsGroup: 100
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+      - name: jet-class-sweep-analysis
+        image: <YOUR_IMAGE>
+        command: ["python", "/workspace/analyze_jet_class.py"]
+        resources:
+          requests:
+            cpu: "2"
+            memory: 4Gi
+          limits:
+            cpu: "2"
+            memory: 4Gi
+        volumeMounts:
+        - name: training-storage
+          mountPath: /training
+
+      volumes:
+      - name: training-storage
+        persistentVolumeClaim:
+          claimName: cms-nrp-hats-<username>
