@@ -1,10 +1,32 @@
 ---
 title: Setup
+wide: true
 ---
 
 ## Prerequisites for NRP Training
 
 Before attending the training session, please ensure you have completed the following setup steps.
+
+## Two ways to follow along
+
+There are two ways to run the hands-on exercises in this training:
+
+1. **Your own machine (preferred).** You run `kubectl` locally against the Nautilus
+   cluster. This only works if you've completed the setup steps below **before**
+   the session — `kubectl`, `kubelogin`, and your kubeconfig all need to be
+   installed and verified in advance. Do this first if at all possible.
+2. **NRP USCMS Analysis Hub (experimental).** A JupyterHub-based environment with
+   the training materials, `kubectl`, and `kubelogin` already installed — nothing
+   to set up on your laptop ahead of time. It still needs one login step done at
+   the start of the session (see below), and it's newer and less battle-tested
+   than running locally, so treat it as a fallback if local setup didn't work out
+   or you're joining last-minute.
+
+Everything past this setup page — namespaces, `kubectl` commands, YAML manifests —
+is identical either way.
+
+Jump to: [Your own machine (preferred)](#method-1-your-own-machine-preferred) ·
+[NRP USCMS Analysis Hub (experimental)](#method-2-nrp-uscms-analysis-hub-experimental)
 
 ### 1. NRP Access Requirements
 
@@ -26,7 +48,21 @@ Before attending the training session, please ensure you have completed the foll
    Ask Daniel or Martin to add you if you have not been added already
 :::
 
-### 2. Install kubectl
+## Method 1: Your own machine (preferred)
+
+Complete these steps **before** the session — they can't be done live.
+
+::: callout tl;dr
+Get an NRP account and namespace access → install `kubectl` → install
+`kubelogin` → download your kubeconfig from [nrp.ai/config](https://nrp.ai/config) → verify with `kubectl get nodes`.
+The sections below walk through each step in detail.
+:::
+
+<div class="details-group" data-details-group>
+<button type="button" data-expand-all>Expand all</button>
+
+<details>
+<summary><strong>1. Install kubectl</strong></summary>
 
 The Kubernetes command-line tool, `kubectl`, is required for the training exercises.
 
@@ -59,7 +95,10 @@ sudo mv kubectl /usr/local/bin/
 
 Download from: [https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/](https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/)
 
-### 3. Install kubelogin Plugin
+</details>
+
+<details>
+<summary><strong>2. Install kubelogin Plugin</strong></summary>
 
 ::: danger[Required]
 You **must** install the `kubelogin` plugin, or your kubeconfig file **will not work**.
@@ -75,7 +114,10 @@ brew install kubelogin
 
 Download from: [https://github.com/int128/kubelogin?tab=readme-ov-file#setup](https://github.com/int128/kubelogin?tab=readme-ov-file#setup)
 
-### 4. Download Kubernetes Config File
+</details>
+
+<details>
+<summary><strong>3. Download Kubernetes Config File</strong></summary>
 
 1. Download the config file from: [https://nrp.ai/config](https://nrp.ai/config)
 2. Save it as `config` (without any extension) in your `~/.kube` folder
@@ -87,7 +129,10 @@ mkdir ~/.kube
 
 4. The final path should be: `~/.kube/config`
 
-### 5. Cross-Platform kubelogin Fixes
+</details>
+
+<details>
+<summary><strong>4. Cross-Platform kubelogin Fixes</strong></summary>
 
 If you run into authentication issues with `kubelogin`, try these fixes:
 
@@ -114,7 +159,10 @@ args:
   - --token-cache-storage=disk
 ```
 
-### 6. Verify Installation
+</details>
+
+<details>
+<summary><strong>5. Verify Installation</strong></summary>
 
 1. **Check kubectl context**:
 
@@ -150,7 +198,11 @@ If you see "No resources found", that's okay - it means you have access but ther
 kubectl config set-context nautilus --namespace <YOUR_NAMESPACE>
 ```
 
-### 7. CLI Tools
+</details>
+
+</div>
+
+### CLI Tools
 
 Below are two tools which reduce the amount of kubernetes commands you need to type out.
 
@@ -159,7 +211,82 @@ Below are two tools which reduce the amount of kubernetes commands you need to t
 
 These are not required. All parts of the tutorial and using Kubernetes in general can be done via the command line, however these tools make things easier. If you wish to use these PLEASE INSTALL PRIOR TO THE EXERCISE.
 
-## 8. Getting Help
+## Method 2: NRP USCMS Analysis Hub (experimental)
+
+::: important
+This path is **experimental**. It's here so you can start the training with
+zero local setup, but it's newer and less tested than running `kubectl` from
+your own machine. If something about it doesn't work, fall back to Method 1
+or ask for help — don't spend the whole session debugging the hub itself.
+:::
+
+You still need the account and namespace access from
+[NRP Access Requirements](#1-nrp-access-requirements) above — this method just
+skips installing anything on your laptop. `kubectl` and `kubelogin` are
+already installed on the hub image; you only need to point `kubectl` at the
+cluster and log in once per session.
+
+::: callout Launch the workspace in JupyterHub
+**[▶ Launch the workspace on the NRP USCMS Analysis Hub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace)** — signs you in at [uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io), pulls the tutorial workspace, and opens JupyterLab.
+:::
+
+### Get kubectl working in the hub terminal
+
+Open a terminal in JupyterLab (**File → New → Terminal**) and run:
+
+```bash
+grid-kube-setup
+```
+
+This fetches a fresh kubeconfig from `https://nrp.ai/config` and installs it at
+`~/.kube/config` (backing up anything already there). It doesn't log you in by
+itself — the next `kubectl` command you run triggers a device-code login:
+
+```bash
+kubectl get pods -n us-cms
+```
+
+`kubelogin` prints a URL and a short code. Open the URL **on your laptop**,
+enter the code, and the hub terminal picks up the token automatically —
+nothing more to click on the hub side.
+
+<details>
+<summary>Expected output</summary>
+
+```text
+jovyan@jupyter-...:~$ grid-kube-setup
+Fetching   https://nrp.ai/config
+user 'oidc':
+    + --grant-type=device-code
+    + --skip-open-browser
+
+Backed up  /home/jovyan/.kube/config.xxxxxxxxxxx.bak
+Updated    /home/jovyan/.kube/config
+
+Next: run any kubectl command to trigger the login, e.g.
+
+  kubectl get pods
+
+kubelogin will print a URL and a code. Open the URL on your laptop, enter the
+code, and this terminal will pick up the token.
+
+jovyan@jupyter-...:~$ kubectl get pods -n us-cms
+Please visit the following URL in your browser: https://authentik.nrp-nautilus.io/device?code=XXXXXXXXX
+NAME                      READY   STATUS    RESTARTS   AGE
+mlflow-667f8c984c-thzsr   2/2     Running   0          2d22h
+mlflow-postgres-0         1/1     Running   0          10d
+```
+</details>
+
+The login lasts for the rest of your hub session — you don't need to repeat
+this for every new terminal, only after `grid-kube-setup` re-installs the
+kubeconfig or your token expires.
+
+The final lesson of this training, [NRP USCMS Analysis Hub](6_analysis_hub.html),
+covers the hub in more depth, including setting up a grid certificate for
+accessing CMS data.
+
+## Getting Help
 
 If you encounter issues during setup:
 
@@ -167,7 +294,7 @@ If you encounter issues during setup:
 - **Email**: [usersupport@nrp-nautilus.io](mailto:usersupport@nrp-nautilus.io)
 - **Documentation**: [NRP Getting Started Guide](https://nrp.ai/documentation/userdocs/start/getting-started/)
 
-## 9. Additional Resources
+## Additional Resources
 
 - [NRP Portal](https://nrp.ai)
 - [NRP Documentation](https://nrp.ai/documentation/)

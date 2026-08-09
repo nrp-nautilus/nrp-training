@@ -4,12 +4,20 @@ teaching: 10
 exercises: 0
 ---
 
+::: callout Open the runnable notebook for this episode
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F3_prep.ipynb)** — every command below is a Shift+Enter cell. If you're on the Analysis Hub, `nbgitpuller` already cloned the repo for you — skip straight to [Step 2](#2-set-your-username).
+:::
+
 **Time:** 00:00-00:25
 
 In this section we will prepare to run the hands-on exercise 
 
 
 ## 1. Clone the training materials
+
+**Skip this step on the NRP USCMS Analysis Hub** — the launch link above
+already clones the repo into your home directory. This step is only for
+Method 1 (your own machine).
 
 Clone the branch containing the files for this training:
 
@@ -98,14 +106,14 @@ export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.2
 For most Linux/Intel systems:
 
 ```bash
-docker build -f Dockerfile.jet-class -t "$IMAGE" .
+docker build -f code/Dockerfile.jet-class -t "$IMAGE" .
 docker push "$IMAGE"
 ```
 
 For Apple Silicon Macs, build the Linux AMD64 image that the cluster will run:
 
 ```bash
-docker build --platform linux/amd64 -f Dockerfile.jet-class -t "$IMAGE" .
+docker build --platform linux/amd64 -f code/Dockerfile.jet-class -t "$IMAGE" .
 docker push "$IMAGE"
 ```
 </details>

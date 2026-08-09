@@ -7,6 +7,8 @@ materials_branch: materials/cms-hats
 lessons:
   - 0_setup
   - 1_intro
-  - 2_prep
-  - 3_hands_on
-  - 4_cms_data
+  - 2_kubernetes_basics
+  - 3_prep
+  - 4_hands_on
+  - 5_cms_data
+  - 6_analysis_hub
