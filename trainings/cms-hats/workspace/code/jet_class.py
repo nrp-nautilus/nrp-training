@@ -120,11 +120,11 @@ def optional_mlflow_run():
 
         mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
         mlflow.set_experiment(MLFLOW_EXPERIMENT_NAME)
-        # silent=True: MLflow's autologging is exception-safe by design (a
-        # logging-side failure inside the patched fit() won't break training
-        # itself), but it can also print noisy version-compatibility
-        # warnings we don't need cluttering the training log.
-        mlflow.tensorflow.autolog(log_models=False, silent=True)
+        # Deliberately not using mlflow.tensorflow.autolog(): MLflow flags
+        # this image's TensorFlow (2.16.1) as below its tested-compatible
+        # range (2.17.1+), and in practice autolog silently captures zero
+        # metrics on it. Logging metrics manually below has no such
+        # dependency on TF/MLflow internals lining up.
         with mlflow.start_run(run_name=f"run-{RUN_ID}") as run:
             mlflow.log_params(
                 {
@@ -231,6 +231,19 @@ def main():
             verbose=2,
         )
         training_seconds = time.time() - train_start
+
+        if run is not None:
+            try:
+                import mlflow
+
+                num_epochs_recorded = len(next(iter(history.history.values())))
+                for epoch_idx in range(num_epochs_recorded):
+                    mlflow.log_metrics(
+                        {name: float(values[epoch_idx]) for name, values in history.history.items()},
+                        step=epoch_idx,
+                    )
+            except Exception as exc:  # noqa: BLE001 - must not break training
+                print(f"MLflow metric logging failed, continuing: {exc}")
 
     y_pred = model.predict(test_ds, verbose=0)
     model_path = RUN_DIR / "jet_classifier.keras"
