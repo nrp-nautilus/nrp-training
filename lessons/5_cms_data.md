@@ -177,13 +177,13 @@ import uproot
 
 events = uproot.open("nanoout_1.root")["Events"]
 all_keys = events.keys()
-print(f"{len(all_keys)} branches in the Events tree. First 20:")
-for name in all_keys[:20]:
+print(f"{len(all_keys)} branches in the Events tree. First 100:")
+for name in all_keys[:100]:
     print(f"  {name}")
 ```
 
 `Events` is the standard NanoAOD tree name. NanoAOD files typically have
-hundreds of branches, so this only prints the first 20 — `Muon_pt`, `MET_pt`,
+hundreds of branches, so this only prints the first 100 — `Muon_pt`, `MET_pt`,
 and similar branches are in there too if you want to plot something else.
 
 ### Jet $p_T$ distribution
@@ -206,7 +206,7 @@ possible version: keep only jets above some $p_T$ threshold, and compare the
 distribution before and after:
 
 ```python
-pt_cut = 50  # GeV
+pt_cut = 25  # GeV
 jet_pt_cut = jet_pt[jet_pt > pt_cut]
 
 print(f"Jets before cut: {len(jet_pt)}")
