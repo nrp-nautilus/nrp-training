@@ -1,14 +1,14 @@
 ---
 title: Hands-On Prep
-teaching: 10
-exercises: 0
+teaching: 20
+exercises: 10
 ---
 
 ::: callout Open the runnable notebook for this episode
 **[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F3_prep.ipynb)** — every command below is a Shift+Enter cell. If you're on the Analysis Hub, `nbgitpuller` already cloned the repo for you — skip straight to [Step 2](#2-set-your-username).
 :::
 
-**Time:** 00:00-00:25
+**Time:** 00:00-00:30
 
 In this section we will prepare to run the hands-on exercise: training and
 evaluating a **jet classifier** on NRP GPUs.

@@ -1,10 +1,10 @@
 ---
 title: Introduction
-teaching: 10
+teaching: 15
 exercises: 0
 ---
 
-**Time:** 00:00-00:25
+**Time:** 00:00-00:15
 
 This section introduces NRP as a resource for US-CMS researchers. We will cover how to gain access and the basics of how to interact with the cluster. 
 

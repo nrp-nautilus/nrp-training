@@ -1,7 +1,8 @@
 title: LPC HATS -- NRP as a Resource for USCMS
 subtitle: Intro to NRP, Running batch jobs, using Jupyterhub
 length: 3 hours
-# date: YYYY-MM-DD
+date: 2026-08-10
+indico_url: https://indico.cern.ch/event/1716267/
 published: true
 materials_branch: materials/cms-hats
 lessons:
