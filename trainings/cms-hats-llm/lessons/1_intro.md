@@ -98,6 +98,9 @@ export OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
 export OPENAI_API_KEY="<paste-your-token-here>"
 ```
 
+Setting these from inside a notebook works a little differently — see the
+setup check at the start of [Lesson 2](2_chat.html).
+
 ### Step 3: Verify Access
 
 From a terminal (JupyterHub terminal or local machine with `curl`), send a real

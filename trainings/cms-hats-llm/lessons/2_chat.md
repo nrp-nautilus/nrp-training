@@ -40,16 +40,26 @@ Work through the notebook top to bottom (**Shift+Enter** to run each cell). The 
 
 ---
 
-<details>
-<summary><strong>📓 Notebook preview (click to expand)</strong></summary>
-
 The content below is the notebook rendered as Markdown with example outputs. Run the live notebook on JupyterHub to execute cells and see your own results.
 
 ---
 
 ## 1. Setup Check
 
-Confirm that the environment variables and Python client are ready.
+Verify the environment variables and OpenAI client.
+
+**On the Analysis Hub**, `OPENAI_API_BASE` and `OPENAI_API_KEY` are already set — skip to the check below.
+
+**Running locally, or swapping in your own personal token?** Edit the `OPENAI_API_KEY` line in the cell below.
+
+```python
+import os
+
+# Only fills these in if they're missing — a no-op on the Analysis Hub, where
+# they're already set. Running locally? Edit the token on the line below.
+os.environ.setdefault("OPENAI_API_BASE", "https://ellm.nrp-nautilus.io/v1")
+os.environ.setdefault("OPENAI_API_KEY", "<paste-your-token-here>")
+```
 
 ```python
 import os
@@ -63,6 +73,7 @@ client = OpenAI(
     api_key=os.environ["OPENAI_API_KEY"],
     base_url=os.environ["OPENAI_API_BASE"],
 )
+
 models = client.models.list()
 print(f"\n{len(models.data)} models available:")
 for m in sorted(models.data, key=lambda x: x.id):
@@ -86,9 +97,69 @@ OPENAI_API_KEY  = rifgnLi8...
 
 ---
 
+## Optional: Set Up Jupyter AI in JupyterLab
+
+Everything below can also be done without writing any code, using
+JupyterLab's built-in **Jupyter AI** extension — a chat sidebar backed by the
+same NRP models.
+
+1. Click the chat-bubble icon in the left sidebar to open **Jupyter AI
+   Chat**, then click **Start Here** (or the gear icon) to open its settings.
+
+   ![Jupyter AI welcome panel — click Start Here to open settings](images/jupyter-ai.png)
+
+2. Under **Language model**, point it at NRP instead of OpenAI's own API:
+   - **Completion model**: choose `OpenAI (general interface)...` — this
+     tells Jupyter AI to speak the OpenAI API format but let you supply your
+     own server, instead of assuming platform.openai.com.
+   - **Model ID**: the NRP model you want, e.g. `minimax-m2`.
+   - **Base API URL (optional)**: `https://ellm.nrp-nautilus.io/v1` — the
+     same `OPENAI_API_BASE` used everywhere else in this training.
+   - Leave **Organization** and **Proxy** blank.
+   - Under **API Keys**, paste your token into **OPENAI_API_KEY** (your
+     personal token from [Lesson 1](1_intro.html#step-2-get-an-api-token), or
+     the shared workshop token if you're on the Analysis Hub).
+
+   ![Jupyter AI settings — Completion model, Model ID, Base API URL, and API key](images/jupyter-ai2.png)
+
+3. Close the settings panel and start chatting in the sidebar.
+
+This is entirely optional — the rest of this notebook talks to NRP directly
+through the `openai` Python package, which works the same everywhere
+(JupyterLab, a script, your own machine) and doesn't depend on this
+extension being installed.
+
+---
+
 ## 2. Basic Chat & the `chat()` Helper
 
-Define a reusable helper that handles reasoning models (which need larger `max_tokens`).
+The OpenAI chat API takes a list of `messages`, each with a `role` and
+`content`. You'll use three roles:
+
+| Role | Purpose |
+|---|---|
+| `system` | Sets the model's behavior/persona for the whole conversation. Sent once, usually first. |
+| `user` | What the human is asking. |
+| `assistant` | The model's own previous replies — sent back on later turns so it remembers the conversation (see [Section 4](#4-multi-turn-interactive-chat)). |
+
+`system` in the `chat()` helper below is **not** a special OpenAI keyword —
+it's a plain Python argument this tutorial defines, which the helper turns
+into a `{"role": "system", "content": ...}` message for you. The underlying
+concept (a `system` role inside `messages`) *is* standard OpenAI API; the
+`system=` argument name itself is just this helper's own naming choice.
+
+A few other parameters worth knowing:
+
+| Parameter | What it does |
+|---|---|
+| `model` | Which model to use — see the [model table](1_intro.html#1-managed-llm-service) in the intro lesson. |
+| `messages` | The list of `{role, content}` turns described above. |
+| `max_tokens` | Hard cap on reply length. Reasoning models (`minimax-m2`, `qwen3`, `gpt-oss`) spend part of this budget thinking privately before answering, so give them more room (1000+) or you may get an empty reply. |
+| `temperature` | Randomness, from `0` (deterministic — same input gives the same answer) to `~1.5` (more varied/creative). `0.2` is a good default for factual or code answers. |
+
+Define a reusable helper that handles both regular and reasoning models.
+Reasoning models (`minimax-m2`, `qwen3`, `gpt-oss`) think privately before
+answering, so they need a larger `max_tokens`.
 
 ```python
 def chat(prompt, model="gemma-small-e4b", system=None, max_tokens=1200):
@@ -102,9 +173,10 @@ def chat(prompt, model="gemma-small-e4b", system=None, max_tokens=1200):
     msg = resp.choices[0].message
     if msg.content:
         return msg.content
+    # Reasoning models stream thinking into a separate field
     reasoning = getattr(msg, "reasoning", None) or getattr(msg, "reasoning_content", None)
     if reasoning:
-        return f"(reasoning only, increase max_tokens):\n{reasoning}"
+        return f"(reasoning only — increase max_tokens):\n{reasoning}"
     return "(no content returned)"
 ```
 
@@ -127,11 +199,21 @@ supersymmetry and dark matter candidates.
 ```
 
 ```python
-# Try a code-generation task
+# Code generation — use gpt-oss which is strong at code tasks
 print(chat(
-    "Write a short Python snippet using ROOT's RDataFrame to read a TTree called "
-    "'Events' from 'data.root' and print the number of entries.",
-    model="gpt-oss",  # strong at code
+    "Write a short Python snippet using uproot to open a ROOT file called 'data.root',"
+    " read the TTree named 'Events', and print the number of entries.",
+    model="gpt-oss",
+))
+```
+
+```python
+# Try a reasoning model for a harder question
+print(chat(
+    "Explain why the invariant mass of two muons is a useful observable for"
+    " searching for new particles decaying to mu+mu-.",
+    model="minimax-m2",
+    max_tokens=2000,
 ))
 ```
 
@@ -139,7 +221,8 @@ print(chat(
 
 ## 3. System Prompts & Personas
 
-The system prompt defines the model's role. Same question, four roles — swap in whatever fits your use case.
+The system prompt defines the model's role. Below: the same CMS question answered
+by four different roles. Swap in whatever is most useful for your workflow.
 
 ```python
 QUESTION = "How do I apply a muon pT > 20 GeV selection in CMS NanoAOD with Python?"
@@ -155,12 +238,12 @@ ROLES = {
         "You are a senior CMS physicist. Answer precisely in a few sentences "
         "for a graduate-level audience. No filler."),
     "Documentation writer": (
-        "You are a CMS documentation writer. Structure your answer clearly with "
-        "headings, a code block, and a note on common pitfalls."),
+        "You are a CMS documentation writer. Structure your answer with headings, "
+        "a code block, and a note on common pitfalls."),
 }
 
 for role, system in ROLES.items():
-    print(f"\n=== {role} ===")
+    print(f"\n{'='*60}\n=== {role} ===")
     print(chat(QUESTION, system=system, model="gemma-small-e4b"))
 ```
 
@@ -168,18 +251,21 @@ for role, system in ROLES.items():
 
 ## 4. Multi-Turn Interactive Chat
 
-Run this cell, then type questions. The model remembers context across turns. Type `quit` to stop, `reset` to clear history.
+Run this cell, then type questions at the prompt. The model remembers context
+across turns — like office hours. Type `quit` to stop, `reset` to clear history.
 
 ```python
-ROLE  = "Teaching assistant"
-MODEL = "gemma-small-e4b"
+ROLE  = "Teaching assistant"   # change to any key in ROLES above
+MODEL = "gemma-small-e4b"      # or minimax-m2, gpt-oss, qwen3
 
 SYSTEMS = {
     "Teaching assistant": (
         "You are a supportive teaching assistant for CMS physicists. Explain "
-        "clearly, build intuition with examples, guide the learner."),
+        "clearly, build intuition with examples, and guide the learner."),
     "CMS expert": (
         "You are an expert CMS physicist. Answer precisely and technically."),
+    "Technical coder": (
+        "You are an expert HEP software engineer. Write clean Python and explain it briefly."),
 }
 
 history = []
@@ -206,7 +292,8 @@ while True:
 
 ## 5. Embeddings & Semantic Similarity
 
-`qwen3-embedding` converts text to vectors. Similar meanings land close together — semantic search is just a dot product.
+`qwen3-embedding` converts text into vectors where similar meanings sit closer
+together. Semantic search is just a dot product between normalized vectors.
 
 ```python
 import numpy as np
@@ -215,21 +302,21 @@ import matplotlib.pyplot as plt
 def embed(texts):
     r = client.embeddings.create(model="qwen3-embedding", input=texts)
     v = np.array([d.embedding for d in r.data])
-    return v / np.linalg.norm(v, axis=1, keepdims=True)
+    return v / np.linalg.norm(v, axis=1, keepdims=True)  # normalize for cosine
 
-# CMS-flavored corpus
+# CMS-flavored sentence corpus
 docs = [
-    "The Higgs boson was discovered by CMS and ATLAS in 2012.",
-    "NanoAOD is a compact CMS data format for analysis.",
-    "Muon pT is measured by the CMS tracking system and muon chambers.",
-    "The missing transverse energy indicates invisible particles like neutrinos.",
-    "Machine learning is used in CMS for jet tagging and trigger decisions.",
-    "Python and ROOT are the primary tools for CMS data analysis.",
-    "Cats like to nap in the sun.",  # unrelated — should rank last
+    "The Higgs boson was discovered by CMS and ATLAS in 2012 at the LHC.",
+    "NanoAOD is a compact ROOT-based data format used for CMS physics analysis.",
+    "Muon transverse momentum is reconstructed from tracks in the CMS tracker and muon chambers.",
+    "Missing transverse energy signals the presence of undetected particles such as neutrinos.",
+    "Deep neural networks are used in CMS for b-jet tagging and Level-1 trigger decisions.",
+    "uproot and coffea are Python libraries widely used for CMS NanoAOD analysis.",
+    "Cats like to nap in the sun.",  # deliberately unrelated
 ]
 
 D = embed(docs)
-query = "How does CMS measure particle momentum?"
+query = "How does CMS measure the momentum of charged particles?"
 sims = D @ embed([query])[0]
 
 print(f"Query: {query}\n")
@@ -239,27 +326,27 @@ for i in sims.argsort()[::-1]:
 
 **Example output:**
 ```
-Query: How does CMS measure particle momentum?
+Query: How does CMS measure the momentum of charged particles?
 
-  0.712  Muon pT is measured by the CMS tracking system and muon chambers.
-  0.634  The Higgs boson was discovered by CMS and ATLAS in 2012.
-  0.601  Machine learning is used in CMS for jet tagging and trigger decisions.
-  0.589  Python and ROOT are the primary tools for CMS data analysis.
-  0.571  The missing transverse energy indicates invisible particles like neutrinos.
-  0.543  NanoAOD is a compact CMS data format for analysis.
+  0.712  Muon transverse momentum is reconstructed from tracks in the CMS tracker and muon chambers.
+  0.634  The Higgs boson was discovered by CMS and ATLAS in 2012 at the LHC.
+  0.601  Deep neural networks are used in CMS for b-jet tagging and Level-1 trigger decisions.
+  0.589  uproot and coffea are Python libraries widely used for CMS NanoAOD analysis.
+  0.571  Missing transverse energy signals the presence of undetected particles such as neutrinos.
+  0.543  NanoAOD is a compact ROOT-based data format used for CMS physics analysis.
   0.301  Cats like to nap in the sun.
 ```
 
 ```python
 # Pairwise similarity heatmap
 M = D @ D.T
-fig, ax = plt.subplots(figsize=(6, 5))
+fig, ax = plt.subplots(figsize=(7, 5))
 im = ax.imshow(M, cmap="viridis", vmin=0, vmax=1)
-labels = [d[:30] + "..." for d in docs]
+labels = [d[:35] + "..." for d in docs]
 ax.set_xticks(range(len(docs))); ax.set_xticklabels(labels, rotation=45, ha="right", fontsize=7)
 ax.set_yticks(range(len(docs))); ax.set_yticklabels(labels, fontsize=7)
 fig.colorbar(im, label="cosine similarity")
-ax.set_title("Sentence similarity (qwen3-embedding)")
+ax.set_title("CMS sentence similarity (qwen3-embedding)")
 plt.tight_layout(); plt.show()
 ```
 
@@ -267,14 +354,16 @@ plt.tight_layout(); plt.show()
 
 ## 6. Multimodal — Send a Detector Image
 
-Vision models (`gemma-small-e4b`, `gemma`, `qwen3`) accept images alongside text. Swap `IMG_URL` for any CMS event display or detector plot.
+Vision models (`gemma-small-e4b`, `gemma`, `qwen3`) accept images alongside text.
+Below we send a CMS figure and ask the model to describe it.
+Swap `IMG_URL` for any detector plot or event display you want to query.
 
 ```python
 import base64, requests
 from IPython.display import Image, display
 
-# Replace with a CMS event display or detector plot URL
-IMG_URL = "https://cms-results.web.cern.ch/cms-results/public-results/publications/HIG/CMS-HIG-19-004/CMS-HIG-19-004_Figure_001-a.png"
+# A public CMS figure — replace with any image URL
+IMG_URL = "https://cds.cern.ch/record/2898346/files/Figure_020-a.png"
 
 raw = requests.get(IMG_URL, timeout=30).content
 display(Image(data=raw))
@@ -284,7 +373,9 @@ r = client.chat.completions.create(
     model="gemma-small-e4b",
     max_tokens=300,
     messages=[{"role": "user", "content": [
-        {"type": "text",      "text": "This is a figure from a CMS physics paper. Describe what you see and what physics it might be showing."},
+        {"type": "text",
+         "text": "This is a figure from a CMS physics paper. "
+                 "Describe what you see: axes, distributions, and what physics measurement it likely represents."},
         {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}},
     ]}],
 )
@@ -295,26 +386,34 @@ print("Model sees:\n", r.choices[0].message.content)
 
 ## 7. RAG — Answer from CMS Documentation
 
-RAG = embed your documents, retrieve the most relevant chunks, ask the LLM to answer **only from that context**. Both the embedding model and the LLM are NRP-managed — nothing to install.
+**RAG** (Retrieval-Augmented Generation) = embed your documents, retrieve the
+most relevant chunks for a question, then ask the LLM to answer **only from
+that context**. This keeps answers grounded and prevents hallucination on
+domain-specific content.
+
+Both the embedding model and the LLM are NRP-managed — nothing to install.
 
 ```python
 import requests, re
 
-# Pull a CMS public documentation page (TWiki or CMS public docs)
-# Here we use the NRP docs as a stand-in; replace with CMS-specific content
-PAGE_URL = "https://raw.githubusercontent.com/nrp-nautilus/nrp-training/main/README.md"
-md = requests.get(PAGE_URL, timeout=30).text
+# --- Corpus: load and chunk a document ---
+# CMS's xrootd redirector documentation — a real TWiki page, and a good
+# stand-in for "an internal doc I actually want answers from."
+RAW_URL = "https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookXrootdService?raw=on"
+md = requests.get(RAW_URL, timeout=30).text
+md = re.sub(r"^---.*?---\s*", "", md, flags=re.S)   # drop frontmatter, if present
 md = re.sub(r"\n{3,}", "\n\n", md).strip()
 
-# Chunk into ~700-character pieces with 150-char overlap
-chunks = [md[i:i+700] for i in range(0, len(md), 550)]
-print(f"Loaded {len(md)} chars, split into {len(chunks)} chunks.")
+# Chunk with slight overlap so context isn't cut mid-sentence
+CHUNK_SIZE, OVERLAP = 700, 150
+chunks = [md[i:i+CHUNK_SIZE] for i in range(0, len(md), CHUNK_SIZE - OVERLAP)]
+print(f"Loaded {len(md):,} chars → {len(chunks)} chunks.")
 ```
 
 ```python
-# Embed all chunks with qwen3-embedding
+# Embed all chunks with qwen3-embedding (one API call)
 chunk_vecs = embed(chunks)
-print(f"Embedded {len(chunks)} chunks → vectors of dim {chunk_vecs.shape[1]}.")
+print(f"Embedded {len(chunks)} chunks → dim {chunk_vecs.shape[1]}.")
 
 def retrieve(question, k=3):
     qv = embed([question])[0]
@@ -336,25 +435,28 @@ def ask_rag(question, model="minimax-m2"):
         system=SYSTEM_RAG, model=model,
     )
 
-question = "What namespaces are used in the NRP training?"
-print("Retrieved chunks:")
-for text, score in retrieve(question):
-    print(f"  score={score:.3f}  {text[:60].strip()}...")
-print("\n--- Answer ---")
-print(ask_rag(question))
+# Try a question that IS in the document
+q1 = "Which redirector would I use if reading a root file located at CERN while working from Fermilab?"
+print(f"Q: {q1}\nRetrieved chunks:")
+for text, score in retrieve(q1):
+    print(f"  score={score:.3f}  {text[:65].strip()}...")
+print("\nAnswer:", ask_rag(q1))
 ```
 
-**Key idea:** everything — chat, personas, embeddings, vision, RAG — uses the same `openai` client with NRP's `base_url`. No GPU needed.
+```python
+# Try a question that is NOT in the document — model should decline
+q2 = "What is the invariant mass of the Z boson?"
+print(f"Q: {q2}")
+print("Answer:", ask_rag(q2))
+```
 
 ---
 
 ## Takeaways
 
-- One `OpenAI` client, one `base_url` — chat, embeddings, vision, RAG all go through the same endpoint.
-- System prompts let you define reusable roles without changing any code logic.
-- Embeddings + cosine similarity = semantic search; no specialized database required for small corpora.
-- RAG keeps LLM answers grounded in your documents and prevents hallucination on domain-specific content.
+- One `OpenAI` client with NRP's `base_url` gives you **chat, personas, embeddings, vision, and RAG** — no GPU, no model downloads.
+- System prompts are a lightweight way to customize model behavior for specific roles in your workflow.
+- Embeddings + cosine similarity = semantic search over any text corpus.
+- RAG keeps answers grounded and honest — the model tells you when the answer isn't in the retrieved context.
 
-**Next:** [Agentic Workflows](3_agentic.html) — point an agentic coding CLI at NRP's managed LLM and have it write code autonomously.
-
-</details>
+**Next:** [Agentic Workflows](3_agentic.html) — point `opencode` at NRP's managed LLM and have it write CMS analysis code autonomously.

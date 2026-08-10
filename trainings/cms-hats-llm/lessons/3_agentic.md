@@ -27,14 +27,20 @@ The key teaching point is **portability**: anything that speaks an OpenAI-compat
 runs unchanged against NRP's managed inference — no API key handoff theater, no
 per-user billing.
 
-::: callout Where to run these exercises
-This episode is terminal- and IDE-driven rather than notebook-driven — there's no
-`3_agentic.ipynb`. You can work from either:
-- A **JupyterHub terminal** on the [NRP USCMS Analysis Hub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace) (opens JupyterLab — start a terminal from the Launcher)
-- Your **local machine** (macOS or Linux)
+::: callout Open the notebook in JupyterHub
+**[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace%2Fnotebooks%2F3_agentic.ipynb)** — clones the training repo and opens `workspace/notebooks/3_agentic.ipynb` on uscms-af.nrp-nautilus.io. Uses a **bash kernel**, same as the Kubernetes-focused trainings — every command below is a Shift+Enter cell.
+:::
+
+This episode is partly terminal- and IDE-driven — the install/config/setup steps
+run as ordinary notebook cells, but launching `opencode` itself opens an
+interactive terminal UI, and the VS Code steps happen in an IDE, so neither fits
+inside a notebook cell. Those are called out individually below. You can work
+from either:
+- The **notebook**, for the runnable parts, plus a JupyterHub terminal (**File
+  → New → Terminal**) for the interactive `opencode` steps
+- Your **local machine** (macOS or Linux), running the same commands directly
 
 All commands are the same either way.
-:::
 
 ---
 
