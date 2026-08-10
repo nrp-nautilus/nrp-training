@@ -17,10 +17,6 @@ keypoints:
   - The same `openai` Python SDK works against NRP, commercial providers, and your own GPU pods.
 ---
 
-::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace)** — signs you in at uscms-af.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab with the notebooks for this training.
-:::
-
 ## Overview
 
 The National Research Platform (NRP) makes large language models available to the entire US-CMS community through a managed, OpenAI-compatible inference endpoint. You do **not** need to rent cloud credits, install model weights, or request a GPU — you just point any OpenAI-compatible tool at NRP's URL and authenticate with a personal token.
@@ -41,7 +37,7 @@ A rotating catalog of open-weights models hosted on NRP GPUs and served behind a
 https://ellm.nrp-nautilus.io/v1
 ```
 
-You authenticate with a **bearer token** (see [Getting a Token](#getting-a-token) below). The endpoint speaks the OpenAI API, so any tool that supports a custom `base_url` works out of the box.
+You authenticate with a **bearer token** (see [Getting Access](#getting-access) below). The endpoint speaks the OpenAI API, so any tool that supports a custom `base_url` works out of the box.
 
 **Currently available models** (see [live list](https://nrp.ai/documentation/userdocs/ai/llm-managed/models/)):
 
@@ -59,6 +55,8 @@ You authenticate with a **bearer token** (see [Getting a Token](#getting-a-token
 ::: callout Tip
 For most tasks, start with `gemma-small-e4b` (fast) or `minimax-m2` (strong reasoning). Switch to `qwen3` when you need the largest context window.
 :::
+
+Models occasionally restart or roll over to a new version — check what's currently up at the [LLM status dashboard](https://nrp.ai/llm-status/).
 
 ### 2. Browser UIs — No Token Required
 
@@ -87,23 +85,52 @@ For this training, you should be a member of the `us-cms` namespace. Contact the
 
 Go to [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) and click **Get LLM token**. A personal bearer token will be sent to your email or displayed on the page.
 
+![Getting a personal LLM token from nrp.ai/llmtoken](images/LLM-tokens.png)
+
 ::: important
 Treat your personal token like a password. Do not commit it to git or share it publicly. In notebooks and scripts, read it from an environment variable (`OPENAI_API_KEY`) rather than hard-coding it.
 :::
 
-On the training JupyterHub (`uscms-af.nrp-nautilus.io`), a shared workshop token is pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you do not need to do anything for the exercises. After the workshop, replace the shared token with your personal one.
+On the training JupyterHub (`uscms-af.nrp-nautilus.io`), a shared workshop token is already pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you don't need to do anything for the exercises. If you're working from your own machine, or want to swap in your personal token after the workshop, export both yourself:
+
+```bash
+export OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
+export OPENAI_API_KEY="<paste-your-token-here>"
+```
 
 ### Step 3: Verify Access
 
-From a terminal (JupyterHub terminal or local machine with `curl`):
+From a terminal (JupyterHub terminal or local machine with `curl`), send a real
+chat request — this actually exercises the model, not just the endpoint, so
+it's a more meaningful check than listing models:
+
+```bash
+curl -s -X POST "$OPENAI_API_BASE/chat/completions" \
+     -H "Authorization: Bearer $OPENAI_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"model": "minimax-m2", "messages": [{"role": "user", "content": "Where is the CMS experiment located?"}]}'
+```
+
+You should get back a JSON response with a real answer buried in it (something
+about CERN, near Geneva, on the LHC).
+
+For a cleaner look, pipe it through Python to pull out just the reply text:
+
+```bash
+curl -s -X POST "$OPENAI_API_BASE/chat/completions" \
+     -H "Authorization: Bearer $OPENAI_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"model": "minimax-m2", "messages": [{"role": "user", "content": "Where is the CMS experiment located?"}]}' \
+  | python3 -c 'import json, sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"])'
+```
+
+You can also list the full model catalog:
 
 ```bash
 curl -s -H "Authorization: Bearer $OPENAI_API_KEY" \
-     https://ellm.nrp-nautilus.io/v1/models \
+     "$OPENAI_API_BASE/models" \
   | python3 -m json.tool | head -20
 ```
-
-You should see a JSON list of available models.
 
 ---
 
@@ -118,26 +145,20 @@ You should see a JSON list of available models.
 
 ---
 
-## Why This Matters for CMS
-
-<!-- TODO: Daniel to fill in. Suggested talking points:
-  - LLMs for literature search and summarization (arxiv, INSPIRE)
-  - Code assistance for ROOT/RDataFrame/Python analysis scripts
-  - RAG over CMS internal documentation or conference proceedings
-  - Multi-modal: image understanding for detector plots, event displays
-  - Agentic workflows: automated analysis code generation
-  - NRP as a community resource — no per-user billing, access through us-cms namespace
--->
-
-::: callout Placeholder
-This section will be filled in with CMS-specific motivation and use cases.
-:::
-
----
-
 ## How to Get Help
 
-- **Training organizers**: Daniel Diaz, Martin Kwok (reachable via the LPC Slack)
 - **NRP support chat** (Slack / Matrix): [https://nrp.ai/contact/](https://nrp.ai/contact/)
 - **NRP documentation**: [https://nrp.ai/documentation/](https://nrp.ai/documentation/)
 - **LLM-specific docs**: [https://nrp.ai/documentation/userdocs/ai/llm-managed/](https://nrp.ai/documentation/userdocs/ai/llm-managed/)
+
+---
+
+## Run the Notebooks
+
+You can run the notebooks for this training either on the NRP US-CMS Analysis
+Hub or on your own machine locally — the Analysis Hub is **recommended** since
+the packages and a shared workshop token are already set up for you.
+
+::: callout Launch the workspace in JupyterHub
+**[▶ Launch the workspace in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace)** — signs you in at uscms-af.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab with the notebooks for this training.
+:::
