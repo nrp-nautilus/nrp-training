@@ -1,7 +1,7 @@
 ---
 title: Agentic Workflows — opencode & IDE Integration
 teaching: 30
-exercises: 20
+exercises: 50
 questions:
   - What is an agentic coding tool and how is it different from chat?
   - How do I configure opencode to use NRP's managed LLMs?

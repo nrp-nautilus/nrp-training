@@ -1,7 +1,7 @@
 ---
 title: Build a Simple Agent — Tool Calling & the Agent Loop
-teaching: 10
-exercises: 20
+teaching: 15
+exercises: 45
 questions:
   - What is an agent, and how is it different from a chat completion?
   - How do I describe a Python function so an LLM can call it?

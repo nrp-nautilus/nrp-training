@@ -1,14 +1,14 @@
 ---
 title: CMS Data Access on NRP
 teaching: 15
-exercises: 15
+exercises: 25
 ---
 
 ::: callout Open the runnable notebook for this episode
 **[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F5_cms_data.ipynb)** — unlike the rest of this training, this notebook uses a **Python kernel**, not bash, so the uproot/matplotlib analysis at the end plots directly inline instead of saving a file. Shell commands are prefixed with `!`. Most of the certificate setup is interactive terminal work (password prompts), so the notebook mostly points you to a terminal.
 :::
 
-**Time:** 00:00-00:30
+**Time:** 00:00-00:40
 
 This lesson uses the **NRP USCMS Analysis Hub**
 ([uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io)) — the

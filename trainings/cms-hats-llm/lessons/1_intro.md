@@ -1,6 +1,6 @@
 ---
 title: Introduction — LLMs on NRP
-teaching: 20
+teaching: 25
 exercises: 0
 questions:
   - What LLM resources does NRP provide for CMS researchers?

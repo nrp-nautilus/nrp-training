@@ -1226,13 +1226,20 @@ def render_index(config, lessons):
         if resource_url else ""
     )
 
+    indico_url = config.get("indico_url")
+    indico = (
+        '<p class="resources-note">Event page (registration, logistics, and '
+        f'more) on <a href="{html.escape(indico_url)}">Indico</a>.</p>'
+        if indico_url else ""
+    )
+
     body = (
         f"<h1>{html.escape(lesson_title)}</h1>"
         f'<p class="subtitle">{html.escape(subtitle)}</p>'
         f"<h2>Schedule</h2>{schedule}"
+        f"{indico}"
+        '<p class="hint">Times are cumulative and assume a prompt start.</p>'
         f"{resources}"
-        '<p class="hint">Times are cumulative and assume a prompt start. '
-        "Edit durations in each lesson's frontmatter.</p>"
     )
     return page("Home", lesson_title, body, nav)
 

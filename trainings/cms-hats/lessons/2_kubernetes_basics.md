@@ -1,14 +1,14 @@
 ---
 title: Kubernetes Basics — Pods, Logs & Debugging
-teaching: 10
-exercises: 15
+teaching: 15
+exercises: 20
 ---
 
 ::: callout Open the runnable notebook for this episode
 **[▶ Open notebook in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats&targetpath=cms-hats&urlpath=lab%2Ftree%2Fcms-hats%2Fworkspace%2Fnotebooks%2F2_kubernetes_basics.ipynb)** — every command below is a Shift+Enter cell; the YAML manifest is in the workspace's `yamls/` folder.
 :::
 
-**Time:** 00:00-00:15
+**Time:** 00:00-00:35
 
 The rest of this training runs Kubernetes Jobs for you — you `kubectl apply` a
 manifest and read the logs. Before that, it helps to see the basic unit those
