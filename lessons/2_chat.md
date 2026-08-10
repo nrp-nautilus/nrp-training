@@ -1,7 +1,7 @@
 ---
 title: Chat with LLMs — Python, Multimodal, Embeddings & RAG
-teaching: 5
-exercises: 40
+teaching: 10
+exercises: 65
 questions:
   - How do I call NRP's managed LLMs from Python?
   - How can I send images or other non-text inputs to a model?
