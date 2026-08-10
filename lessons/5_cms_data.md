@@ -127,9 +127,14 @@ grid storage and plot something from it with
 verification — if the copy below succeeds, your proxy is good.
 
 🖥️ **Terminal step** — `xrdcp` needs a real terminal here, not a notebook
-cell; run it in the same JupyterLab terminal as the steps above:
+cell; run it in the same JupyterLab terminal as the steps above. `cd` into
+the same folder as the notebook first — the Python cells below open
+`nanoout_1.root` with a relative path, which only resolves if the file
+actually lands next to the notebook rather than in your terminal's default
+directory:
 
 ```bash
+cd ~/cms-hats/workspace/notebooks
 xrdcp -f root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root nanoout_1.root
 ```
 
@@ -161,8 +166,8 @@ for pkg in ("uproot", "awkward", "matplotlib"):
 print("Dependencies ready")
 ```
 
-Open it with uproot and histogram the jet transverse momenta, right here in
-the notebook:
+Open it with uproot, right here in the notebook, and see what's inside
+before plotting anything:
 
 ```python
 %matplotlib inline
@@ -171,6 +176,19 @@ import matplotlib.pyplot as plt
 import uproot
 
 events = uproot.open("nanoout_1.root")["Events"]
+all_keys = events.keys()
+print(f"{len(all_keys)} branches in the Events tree. First 20:")
+for name in all_keys[:20]:
+    print(f"  {name}")
+```
+
+`Events` is the standard NanoAOD tree name. NanoAOD files typically have
+hundreds of branches, so this only prints the first 20 — `Muon_pt`, `MET_pt`,
+and similar branches are in there too if you want to plot something else.
+
+### Jet $p_T$ distribution
+
+```python
 jet_pt = ak.flatten(events["Jet_pt"].array(entry_stop=5000))
 
 plt.hist(jet_pt, bins=50, range=(0, 200))
@@ -180,11 +198,50 @@ plt.title(f"Jet $p_T$ spectrum ({len(jet_pt)} jets, first 5000 events)")
 plt.show()
 ```
 
-`Events` is the standard NanoAOD tree name; `uproot.open(...).keys()` lists
-every tree/branch in the file if you want to plot something else
-(`Muon_pt`, `MET_pt`, and similar branches are also in this file).
+### A simple cut
 
-## Sharing your proxy with another namespace
+Analyses almost always work with a *selected* subset of events or objects,
+not the whole sample — this is usually called a "cut." Here's the smallest
+possible version: keep only jets above some $p_T$ threshold, and compare the
+distribution before and after:
+
+```python
+pt_cut = 50  # GeV
+jet_pt_cut = jet_pt[jet_pt > pt_cut]
+
+print(f"Jets before cut: {len(jet_pt)}")
+print(f"Jets with pT > {pt_cut} GeV: {len(jet_pt_cut)}")
+
+plt.hist(jet_pt, bins=50, range=(0, 200), histtype="step", label="all jets")
+plt.hist(jet_pt_cut, bins=50, range=(0, 200), histtype="step", label=f"$p_T$ > {pt_cut} GeV")
+plt.xlabel("Jet $p_T$ [GeV]")
+plt.ylabel("Jets / bin")
+plt.title("Effect of a simple $p_T$ cut")
+plt.legend()
+plt.show()
+```
+
+Try changing `pt_cut`, or cutting on a different branch entirely (`Jet_eta`,
+`Muon_pt`, ...) — same pattern: a boolean comparison on an awkward array,
+which is itself usable as a mask.
+
+## Clean up
+
+Proxies are short-lived by design (the transcript above expires in about a
+week), so there's nothing to revoke. Remove the file you copied down:
+
+```bash
+rm -f nanoout_1.root
+```
+
+## Reference: sharing your proxy with another namespace
+
+::: important
+This is reference material, not something to actually run in this training
+— there's no need for you to publish your proxy anywhere today. It's here
+because you'll likely want it later, once you're running your own jobs
+outside this tutorial.
+:::
 
 Your proxy lives at `~/.globus/x509up` on the hub, but Kubernetes Jobs run in a
 namespace and can't reach your home directory directly. `grid-proxy-publish`
@@ -211,17 +268,7 @@ runs that Job publish their **own** proxy there — don't publish yours on
 their behalf.
 :::
 
-## Clean up
-
-Proxies are short-lived by design (the transcript above expires in about a
-week), so there's nothing to revoke. Remove the file you copied down:
-
-```bash
-rm -f nanoout_1.root
-```
-
-If you published a proxy to a namespace you don't want it in anymore, find
-the Secret `grid-proxy-publish` created and delete it:
+If you do this and later want to remove a proxy Secret from a namespace:
 
 ```bash
 kubectl get secrets -n <namespace>
