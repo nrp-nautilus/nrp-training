@@ -163,6 +163,14 @@ for pkg in ("uproot", "awkward", "matplotlib"):
             [sys.executable, "-m", "pip", "install", "--user", "--quiet", pkg],
             check=True, cwd=home,
         )
+
+# Some hub images (notably conda-based ones) don't put the --user
+# site-packages directory on sys.path by default, so a successful pip
+# install can still leave the import failing. Make sure it's there.
+import site
+user_site = site.getusersitepackages()
+if user_site not in sys.path:
+    sys.path.insert(0, user_site)
 print("Dependencies ready")
 ```
 
