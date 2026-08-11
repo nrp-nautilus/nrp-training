@@ -44,6 +44,27 @@ The content below is the notebook rendered as Markdown with example outputs. Run
 
 ---
 
+## Available Models
+
+Quick reference — the same catalog from [Lesson 1](1_intro.html#1-managed-llm-service), NRP model ID alongside the underlying HuggingFace model:
+
+| Model | HuggingFace ID | Parameters | Context | Tools | Vision | Notes |
+|---|---|---|---|---|---|---|
+| `qwen3` | `Qwen/Qwen3.5-397B-A17B-FP8` | 397B (17B active MoE) | 1.01M | ✓ | image, video | Largest context |
+| `qwen3-small` | `Qwen/Qwen3.6-27B` | 27B | 1.01M | ✓ | image, video | |
+| `gpt-oss` | `openai/gpt-oss-120b` | 120B | 131K | ✓ | — | Strong at code |
+| `gemma` | `google/gemma-4-31B-it-qat-w4a16-ct` | 31B | 262K | ✓ | image, video | |
+| `gemma-small` | `google/gemma-4-12B-it-qat-w4a16-ct` | 12B | 262K | ✓ | image, video | *Evaluating* — fast, good default |
+| `minimax-m2` | `MiniMaxAI/MiniMax-M2.7` | 230B | 204K | ✓ | — | *Evaluating* — strong reasoning |
+| `glm-5` | `nvidia/GLM-5.2-NVFP4` | 744B | 300K | ✓ | — | *Evaluating* |
+| `deepseek-v4-flash` | `deepseek-ai/DeepSeek-V4-Flash-0731` | 304B | 1.05M | ✓ | — | *Evaluating* |
+| `kimi` | `moonshotai/Kimi-K2.7-Code` | 1T MoE | 131K | ✓ | image, video | *Evaluating* |
+| `qwen3-embedding` | `Qwen/Qwen3-VL-Embedding-8B` | 8B | 262K | — | image, video | Embeddings only — semantic search/RAG |
+
+*Evaluating* models are under active testing — configuration can change without notice. This notebook defaults to `gemma-small` and `minimax-m2`, both good general-purpose choices. Check the [live list](https://nrp.ai/documentation/userdocs/ai/llm-managed/models/) or the [LLM status dashboard](https://nrp.ai/llm-status/) if something isn't responding.
+
+---
+
 ## 1. Setup Check
 
 Verify the environment variables and OpenAI client.
@@ -85,10 +106,13 @@ for m in sorted(models.data, key=lambda x: x.id):
 OPENAI_API_BASE = https://ellm.nrp-nautilus.io/v1
 OPENAI_API_KEY  = rifgnLi8...
 
-7 models available:
+10 models available:
+  deepseek-v4-flash
   gemma
-  gemma-small-e4b
+  gemma-small
+  glm-5
   gpt-oss
+  kimi
   minimax-m2
   qwen3
   qwen3-embedding
@@ -138,22 +162,17 @@ The OpenAI chat API takes a list of `messages`, each with a `role` and
 
 | Role | Purpose |
 |---|---|
-| `system` | Sets the model's behavior/persona for the whole conversation. Sent once, usually first. |
+| `system` | The **system prompt** — instructions that set the model's behavior/persona for the whole conversation. Sent once, usually first. |
 | `user` | What the human is asking. |
 | `assistant` | The model's own previous replies — sent back on later turns so it remembers the conversation (see [Section 4](#4-multi-turn-interactive-chat)). |
 
-`system` in the `chat()` helper below is **not** a special OpenAI keyword —
-it's a plain Python argument this tutorial defines, which the helper turns
-into a `{"role": "system", "content": ...}` message for you. The underlying
-concept (a `system` role inside `messages`) *is* standard OpenAI API; the
-`system=` argument name itself is just this helper's own naming choice.
-
-A few other parameters worth knowing:
+A few parameters worth knowing, including the ones our `chat()` helper below exposes as Python arguments:
 
 | Parameter | What it does |
 |---|---|
 | `model` | Which model to use — see the [model table](1_intro.html#1-managed-llm-service) in the intro lesson. |
 | `messages` | The list of `{role, content}` turns described above. |
+| `system` (`chat()` helper arg) | Your system prompt as a plain string. `chat()` wraps it into a `{"role": "system", "content": ...}` message for you, so you don't have to build the `messages` list by hand. |
 | `max_tokens` | Hard cap on reply length. Reasoning models (`minimax-m2`, `qwen3`, `gpt-oss`) spend part of this budget thinking privately before answering, so give them more room (1000+) or you may get an empty reply. |
 | `temperature` | Randomness, from `0` (deterministic — same input gives the same answer) to `~1.5` (more varied/creative). `0.2` is a good default for factual or code answers. |
 
@@ -162,7 +181,7 @@ Reasoning models (`minimax-m2`, `qwen3`, `gpt-oss`) think privately before
 answering, so they need a larger `max_tokens`.
 
 ```python
-def chat(prompt, model="gemma-small-e4b", system=None, max_tokens=1200):
+def chat(prompt, model="gemma-small", system=None, max_tokens=1200):
     msgs = []
     if system:
         msgs.append({"role": "system", "content": system})
@@ -181,7 +200,6 @@ def chat(prompt, model="gemma-small-e4b", system=None, max_tokens=1200):
 ```
 
 ```python
-# Ask something CMS-relevant
 print(chat(
     "What is the CMS detector and what is it used for?",
     system="Answer in two sentences for an audience of physics graduate students.",
@@ -244,7 +262,7 @@ ROLES = {
 
 for role, system in ROLES.items():
     print(f"\n{'='*60}\n=== {role} ===")
-    print(chat(QUESTION, system=system, model="gemma-small-e4b"))
+    print(chat(QUESTION, system=system, model="gemma-small"))
 ```
 
 ---
@@ -256,7 +274,7 @@ across turns — like office hours. Type `quit` to stop, `reset` to clear histor
 
 ```python
 ROLE  = "Teaching assistant"   # change to any key in ROLES above
-MODEL = "gemma-small-e4b"      # or minimax-m2, gpt-oss, qwen3
+MODEL = "gemma-small"      # or minimax-m2, gpt-oss, qwen3
 
 SYSTEMS = {
     "Teaching assistant": (
@@ -295,6 +313,22 @@ while True:
 `qwen3-embedding` converts text into vectors where similar meanings sit closer
 together. Semantic search is just a dot product between normalized vectors.
 
+Why this matters for this audience — a few CMS-adjacent uses:
+
+- **Semantic search over your own docs** — searching TWiki pages, analysis
+  notes, or meeting minutes by meaning instead of exact keyword match. This
+  is exactly what powers the RAG pipeline in
+  [Section 7](#7-rag-answer-from-cms-documentation) below.
+- **Finding related work** — given an abstract or analysis strategy, surface
+  similar past PAS/AN documents or papers.
+- **Dataset curation for model training** — deduplicating or filtering a
+  training corpus by semantic similarity. This is the classic ML-engineering
+  use case (and probably the most familiar one if you've trained models
+  before), but it's a step removed from what most of this audience will do
+  day-to-day, since here you're mainly *using* an LLM rather than training
+  one — think of it more as "why embeddings exist" than "what you'll reach
+  for first."
+
 ```python
 import numpy as np
 import matplotlib.pyplot as plt
@@ -304,7 +338,6 @@ def embed(texts):
     v = np.array([d.embedding for d in r.data])
     return v / np.linalg.norm(v, axis=1, keepdims=True)  # normalize for cosine
 
-# CMS-flavored sentence corpus
 docs = [
     "The Higgs boson was discovered by CMS and ATLAS in 2012 at the LHC.",
     "NanoAOD is a compact ROOT-based data format used for CMS physics analysis.",
@@ -354,23 +387,28 @@ plt.tight_layout(); plt.show()
 
 ## 6. Multimodal — Send a Detector Image
 
-Vision models (`gemma-small-e4b`, `gemma`, `qwen3`) accept images alongside text.
+Vision models (`gemma-small`, `gemma`, `qwen3`) accept images alongside text.
 Below we send a CMS figure and ask the model to describe it.
 Swap `IMG_URL` for any detector plot or event display you want to query.
 
 ```python
 import base64, requests
+from pathlib import Path
 from IPython.display import Image, display
 
-# A public CMS figure — replace with any image URL
-IMG_URL = "https://cds.cern.ch/record/2898346/files/Figure_020-a.png"
-
+# A public CMS figure — replace with any image URL.
+IMG_URL = "https://cms-results.web.cern.ch/cms-results/public-results/publications/HIG-19-004/CMS-HIG-19-004_Figure_005-b.png"
 raw = requests.get(IMG_URL, timeout=30).content
-display(Image(data=raw))
+
+# If the public URL above is rate-limited or unreachable, use the local copy
+# in the workspace instead:
+# raw = Path("../../images/CMS-HIG-19-004_Figure_005-b.png").read_bytes()
+
+display(Image(data=raw, width=500))  # shrunk for display only — full-res bytes still go to the model
 
 b64 = base64.b64encode(raw).decode()
 r = client.chat.completions.create(
-    model="gemma-small-e4b",
+    model="gemma-small",
     max_tokens=300,
     messages=[{"role": "user", "content": [
         {"type": "text",
@@ -391,23 +429,34 @@ most relevant chunks for a question, then ask the LLM to answer **only from
 that context**. This keeps answers grounded and prevents hallucination on
 domain-specific content.
 
+Here we point it at the [LPC Physics Forum schedule](https://lpc.fnal.gov/programs/lpcpf/index.shtml) —
+a real page that's updated regularly with upcoming talks. That's a good
+demonstration of RAG's real value: the LLM's own training data has a cutoff,
+but RAG lets it answer correctly about content added *after* that cutoff,
+as long as you retrieve it at question time.
+
 Both the embedding model and the LLM are NRP-managed — nothing to install.
 
 ```python
-import requests, re
+import html, re, requests
 
 # --- Corpus: load and chunk a document ---
-# CMS's xrootd redirector documentation — a real TWiki page, and a good
-# stand-in for "an internal doc I actually want answers from."
-RAW_URL = "https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookXrootdService?raw=on"
-md = requests.get(RAW_URL, timeout=30).text
-md = re.sub(r"^---.*?---\s*", "", md, flags=re.S)   # drop frontmatter, if present
-md = re.sub(r"\n{3,}", "\n\n", md).strip()
+# The LPC Physics Forum schedule — a real, frequently-updated page, and a
+# good stand-in for "a live doc I want an LLM to answer from correctly."
+RAW_URL = "https://lpc.fnal.gov/programs/lpcpf/index.shtml"
+raw_html = requests.get(RAW_URL, timeout=30).text
+
+# Strip tags/scripts and decode HTML entities to get plain text
+text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", raw_html, flags=re.S | re.I)
+text = re.sub(r"<[^>]+>", " ", text)
+text = html.unescape(text)
+text = re.sub(r"[ \t]+", " ", text)
+text = re.sub(r"\n\s*\n+", "\n", text).strip()
 
 # Chunk with slight overlap so context isn't cut mid-sentence
 CHUNK_SIZE, OVERLAP = 700, 150
-chunks = [md[i:i+CHUNK_SIZE] for i in range(0, len(md), CHUNK_SIZE - OVERLAP)]
-print(f"Loaded {len(md):,} chars → {len(chunks)} chunks.")
+chunks = [text[i:i+CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE - OVERLAP)]
+print(f"Loaded {len(text):,} chars → {len(chunks)} chunks.")
 ```
 
 ```python
@@ -436,7 +485,7 @@ def ask_rag(question, model="minimax-m2"):
     )
 
 # Try a question that IS in the document
-q1 = "Which redirector would I use if reading a root file located at CERN while working from Fermilab?"
+q1 = "When is the next LPC Physics Forum talk, and what is it about?"
 print(f"Q: {q1}\nRetrieved chunks:")
 for text, score in retrieve(q1):
     print(f"  score={score:.3f}  {text[:65].strip()}...")

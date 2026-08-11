@@ -38,10 +38,10 @@ case "$EP" in
   if [ -n "$OPENAI_API_KEY" ] && [ -n "$OPENAI_API_BASE" ]; then
     reply=$(curl -s -X POST "$OPENAI_API_BASE/chat/completions" --max-time 90 \
       -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" \
-      -d '{"model":"gemma-small-e4b","max_tokens":50,"messages":[{"role":"user","content":"Say OK"}]}' \
+      -d '{"model":"gemma-small","max_tokens":50,"messages":[{"role":"user","content":"Say OK"}]}' \
       | python3 -c 'import json,sys; print((json.load(sys.stdin)["choices"][0]["message"]["content"] or "").strip())' 2>/dev/null)
     if [ -n "$reply" ]; then ok "chat completion round-trip works — your token is valid"
-    else bad "chat completion returned nothing" "token invalid/expired, or gemma-small-e4b not in the current catalog"; fi
+    else bad "chat completion returned nothing" "token invalid/expired, or gemma-small not in the current catalog"; fi
   fi
   ;;
 
