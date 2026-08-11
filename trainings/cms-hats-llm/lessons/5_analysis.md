@@ -130,11 +130,22 @@ echo "Persisted. OPENAI_API_KEY = ${OPENAI_API_KEY:0:8}..."
 Claude Code reads an `env` block from `~/.claude/settings.json`. This is where the
 Anthropic-compatible endpoint and your NRP token go.
 
-The model IDs matter. JFC is extremely context-hungry — the orchestrator passes methodology
-files, phase specs and upstream artifacts into every subagent — so pick a long-context model
-with solid tool calling. `qwen3` (1.01M context) is the natural default; `glm-5` (300K) and
-`gpt-oss` (131K, strong at code) are reasonable alternates. Claude Code asks for
-"opus"/"sonnet"/"haiku" tiers internally, so all of them are mapped to NRP models below.
+**Model choice matters more than usual here.** Claude Code speaks the Anthropic protocol, and
+NRP's `/anthropic` endpoint is a *translation layer* over an OpenAI-style backend. That
+translation is where things break: reasoning models emit "thinking" blocks, and every agent turn
+emits tool-use blocks, and a bridge that mislabels either one will crash Claude Code's SDK with
+`API Error: Content block is not a text block`. We default to **`gpt-oss`** because it is the
+model vLLM uses as its own worked example in the
+[vLLM ↔ Claude Code guide](https://docs.vllm.ai/en/stable/serving/integrations/claude_code/), so
+that path is the one actually exercised upstream. `glm-5` and `minimax-m2` are the next
+candidates if it misbehaves.
+
+**`WebSearch` is denied on purpose.** It is a server-side Anthropic tool that only Claude models
+can emit — open-weights models on NRP cannot produce it, so leaving it enabled just burns turns
+on a tool that can never succeed. This matters for JFC, whose methodology insists every numeric
+constant be cited (*"any uncited numeric constant is Category A"*): with web search unavailable,
+the reference PDFs in `docs/` are the citable source. `WebFetch` is a different, client-side
+tool and still works if the agent has a specific URL.
 
 ::: important
 This writes your **user-level** Claude Code settings. If you already use Claude Code against
@@ -143,8 +154,8 @@ first — restore it after the workshop.
 :::
 
 ```bash
-NRP_MODEL="qwen3"          # 1.01M context — see the model table in Lesson 1
-NRP_CONTEXT="1010000"
+NRP_MODEL="gpt-oss"        # vLLM's documented Claude Code example — see note above
+NRP_CONTEXT="131072"
 
 mkdir -p ~/.claude
 [ -f ~/.claude/settings.json ] && cp ~/.claude/settings.json ~/.claude/settings.json.bak && echo "Backed up existing settings to ~/.claude/settings.json.bak"
@@ -168,6 +179,9 @@ cat > ~/.claude/settings.json <<EOF
     "DISABLE_TELEMETRY": "1",
     "API_TIMEOUT_MS": "3000000",
     "CLAUDE_CODE_MAX_RETRIES": "10"
+  },
+  "permissions": {
+    "deny": ["WebSearch"]
   }
 }
 EOF
@@ -178,10 +192,10 @@ python3 -m json.tool ~/.claude/settings.json
 Confirm the Anthropic-compatible endpoint answers with your token before handing it a
 multi-hour job. `HTTP 200` plus a non-empty `reply` means Claude Code will work.
 
-Note the generous `max_tokens`. `qwen3` is a **reasoning model** — it spends part of its output
-budget thinking privately before emitting any visible text (the same behaviour you saw in
-[Chat with LLMs](2_chat.html)). Ask it for 64 tokens and it will burn all 64 on reasoning and
-hand back `"content": null` with `"stop_reason": "max_tokens"` — which looks like a broken
+Note the generous `max_tokens`. NRP's models are **reasoning models** — they spend part of the
+output budget thinking privately before emitting any visible text (the same behaviour you saw in
+[Chat with LLMs](2_chat.html)). Ask for 64 tokens and the model will burn all 64 on reasoning
+and hand back `"content": null` with `"stop_reason": "max_tokens"` — which looks like a broken
 endpoint but is just an under-funded request.
 
 ```bash
@@ -190,7 +204,7 @@ curl -s -o /tmp/anthropic_check.json -w 'HTTP %{http_code}\n' \
   -H "x-api-key: $OPENAI_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -H "content-type: application/json" \
-  -d '{"model":"qwen3","max_tokens":1000,"messages":[{"role":"user","content":"Reply with exactly: NRP OK"}]}'
+  -d "{\"model\":\"${NRP_MODEL:-gpt-oss}\",\"max_tokens\":1000,\"messages\":[{\"role\":\"user\",\"content\":\"Reply with exactly: NRP OK\"}]}"
 
 python3 -c '
 import json
@@ -214,9 +228,36 @@ Reading the result:
 | `ERROR: ...` mentioning the model | That model doesn't route cleanly through the Anthropic bridge — try another |
 | `HTTP 401` / `403` | Token problem — check `OPENAI_API_KEY` |
 
-If you need a different model, set `NRP_MODEL="glm-5"` or `"gpt-oss"` and re-run the settings
-cell in Part 2, then re-run this check. The [LLM status dashboard](https://nrp.ai/llm-status/)
-shows what's currently up.
+This check only proves the endpoint answers. The bridge can still fail **later**, once Claude
+Code starts making tool calls — see below.
+
+::: callout If Claude Code dies with "Content block is not a text block"
+This is the failure to expect, and it is a **bridge bug, not your configuration**. The Anthropic
+protocol requires a `text_delta` to target an open `text` block; translation layers routinely
+mislabel *thinking* blocks and *tool-use* blocks, and Claude Code's SDK rejects the stream. It
+typically hits on the agent's very first tool call. The same bug is documented against
+[sglang](https://github.com/sgl-project/sglang/issues/24293) and
+[LiteLLM](https://github.com/BerriAI/litellm/issues/29441).
+
+In order:
+
+1. Set `NRP_MODEL="glm-5"` or `"minimax-m2"`, re-run the settings cell, relaunch.
+2. **Fall back to opencode.** The fast path stages only `prompt.md`, `docs/` and
+   `h4l_ntuplize.py` — none of JFC's subagent machinery — so nothing about it actually requires
+   Claude Code. opencode talks to NRP over `/v1` with no Anthropic translation in the way, and
+   you already configured it in [Agentic Workflows](3_agentic.html):
+
+   ```bash
+   cd ~/jfc-exercise/jfc/analyses/h4l_rogue
+   opencode
+   ```
+
+   Then paste the contents of `prompt.md` at the opencode prompt.
+
+Claude Code is only strictly required for the take-home full-spec path, which spawns subagents.
+:::
+
+The [LLM status dashboard](https://nrp.ai/llm-status/) shows what's currently up.
 
 ---
 
