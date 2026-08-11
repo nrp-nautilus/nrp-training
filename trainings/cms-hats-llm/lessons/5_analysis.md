@@ -176,7 +176,13 @@ python3 -m json.tool ~/.claude/settings.json
 ```
 
 Confirm the Anthropic-compatible endpoint answers with your token before handing it a
-multi-hour job. A `200` with a JSON body containing `content` means Claude Code will work:
+multi-hour job. `HTTP 200` plus a non-empty `reply` means Claude Code will work.
+
+Note the generous `max_tokens`. `qwen3` is a **reasoning model** — it spends part of its output
+budget thinking privately before emitting any visible text (the same behaviour you saw in
+[Chat with LLMs](2_chat.html)). Ask it for 64 tokens and it will burn all 64 on reasoning and
+hand back `"content": null` with `"stop_reason": "max_tokens"` — which looks like a broken
+endpoint but is just an under-funded request.
 
 ```bash
 curl -s -o /tmp/anthropic_check.json -w 'HTTP %{http_code}\n' \
@@ -184,14 +190,33 @@ curl -s -o /tmp/anthropic_check.json -w 'HTTP %{http_code}\n' \
   -H "x-api-key: $OPENAI_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
   -H "content-type: application/json" \
-  -d '{"model":"qwen3","max_tokens":64,"messages":[{"role":"user","content":"Reply with exactly: NRP OK"}]}'
+  -d '{"model":"qwen3","max_tokens":1000,"messages":[{"role":"user","content":"Reply with exactly: NRP OK"}]}'
 
-head -c 600 /tmp/anthropic_check.json; echo
+python3 -c '
+import json
+d = json.load(open("/tmp/anthropic_check.json"))
+if "error" in d:
+    print("ERROR:", d["error"]); raise SystemExit
+c = d.get("content")
+text = "".join(b.get("text", "") for b in c) if isinstance(c, list) else (c or "")
+print("model:      ", d.get("model"))
+print("stop_reason:", d.get("stop_reason"))
+print("reply:      ", repr(text.strip()))
+'
 ```
 
-If that returned a non-200, or an error mentioning the model: the Anthropic bridge does not
-route every model equally well. Try `NRP_MODEL="glm-5"` or `"gpt-oss"` (re-running the settings
-cell), and check the [LLM status dashboard](https://nrp.ai/llm-status/).
+Reading the result:
+
+| What you see | Meaning |
+|---|---|
+| `HTTP 200`, `stop_reason: end_turn`, non-empty reply | Working — go on to Part 3 |
+| `HTTP 200`, `stop_reason: max_tokens`, empty reply | The model spent its whole budget reasoning. Raise `max_tokens` — not an endpoint problem |
+| `ERROR: ...` mentioning the model | That model doesn't route cleanly through the Anthropic bridge — try another |
+| `HTTP 401` / `403` | Token problem — check `OPENAI_API_KEY` |
+
+If you need a different model, set `NRP_MODEL="glm-5"` or `"gpt-oss"` and re-run the settings
+cell in Part 2, then re-run this check. The [LLM status dashboard](https://nrp.ai/llm-status/)
+shows what's currently up.
 
 ---
 
