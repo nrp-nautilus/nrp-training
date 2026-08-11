@@ -60,8 +60,29 @@ case "$EP" in
   llm_check
   ;;
 
+5)
+  echo "Episode 5 — agentic physics analysis (JFC on NRP)"
+  if command -v claude >/dev/null 2>&1; then ok "claude CLI installed ($(claude --version 2>/dev/null | head -1))"
+  else skip "claude not on PATH (curl -fsSL https://claude.ai/install.sh | bash)"; fi
+  if command -v pixi >/dev/null 2>&1; then ok "pixi installed ($(pixi --version 2>/dev/null))"
+  else skip "pixi not on PATH (curl -fsSL https://pixi.sh/install.sh | sh)"; fi
+  if [ -f "$HOME/.claude/settings.json" ]; then
+    if grep -q 'ellm.nrp-nautilus.io/anthropic' "$HOME/.claude/settings.json" 2>/dev/null; then
+      ok "Claude Code pointed at NRP's Anthropic-compatible endpoint"
+    else
+      bad "~/.claude/settings.json exists but does not reference /anthropic" \
+          "set ANTHROPIC_BASE_URL to https://ellm.nrp-nautilus.io/anthropic (Part 2)"
+    fi
+  else skip "~/.claude/settings.json (write the NRP config in Part 2)"; fi
+  if [ -f "$HOME/jfc-exercise/jfc/analyses/h4l_rogue/prompt.md" ]; then ok "h4l exercise staged in ~/jfc-exercise"
+  else skip "~/jfc-exercise/jfc/analyses/h4l_rogue/prompt.md (staging step, Part 4)"; fi
+  if [ -e "$HOME/jfc-exercise/data" ]; then ok "CMS Open Data samples present"
+  else skip "~/jfc-exercise/data (download step, Part 3)"; fi
+  llm_check
+  ;;
+
 *)
-  echo "usage: bash check.sh <episode 1-4>"; exit 1;;
+  echo "usage: bash check.sh <episode 1-5>"; exit 1;;
 esac
 
 echo
