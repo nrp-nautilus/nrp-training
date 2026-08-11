@@ -158,7 +158,7 @@ Docker image, so the image needs a registry name that the cluster can pull.
 
 You can use the prepare image 
 ```bash
-export IMAGE=ghcr.io/ddiaz006/cms-hats-jet-class:0.3
+export IMAGE=ghcr.io/ddiaz006/cms-hats-jet-class:0.4
 ```
 
 Or, you can build your own. 
@@ -168,13 +168,13 @@ Or, you can build your own.
 Use a name like:
 
 ```text
-ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.3
+ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.4
 ```
 
 From the `workspace/` directory, set the image name:
 
 ```bash
-export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.3
+export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.4
 ```
 
 For most Linux/Intel systems:
@@ -213,7 +213,7 @@ Set the image name. Use the same `USER` value from the previous step so your Job
 uses the shared PVC you created above.
 
 ```bash
-export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.3
+export IMAGE=ghcr.io/<github-user-or-org>/cms-hats-jet-class:0.4
 cd ~/cms-hats/workspace
 ```
 
@@ -539,7 +539,7 @@ work each size actually took.
 ::: important
 This extension records each run's wall-clock training time in
 `metadata.json`/`metrics.json`. The prebuilt
-`ghcr.io/ddiaz006/cms-hats-jet-class:0.3` image already includes this. If
+`ghcr.io/ddiaz006/cms-hats-jet-class:0.4` image already includes this. If
 you built your own image earlier (before this note was added), rebuild and
 push it again (see [step 4](#4-the-container-image) above) to pick up the
 change. Without it, the sweep still runs and still compares accuracy vs.

@@ -202,7 +202,7 @@ Pod](#what-makes-a-job-different-from-a-pod) above if you skipped it.
 ::: important
 This extension also records each run's wall-clock training time in
 `metadata.json`/`metrics.json`. The prebuilt
-`ghcr.io/ddiaz006/cms-hats-jet-class:0.3` image already includes this. If
+`ghcr.io/ddiaz006/cms-hats-jet-class:0.4` image already includes this. If
 you built your own image earlier (before this note was added), rebuild and
 push it again (see [step 4 of Hands-On Prep](3_prep.html#4-the-container-image))
 to pick up the change. Without it, the sweep still runs and still compares
