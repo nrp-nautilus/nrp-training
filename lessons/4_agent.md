@@ -42,9 +42,9 @@ Work through the notebook top to bottom (**Shift+Enter** to run each cell). The 
 | 6 | Guardrails — iteration caps, errors as messages, self-correction |
 | 7 | Exercises — your own questions, a third tool, agentic RAG challenge |
 
-**Prerequisites:** `OPENAI_API_BASE` and `OPENAI_API_KEY` are pre-loaded on the
-training JupyterHub (at home, export your personal token from
-[https://nrp.ai/llmtoken](https://nrp.ai/llmtoken)). CPU-only is sufficient.
+**Prerequisites:** `OPENAI_API_BASE` and `OPENAI_API_KEY` must be set — export
+your personal token from [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken)
+(covered in [Lesson 1](1_intro.html#getting-access)). CPU-only is sufficient.
 
 ---
 
@@ -54,11 +54,17 @@ The content below is the notebook rendered as Markdown with example outputs. Run
 
 ## 1. Setup
 
-Same client as in the Chat notebook — one `OpenAI` client pointed at NRP.
+Same client as in the Chat notebook — one `OpenAI` client pointed at NRP. This
+notebook is a separate kernel from Lesson 2, so it needs its own token set —
+edit the `OPENAI_API_KEY` line below with your personal token from
+[Lesson 1](1_intro.html#step-2-get-an-api-token).
 
 ```python
 import os, json, math
 from openai import OpenAI
+
+os.environ.setdefault("OPENAI_API_BASE", "https://ellm.nrp-nautilus.io/v1")
+os.environ.setdefault("OPENAI_API_KEY", "<paste-your-token-here>")
 
 client = OpenAI(
     api_key=os.environ["OPENAI_API_KEY"],

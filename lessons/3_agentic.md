@@ -119,10 +119,10 @@ JSON
 ```
 
 `{env:OPENAI_API_KEY}` tells opencode to read the token from your environment
-at runtime. The persistence step above already makes sure any terminal you
-open has it — on the Analysis Hub that's the shared workshop token; on your
-own machine, edit the placeholder in that step to your personal token from
-[https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) first.
+at runtime. The persistence step above makes sure any terminal you open has
+it — edit the placeholder in that step to your own personal token from
+[https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) first, on the Analysis Hub
+or your own machine.
 
 ::: callout Switching models
 Inside opencode, press **Ctrl+P** and select *Switch models* to change the active

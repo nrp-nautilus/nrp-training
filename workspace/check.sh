@@ -3,8 +3,7 @@
 #
 #   bash check.sh <episode 1-4>
 #
-# No username needed — this training uses a shared workshop token and doesn't
-# create per-user cluster resources.
+# No username needed — this training doesn't create per-user cluster resources.
 
 NS=us-cms
 EP="$1"
@@ -20,7 +19,7 @@ llm_check() {
     code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $OPENAI_API_KEY" "$OPENAI_API_BASE/models" --max-time 15)
     if [ "$code" = 200 ]; then ok "managed LLM endpoint reachable ($OPENAI_API_BASE)"
     else bad "LLM endpoint answered '$code'" "token invalid/expired? get one at nrp.ai/llmtoken, or ask an instructor"; fi
-  else bad "OPENAI_API_KEY / OPENAI_API_BASE not set" "pre-exported on the training hub; on your own machine export both yourself"; fi
+  else bad "OPENAI_API_KEY / OPENAI_API_BASE not set" "export your personal token from nrp.ai/llmtoken (see Lesson 1)"; fi
 }
 
 case "$EP" in
