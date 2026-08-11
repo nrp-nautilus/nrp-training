@@ -156,23 +156,86 @@ Enter. (`/` opens the slash-command menu for things like `/models` or
 
 ```text
 Write a Python script cms_nano_summary.py that uses the uproot library to open
-a CMS NanoAOD ROOT file (path given as a command-line argument) and prints a
-summary table of all the TTree branches under the "Events" tree, grouped by
-collection (e.g., all "Muon_*" branches together, all "Jet_*" branches
-together). For each group print the branch name, type, and a one-line
-description if available. At the end print the total number of events. Add a
-proper argparse interface and a top-level docstring. Also add a
-requirements.txt pinning uproot>=5 and tabulate.
+a CMS NanoAOD ROOT file and print a summary of its contents.
+
+The input is a real CMS NanoAOD file whose path is given as a command-line
+argument. It has an "Events" TTree using the standard NanoAOD flat-branch
+convention: collections appear as "<Collection>_<variable>" (Muon_pt,
+Muon_eta, Jet_pt, ...), with an "n<Collection>" counter branch giving the
+per-event multiplicity of each collection.
+
+The script should:
+- Group the branches by collection (all "Muon_*" together, all "Jet_*"
+  together, and so on), listing anything that isn't part of a collection
+  under "Event-level".
+- For each branch print its name, type, and title/description if uproot
+  exposes one.
+- Print the total number of events at the end.
+- Have a proper argparse interface and a top-level docstring.
+
+Also write a requirements.txt pinning uproot>=5 and tabulate.
 ```
 
 opencode will plan the implementation, write the files, and tell you how to run
 them. Install and test:
 
 ```bash
+cd ~/opencode-exercise
 pip install -r requirements.txt
 # For the exercise, point to any NanoAOD file you have access to, or use:
 python cms_nano_summary.py --help
 ```
+
+### Test it on a real NanoAOD file
+
+`--help` only proves the script parses. To actually exercise it you need a
+NanoAOD file, and there are two ways to get one.
+
+**Option A — copy from CERN EOS with `xrdcp`.** This needs a valid grid proxy.
+If you haven't set one up, run `grid-cert-import` once and then
+`grid-proxy-init` — both are Analysis Hub tools, covered in [CMS Data on
+NRP](https://training.nrp-nautilus.io/cms-hats/5_cms_data.html) in the
+companion training. `xrdcp` looks for the proxy at `~/.globus/x509up` by
+default, so nothing extra to set.
+
+🖥️ **Terminal step** — `xrdcp` needs a real terminal, not a notebook cell:
+
+```bash
+cd ~/opencode-exercise
+xrdcp -f root://eoscms.cern.ch//eos/cms/store/group/cmst3/group/l1tr/maglowac/AD_HLT_PF/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8/re-emul_Run3Winter25MiniAOD-FEVTOUTPUT_142X_v7-v1/251124_134438/0000/nanoout_1.root nanoout_1.root
+```
+
+**Option B — no grid proxy?** The same file is mirrored on NRP S3 and needs no
+credentials. Skip Option A entirely if you'd rather not deal with certificates
+today.
+
+```bash
+cd ~/opencode-exercise
+
+# Option B: pull the same NanoAOD file from NRP S3 — no proxy, no credentials (~20 MB).
+# Skip this if you already copied it with xrdcp above.
+[ -f nanoout_1.root ] || curl -L -o nanoout_1.root \
+  "https://s3-west.nrp-nautilus.io/transfer-bucket/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8_nano.root"
+
+ls -lh nanoout_1.root
+```
+
+```bash
+cd ~/opencode-exercise
+python cms_nano_summary.py nanoout_1.root | head -40
+```
+
+This is the real test of the agent's work: does the script actually survive
+contact with a NanoAOD file? Common ways a first attempt falls over — worth
+feeding straight back to opencode rather than fixing by hand:
+
+- Treating every branch as flat when the jagged collection branches need
+  `n<Collection>` to interpret.
+- Crashing on branches with no title instead of printing a blank description.
+- Assuming a fixed set of collections rather than discovering them from the file.
+
+If it fails, paste the traceback into opencode and let it debug — watching an
+agent iterate on a real error is the point of the exercise.
 
 ::: important
 If opencode generates a file named `uproot.py`, rename it — it would shadow the
