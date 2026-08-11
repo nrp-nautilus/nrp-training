@@ -9,6 +9,7 @@ Credit: Javier Duarte, UCSD, 2023.
 import json
 import os
 import random
+import shutil
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -53,6 +54,35 @@ def set_reproducible_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
     tf.random.set_seed(seed)
+
+
+def fetch_openml_with_retries(dataset, cache_dir, attempts=5):
+    """fetch_openml, retrying on download corruption.
+
+    The OpenML download occasionally arrives corrupted somewhere on the
+    network path out of the cluster (a different wrong checksum each time,
+    not a stale/bad file upstream), and scikit-learn's own single built-in
+    retry isn't always enough. Wipe the cached copy and try again a few
+    times before giving up.
+    """
+    last_error = None
+    for attempt in range(1, attempts + 1):
+        try:
+            return fetch_openml(dataset, parser="auto", cache=True, data_home=str(cache_dir))
+        except ValueError as exc:
+            last_error = exc
+            print(f"OpenML download attempt {attempt}/{attempts} failed "
+                  f"(likely transit corruption, not a bad upstream file): {exc}")
+            # fetch_openml/sklearn already does one clean-cache retry internally;
+            # this clears everything under our cache dir so the next attempt
+            # starts from a truly clean slate rather than a half-good cache.
+            shutil.rmtree(cache_dir, ignore_errors=True)
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            if attempt < attempts:
+                time.sleep(5 * attempt)
+    raise RuntimeError(
+        f"Failed to download {dataset} from OpenML after {attempts} attempts"
+    ) from last_error
 
 
 def configure_tensorflow():
@@ -156,7 +186,7 @@ def main():
     print(f"Output directory: {RUN_DIR}")
     print(f"Loading OpenML dataset: {DATASET}")
 
-    data = fetch_openml(DATASET, parser="auto", cache=True, data_home=str(OPENML_CACHE_DIR))
+    data = fetch_openml_with_retries(DATASET, OPENML_CACHE_DIR)
     X_df = data["data"]
     y = data["target"]
     feature_names = list(data["feature_names"])
