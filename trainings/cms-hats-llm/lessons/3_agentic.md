@@ -58,11 +58,38 @@ export PATH="$HOME/.opencode/bin:$PATH"
 opencode --version
 ```
 
-Add the `export` to your `~/.bashrc` or `~/.bash_profile` to make it permanent.
+Terminals in JupyterLab are **separate processes** from a notebook's own shell
+— `export`s in one don't reach the other. The most common failure mode from
+this: opencode returns `Forbidden` because the terminal's shell never saw
+`OPENAI_API_KEY`. Persist the endpoint, your token, and opencode's `PATH` into
+your shell startup files once, so **every new terminal** picks them up
+automatically:
+
+```bash
+: "${OPENAI_API_BASE:=https://ellm.nrp-nautilus.io/v1}"
+: "${OPENAI_API_KEY:=<paste-your-token-here>}"
+
+for RC in ~/.bashrc ~/.bash_profile; do
+    touch "$RC"
+    grep -v -E 'OPENAI_API_BASE=|OPENAI_API_KEY=|\.opencode/bin|NRP managed LLM \(cms-hats-llm training\)' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
+    cat >> "$RC" <<EOF
+
+# --- NRP managed LLM (cms-hats-llm training) ---
+export OPENAI_API_BASE="$OPENAI_API_BASE"
+export OPENAI_API_KEY="$OPENAI_API_KEY"
+export PATH="\$HOME/.opencode/bin:\$PATH"
+EOF
+done
+```
+
+A terminal that's already open needs `source ~/.bashrc` — or just close it and
+open a fresh one.
 
 ### Configure NRP as the provider
 
-Write the config file that tells opencode to use NRP's endpoint:
+Write the config file that tells opencode to use NRP's endpoint. (See the
+[full client-config reference](https://nrp.ai/documentation/userdocs/ai/llm-managed/client-configs/)
+for opencode, VS Code, Claude Code, and more.)
 
 ```bash
 mkdir -p ~/.config/opencode
@@ -78,11 +105,11 @@ cat > ~/.config/opencode/opencode.json <<'JSON'
         "apiKey": "{env:OPENAI_API_KEY}"
       },
       "models": {
-        "minimax-m2":      { "name": "MiniMax M2"        },
-        "gpt-oss":         { "name": "GPT-OSS"           },
-        "qwen3":           { "name": "Qwen3 397B"        },
-        "gemma-small-e4b": { "name": "Gemma 3n E4B"      },
-        "gemma":           { "name": "Gemma 31B"         }
+        "minimax-m2":  { "name": "MiniMax M2"  },
+        "gpt-oss":     { "name": "GPT-OSS"     },
+        "qwen3":       { "name": "Qwen3 397B"  },
+        "gemma-small": { "name": "Gemma 4 12B" },
+        "gemma":       { "name": "Gemma 31B"   }
       }
     }
   },
@@ -92,9 +119,10 @@ JSON
 ```
 
 `{env:OPENAI_API_KEY}` tells opencode to read the token from your environment
-at runtime — the shared workshop token is already exported on the JupyterHub, and
-on your local machine you can export your personal token from
-[https://nrp.ai/llmtoken](https://nrp.ai/llmtoken).
+at runtime. The persistence step above already makes sure any terminal you
+open has it — on the Analysis Hub that's the shared workshop token; on your
+own machine, edit the placeholder in that step to your personal token from
+[https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) first.
 
 ::: callout Switching models
 Inside opencode, press **Ctrl+P** and select *Switch models* to change the active
@@ -104,14 +132,27 @@ model mid-session. Try the same task with `gpt-oss` (strong at code) vs `qwen3`
 
 ### Exercise: Build a CMS analysis helper
 
-Create a fresh project directory and launch opencode:
+opencode scopes file writes to the nearest `.git` directory, not simply your
+shell's current directory — without one, it can fall back to a much wider
+default and write generated files somewhere you don't expect (a
+[known opencode behavior](https://github.com/anomalyco/opencode/issues/15192),
+not something specific to this training). `git init` the project directory
+first so it's scoped correctly, then launch opencode:
 
 ```bash
-mkdir -p ~/cms-llm-exercise && cd ~/cms-llm-exercise
+mkdir -p ~/opencode-exercise && cd ~/opencode-exercise
+git init -q
+export PATH="$HOME/.opencode/bin:$PATH"
 opencode
 ```
 
-Inside the opencode TUI, press `/` to open the prompt. Paste the following task:
+Getting `Forbidden` responses once inside opencode? That means this shell
+doesn't have `OPENAI_API_KEY` — go back and rerun the persistence step above,
+then open a new terminal.
+
+The prompt is active as soon as opencode opens — just type your task and press
+Enter. (`/` opens the slash-command menu for things like `/models` or
+`/clear`, not the prompt itself.) Paste the following task:
 
 ```text
 Write a Python script cms_nano_summary.py that uses the uproot library to open
@@ -189,7 +230,7 @@ VS Code will generate a configuration similar to:
       "url": "https://ellm.nrp-nautilus.io/v1/chat/completions",
       "toolCalling": true,
       "vision": false,
-      "maxInputTokens": 524288,
+      "maxInputTokens": 131072,
       "maxOutputTokens": 100000
     },
     {
@@ -209,7 +250,7 @@ Full setup guide: [NRP client configs — VS Code](https://nrp.ai/documentation/
 
 ### Exercise
 
-Open the `cms-llm-exercise` directory you created in Part 1 in VS Code. In the
+Open the `opencode-exercise` directory you created in Part 1 in VS Code. In the
 Copilot Chat panel, select an NRP model and ask:
 
 ```text

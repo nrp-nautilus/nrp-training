@@ -13,7 +13,7 @@ objectives:
 keypoints:
   - NRP runs an OpenAI-compatible managed LLM endpoint at `https://ellm.nrp-nautilus.io/v1`.
   - Access requires an NRP account and a personal token from `https://nrp.ai/llmtoken`.
-  - Browser UIs (Open WebUI, LibreChat) require no token — sign in with your NRP/CERN account.
+  - The Open WebUI browser UI requires no token — sign in with your NRP/CERN account.
   - The same `openai` Python SDK works against NRP, commercial providers, and your own GPU pods.
 ---
 
@@ -31,43 +31,42 @@ NRP exposes two complementary AI/LLM resources:
 
 ### 1. Managed LLM Service
 
-A rotating catalog of open-weights models hosted on NRP GPUs and served behind a single OpenAI-compatible REST endpoint:
+A rotating catalog of open-weights models hosted on NRP GPUs, reachable two ways:
 
-```
-https://ellm.nrp-nautilus.io/v1
-```
+- **Programmatically**, behind a single OpenAI-compatible REST endpoint:
 
-You authenticate with a **bearer token** (see [Getting Access](#getting-access) below). The endpoint speaks the OpenAI API, so any tool that supports a custom `base_url` works out of the box.
+  ```
+  https://ellm.nrp-nautilus.io/v1
+  ```
+
+  You authenticate with a **bearer token** (see [Getting Access](#getting-access) below). The endpoint speaks the OpenAI API, so any tool that supports a custom `base_url` works out of the box.
+
+- **In the browser**, via [Open WebUI](https://nrp-openwebui.nrp-nautilus.io), signed in with your NRP/CERN account — no API token needed. Useful for quick experiments and sharing demos with collaborators.
 
 **Currently available models** (see [live list](https://nrp.ai/documentation/userdocs/ai/llm-managed/models/)):
 
-| Model | Parameters | Context | Tools | Vision | Notes |
-|---|---|---|---|---|---|
-| `qwen3` | 397B (17B active MoE) | 262K | ✓ | image, video | Largest context |
-| `qwen3-small` | 27B | 262K | ✓ | image, video | |
-| `gpt-oss` | 120B | 131K | ✓ | — | Strong at code |
-| `gemma` | 31B | 262K | ✓ | image, video | |
-| `gemma-small-e4b` | ~4B active | 128K | ✓ | image, video | Fast, good default |
-| `minimax-m2` | 230B | 204K | ✓ | — | Strong reasoning |
-| `qwen3-embedding` | 8B | — | embeddings only | — | Semantic search/RAG |
-| `kimi` | 1T MoE (eval) | 262K | ✓ | image, video | Under evaluation |
+| Model | HuggingFace ID | Parameters | Context | Tools | Vision | Notes |
+|---|---|---|---|---|---|---|
+| `qwen3` | `Qwen/Qwen3.5-397B-A17B-FP8` | 397B (17B active MoE) | 1.01M | ✓ | image, video | Largest context |
+| `qwen3-small` | `Qwen/Qwen3.6-27B` | 27B | 1.01M | ✓ | image, video | |
+| `gpt-oss` | `openai/gpt-oss-120b` | 120B | 131K | ✓ | — | Strong at code |
+| `gemma` | `google/gemma-4-31B-it-qat-w4a16-ct` | 31B | 262K | ✓ | image, video | |
+| `gemma-small` | `google/gemma-4-12B-it-qat-w4a16-ct` | 12B | 262K | ✓ | image, video | *Evaluating* — fast, good default |
+| `minimax-m2` | `MiniMaxAI/MiniMax-M2.7` | 230B | 204K | ✓ | — | *Evaluating* — strong reasoning |
+| `glm-5` | `nvidia/GLM-5.2-NVFP4` | 744B | 300K | ✓ | — | *Evaluating* |
+| `deepseek-v4-flash` | `deepseek-ai/DeepSeek-V4-Flash-0731` | 304B | 1.05M | ✓ | — | *Evaluating* |
+| `kimi` | `moonshotai/Kimi-K2.7-Code` | 1T MoE | 131K | ✓ | image, video | *Evaluating* |
+| `qwen3-embedding` | `Qwen/Qwen3-VL-Embedding-8B` | 8B | 262K | — | image, video | Embeddings only — semantic search/RAG |
+
+*Evaluating* models are under active testing — configuration can change without notice; stick to the others for anything you need to be stable through the workshop.
 
 ::: callout Tip
-For most tasks, start with `gemma-small-e4b` (fast) or `minimax-m2` (strong reasoning). Switch to `qwen3` when you need the largest context window.
+For most tasks, start with `gemma-small` (fast) or `minimax-m2` (strong reasoning). Switch to `qwen3` when you need the largest context window.
 :::
 
 Models occasionally restart or roll over to a new version — check what's currently up at the [LLM status dashboard](https://nrp.ai/llm-status/).
 
-### 2. Browser UIs — No Token Required
-
-Two browser frontends are available using your NRP/CERN SSO login — no API token needed:
-
-- **Open WebUI**: [https://nrp-openwebui.nrp-nautilus.io](https://nrp-openwebui.nrp-nautilus.io)
-- **LibreChat**: [https://librechat.nrp-nautilus.io](https://librechat.nrp-nautilus.io)
-
-These are useful for quick experiments and for sharing demos with collaborators.
-
-### 3. Bring-Your-Own GPU
+### 2. Bring-Your-Own GPU
 
 For workloads requiring full model control — custom weights, fine-tuning, custom quantization, or private inference — you can request your own GPU pod in your namespace and run any inference server (vLLM, TGI, Ollama, etc.). This is covered in other NRP training sessions.
 
@@ -91,7 +90,7 @@ Go to [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) and click **Get LLM tok
 Treat your personal token like a password. Do not commit it to git or share it publicly. In notebooks and scripts, read it from an environment variable (`OPENAI_API_KEY`) rather than hard-coding it.
 :::
 
-On the training JupyterHub (`uscms-af.nrp-nautilus.io`), a shared workshop token is already pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you don't need to do anything for the exercises. If you're working from your own machine, or want to swap in your personal token after the workshop, export both yourself:
+On the NRP USCMS Analysis Facility, a shared workshop token is already pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you don't need to do anything for the exercises. If you're working from your own machine, or want to swap in your personal token after the workshop, export both yourself:
 
 ```bash
 export OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
@@ -141,7 +140,7 @@ curl -s -H "Authorization: Bearer $OPENAI_API_KEY" \
 
 | Method | Where | When to Use |
 |---|---|---|
-| Open WebUI / LibreChat | Browser | Quick questions, no coding |
+| Open WebUI | Browser | Quick questions, no coding |
 | Python `openai` SDK | Notebook / script | Programmatic use, RAG, embeddings |
 | `curl` | Terminal | Quick smoke tests, scripting |
 | Agentic tools (opencode, VS Code, Claude Code) | Terminal / IDE | AI-assisted coding and research |
