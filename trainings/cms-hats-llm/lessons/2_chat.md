@@ -36,7 +36,7 @@ Work through the notebook top to bottom (**Shift+Enter** to run each cell). The 
 | 6 | Multimodal — send a detector image |
 | 7 | RAG over CMS documentation |
 
-**Prerequisites:** `OPENAI_API_BASE` and `OPENAI_API_KEY` are pre-loaded on the training JupyterHub. A CPU-only session is sufficient for all exercises.
+**Prerequisites:** your own personal `OPENAI_API_KEY` from [Lesson 1](1_intro.html#step-2-get-an-api-token), set alongside `OPENAI_API_BASE` (covered in the Setup Check below). A CPU-only session is sufficient for all exercises.
 
 ---
 
@@ -69,15 +69,15 @@ Quick reference — the same catalog from [Lesson 1](1_intro.html#1-managed-llm-
 
 Verify the environment variables and OpenAI client.
 
-**On the Analysis Hub**, `OPENAI_API_BASE` and `OPENAI_API_KEY` are already set — skip to the check below.
-
-**Running locally, or swapping in your own personal token?** Edit the `OPENAI_API_KEY` line in the cell below.
+Edit the `OPENAI_API_KEY` line in the cell below with your own personal token
+from [Lesson 1](1_intro.html#step-2-get-an-api-token), on the Analysis Hub or
+locally.
 
 ```python
 import os
 
-# Only fills these in if they're missing — a no-op on the Analysis Hub, where
-# they're already set. Running locally? Edit the token on the line below.
+# The endpoint is fixed, but you always need to paste your own personal
+# token below.
 os.environ.setdefault("OPENAI_API_BASE", "https://ellm.nrp-nautilus.io/v1")
 os.environ.setdefault("OPENAI_API_KEY", "<paste-your-token-here>")
 ```
@@ -140,9 +140,8 @@ same NRP models.
    - **Base API URL (optional)**: `https://ellm.nrp-nautilus.io/v1` — the
      same `OPENAI_API_BASE` used everywhere else in this training.
    - Leave **Organization** and **Proxy** blank.
-   - Under **API Keys**, paste your token into **OPENAI_API_KEY** (your
-     personal token from [Lesson 1](1_intro.html#step-2-get-an-api-token), or
-     the shared workshop token if you're on the Analysis Hub).
+   - Under **API Keys**, paste your token into **OPENAI_API_KEY** — your
+     personal token from [Lesson 1](1_intro.html#step-2-get-an-api-token).
 
    ![Jupyter AI settings — Completion model, Model ID, Base API URL, and API key](images/jupyter-ai2.png)
 

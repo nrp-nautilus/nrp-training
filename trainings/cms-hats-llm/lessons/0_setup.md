@@ -12,10 +12,10 @@ Before attending the training session, please ensure you have completed the foll
 There are two ways to run the hands-on exercises in this training:
 
 1. **NRP USCMS Analysis Hub (recommended).** A JupyterHub-based environment with
-   the training materials and Python packages already installed, plus a
-   shared workshop API token pre-loaded — nothing to set up on your laptop
-   ahead of time. It still needs one login step done at the start of the
-   session (see below).
+   the training materials and Python packages already installed — nothing to
+   set up on your laptop ahead of time. You'll still need your own personal
+   API token (same step either way — see below) and one login step done at
+   the start of the session.
 2. **Your own machine (alternative).** You call NRP's managed LLM endpoint
    directly from a local Python environment. This is lighter-weight than the
    Kubernetes-heavy trainings — there's no `kubectl`/`kubelogin` to install,
@@ -53,16 +53,17 @@ Jump to: [NRP USCMS Analysis Hub (recommended)](#method-1-nrp-uscms-analysis-hub
 You still need the account and namespace access from
 [NRP Access Requirements](#1-nrp-access-requirements) above — this method just
 skips installing anything on your laptop. The Python packages used in the
-exercises (`openai`, etc.) and a shared workshop API token are already set up
-on the hub image.
+exercises (`openai`, etc.) are already set up on the hub image, but you'll
+still need to get your own personal API token (see
+[Introduction — LLMs on NRP](1_intro.html#getting-access)).
 
 ::: callout Launch the workspace in JupyterHub
 **[▶ Launch the workspace on the NRP USCMS Analysis Hub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace)** — signs you in at [uscms-af.nrp-nautilus.io](https://uscms-af.nrp-nautilus.io), pulls the tutorial workspace, and opens JupyterLab.
 :::
 
 That's it — no `kubectl` setup is needed for this training. [Introduction —
-LLMs on NRP](1_intro.html), the first lesson, covers the endpoint, the
-pre-loaded workshop token, and how to verify access.
+LLMs on NRP](1_intro.html), the first lesson, covers the endpoint, getting
+your personal API token, and how to verify access.
 
 ## Method 2: Your own machine (alternative)
 

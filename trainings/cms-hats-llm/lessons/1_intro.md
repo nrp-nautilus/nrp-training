@@ -90,7 +90,8 @@ Go to [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) and click **Get LLM tok
 Treat your personal token like a password. Do not commit it to git or share it publicly. In notebooks and scripts, read it from an environment variable (`OPENAI_API_KEY`) rather than hard-coding it.
 :::
 
-On the NRP USCMS Analysis Facility, a shared workshop token is already pre-loaded as `OPENAI_API_KEY` and the endpoint URL as `OPENAI_API_BASE` — you don't need to do anything for the exercises. If you're working from your own machine, or want to swap in your personal token after the workshop, export both yourself:
+Whether you're on the NRP USCMS Analysis Facility or your own machine, export
+your own personal token and the endpoint URL yourself:
 
 ```bash
 export OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
@@ -159,7 +160,8 @@ curl -s -H "Authorization: Bearer $OPENAI_API_KEY" \
 
 You can run the notebooks for this training either on the NRP US-CMS Analysis
 Hub or on your own machine locally — the Analysis Hub is **recommended** since
-the packages and a shared workshop token are already set up for you.
+the packages are already installed for you. You'll still need your own
+personal API token either way (see [Getting Access](#getting-access) above).
 
 ::: callout Launch the workspace in JupyterHub
 **[▶ Launch the workspace in JupyterHub](https://uscms-af.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fcms-hats-llm&targetpath=cms-hats-llm&urlpath=lab%2Ftree%2Fcms-hats-llm%2Fworkspace)** — signs you in at uscms-af.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab with the notebooks for this training.
