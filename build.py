@@ -1233,9 +1233,22 @@ def render_index(config, lessons):
         if indico_url else ""
     )
 
+    names = [n for n in (config.get("facilitators") or []) if str(n).strip()]
+    if len(names) > 1:
+        joined = ", ".join(html.escape(n) for n in names[:-1])
+        joined += f" and {html.escape(names[-1])}"
+    else:
+        joined = "".join(html.escape(n) for n in names)
+    facilitators = (
+        f'<p class="facilitators"><strong>'
+        f'{"Facilitators" if len(names) > 1 else "Facilitator"}:</strong> {joined}</p>'
+        if names else ""
+    )
+
     body = (
         f"<h1>{html.escape(lesson_title)}</h1>"
         f'<p class="subtitle">{html.escape(subtitle)}</p>'
+        f"{facilitators}"
         f"<h2>Schedule</h2>{schedule}"
         f"{indico}"
         '<p class="hint">Times are cumulative and assume a prompt start.</p>'
@@ -1789,6 +1802,8 @@ a:hover { color: var(--accent-2); text-decoration: underline; }
 .details-group details[open] summary::before { transform: rotate(90deg); }
 .content h1 { margin-top: 0; line-height: 1.2; }
 .subtitle { color: var(--muted); font-size: 1.1rem; margin-top: -8px; }
+.facilitators { color: var(--muted); margin: 0.75em 0 0; }
+.facilitators strong { color: var(--fg); }
 .lesson-meta { color: var(--muted); font-size: .9rem; margin-top: -6px; }
 .content li > ol, .content li > ul { margin: .3em 0 .3em 1.4em; }
 .content ol { list-style-type: decimal; }

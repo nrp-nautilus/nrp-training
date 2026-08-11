@@ -77,10 +77,47 @@ matters because JFC's methodology asks agents to fetch and cite numeric constant
 Finding *where* it degrades is the interesting result. Keep notes.
 :::
 
-**Time budget.** The setup below runs ~10–15 minutes, most of it `pixi install` and the data
-download. The agent run itself is open-ended — Phil budgets ~20–30 minutes for the fast path to
-produce something worth looking at. A *complete* JFC analysis runs for hours and is deliberately
-out of scope; see [Take it further](#take-it-further) at the end.
+**Time budget.** The setup below runs ~10–15 minutes, most of it the data download. The agent
+run itself is open-ended — Phil budgets ~20–30 minutes for the fast path to produce something
+worth looking at. A *complete* JFC analysis runs for hours and is deliberately out of scope; see
+[Take it further](#take-it-further) at the end.
+
+**Resources.** Pick a hub profile with at least:
+
+| | Fast path (this lesson) | Full JFC path (take-home) |
+|---|---|---|
+| CPU | **4 cores** | 8 cores |
+| RAM | **8 GB** (16 GB comfortable) | 16 GB |
+| Disk | ~2 GB | ~6–8 GB |
+
+No GPU — inference happens on NRP's GPUs, not yours.
+
+**Why 4 cores.** The agent itself is almost entirely network-bound, sitting idle waiting on NRP
+inference; it uses negligible CPU. Cores matter for the analysis code the agent *writes* —
+decompressing ROOT files with uproot is CPU-bound, and the fits at the end lean on threaded
+BLAS.
+
+Returns diminish quickly past ~8 cores, for a specific reason: the natural way to parallelise
+this is one worker per sample file, but the dataset is extremely lopsided — `ZZTo4L.root` is
+572 MiB of the 865 MiB total, so **two thirds of the work sits in a single file** that per-file
+parallelism cannot split. Extra workers finish the small samples and then idle.
+
+**Careful: cores and RAM multiply.** JFC's scale-out rules tell agents to reach for
+`ProcessPoolExecutor` on anything taking 2–15 minutes, and each worker holds its own arrays. On
+an 8 GB machine keep the pool at ~4; asking for 12 workers on 12 files is the fastest route to
+an OOM kill.
+
+Disk breaks down as ~865 MiB of extracted samples, ~30 MiB of repositories, a few hundred MiB
+for the `claude` and `pixi` binaries, and whatever the agent writes. The take-home path adds a
+pixi environment carrying the full scientific-Python stack plus pandoc and LaTeX, which is the
+multi-gigabyte part.
+
+RAM is driven by that same `ZZTo4L.root`: ROOT files are internally compressed, so materialising
+all of its branches at once lands in the multi-gigabyte range. Note the irony — JFC's own coding
+rules say *"Prototype on a slice. ~1000 events first, full data only for production"*, but the
+fast path deliberately strips those rules out, so a naive agent is **more** likely to exhaust
+memory here than under the full specification. If a subagent gets OOM-killed, that is the
+reason, and telling the agent to read a slice or specific branches fixes it.
 
 ---
 
@@ -289,7 +326,7 @@ if [ -d data ]; then
     echo "data/ already present — skipping download."
 else
     curl -L -o data.tgz "$DATA_URL"
-    tar xzf data.tgz
+    tar xzf data.tgz && rm -f data.tgz    # drop the 857 MiB tarball once extracted
 fi
 du -sh data 2>/dev/null; ls data | head
 ```

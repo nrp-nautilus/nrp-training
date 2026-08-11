@@ -4,6 +4,9 @@ date: 2026-08-11
 indico_url: https://indico.cern.ch/event/1716274/
 published: true
 materials_branch: materials/cms-hats-llm
+facilitators:
+  - Daniel Diaz
+  - Arghya Ranjan Das
 lessons:
   - 0_setup
   - 1_intro
