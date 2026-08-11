@@ -355,7 +355,7 @@ SYSTEM = (
     "answer in plain text with units."
 )
 
-def run_agent(question, model=MODEL, max_turns=8, verbose=True):
+def run_agent(question, model=MODEL, max_turns=8, verbose=True, show_reasoning=False):
     messages = [
         {"role": "system", "content": SYSTEM},
         {"role": "user", "content": question},
@@ -366,6 +366,14 @@ def run_agent(question, model=MODEL, max_turns=8, verbose=True):
             tools=TOOL_SCHEMAS, max_tokens=2000,
         )
         msg = resp.choices[0].message
+
+        if show_reasoning:
+            # Reasoning models (gpt-oss, minimax-m2, qwen3) expose private
+            # chain-of-thought here — this is what lets you see *why* the
+            # model retried "tauon" as "tau", not just that it did.
+            reasoning = getattr(msg, "reasoning", None) or getattr(msg, "reasoning_content", None)
+            if reasoning:
+                print(f"  [turn {turn}] reasoning: {reasoning}\n")
 
         if not msg.tool_calls:                      # plain text -> we're done
             return msg.content or "(no content returned)"
@@ -454,7 +462,8 @@ Watch the agent recover from a failed lookup by itself:
 ```python
 print(run_agent(
     "What is the lifetime of the tau lepton, in seconds? "
-    "Try looking up 'tauon' first."
+    "Try looking up 'tauon' first.",
+    show_reasoning=True,
 ))
 ```
 
@@ -468,6 +477,16 @@ The tau lepton has a lifetime of 2.903e-13 seconds.
 
 The first call fails, the error message lists the known names, and the model
 retries with `tau` — self-correction, driven entirely by a good error string.
+There's no alias table mapping "tauon" to "tau" anywhere in this code — the
+model reads the plain-text error, recognizes "tau" in the list as the
+particle it meant, and retries. That's genuine reasoning over text, not a
+lookup trick.
+
+`show_reasoning=True` above prints the model's private chain-of-thought, if it
+returns any, so you can watch that reasoning happen instead of just inferring
+it from the retry. Whether you see much depends on the model: `gpt-oss` may
+not spend much reasoning budget on a lookup this simple — try
+`model="minimax-m2"` for a more talkative trace.
 
 ---
 
@@ -515,6 +534,47 @@ DECAY_SCHEMA = {
 #                 "decays at rest to mu+ mu-?"))
 ```
 
+<details>
+<summary><strong>Click to reveal a solution</strong></summary>
+
+```python
+def two_body_decay_momentum(M, m1, m2):
+    """Momentum (GeV) of each daughter in a two-body decay at rest."""
+    val = (M**2 - (m1 + m2)**2) * (M**2 - (m1 - m2)**2)
+    p = math.sqrt(max(val, 0.0)) / (2 * M)
+    return f"{p:.4f} GeV"
+
+DECAY_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "two_body_decay_momentum",
+        "description": (
+            "Compute the momentum (GeV) of each daughter particle in a "
+            "two-body decay M -> m1 + m2, evaluated in the rest frame of M."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "M":  {"type": "number", "description": "Mass of the parent particle, in GeV"},
+                "m1": {"type": "number", "description": "Mass of the first daughter particle, in GeV"},
+                "m2": {"type": "number", "description": "Mass of the second daughter particle, in GeV"},
+            },
+            "required": ["M", "m1", "m2"],
+        },
+    },
+}
+
+TOOL_FUNCS["two_body_decay_momentum"] = two_body_decay_momentum
+TOOL_SCHEMAS.append(DECAY_SCHEMA)
+print(run_agent("What is the momentum of each muon when a J/psi "
+                "decays at rest to mu+ mu-?"))
+```
+
+For J/ψ → μ⁺μ⁻ (M=3.0969 GeV, m1=m2=0.10566 GeV) this gives ≈1.545 GeV per
+muon — matches the equal-mass shortcut `p = √(M²/4 − m²)`.
+
+</details>
+
 **Challenge (take-home) — a retrieval tool.** Wrap the RAG `retrieve()`
 function from the Chat notebook as a `search_docs(query)` tool. Your agent can
 then *decide* when to search documentation — which is precisely how "agentic
@@ -533,3 +593,6 @@ RAG" works in production systems.
 - The agentic tools from the previous lesson (opencode, Claude Code) are this
   exact loop with file-editing and shell tools attached. You now know how
   they work.
+
+**Next:** [Agentic Physics Analysis](5_analysis.html) — the same loop scaled up
+to a full research framework, running a H→4ℓ measurement on NRP models.

@@ -268,25 +268,33 @@ The same NRP endpoint works with any tool that supports a custom OpenAI-compatib
 |---|---|
 | **opencode** | `"baseURL": "https://ellm.nrp-nautilus.io/v1"` in `~/.config/opencode/opencode.json` |
 | **VS Code Copilot Chat** | Chat: Manage Language Models → Custom Endpoint (see Part 2) |
-| **Claude Code** | `export ANTHROPIC_BASE_URL=https://ellm.nrp-nautilus.io/v1` (OpenAI-compat mode) |
+| **Claude Code** | `"ANTHROPIC_BASE_URL": "https://ellm.nrp-nautilus.io/anthropic"` in `~/.claude/settings.json` |
 | **Continue** (VS Code/JetBrains) | Set `apiBase` in `~/.continue/config.json` |
 | **Cursor** | Settings → Models → Add Custom Provider |
 | **LangChain / LlamaIndex** | Pass `base_url` to `ChatOpenAI` or `OpenAI` constructor |
 | **any `curl` / `httpx` script** | Replace `api.openai.com/v1` with `ellm.nrp-nautilus.io/v1` |
 
 ::: callout CMS-specific example: Claude Code with NRP
-If you use Claude Code for CMS analysis work, you can configure it to route
-requests through NRP's open-weights models instead of Anthropic's API:
+Claude Code speaks the Anthropic API, not the OpenAI one — so it uses NRP's
+separate **Anthropic-compatible** endpoint at `/anthropic` (not `/v1`), and
+reads its configuration from `~/.claude/settings.json` rather than plain
+environment variables:
 
-```bash
-export ANTHROPIC_BASE_URL=https://ellm.nrp-nautilus.io/v1
-export ANTHROPIC_API_KEY=$OPENAI_API_KEY
-claude --model gpt-oss
+```json
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://ellm.nrp-nautilus.io/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "<your-llm-token>",
+    "ANTHROPIC_MODEL": "qwen3"
+  }
+}
 ```
 
-Note: NRP models are OpenAI-compatible, not Anthropic-compatible — some
-Claude-specific features (extended thinking, tool-use schemas) may behave
-differently. Test your workflow and fall back to the default endpoint when needed.
+Note that not all NRP models route cleanly through the Anthropic-compatible
+endpoint, and Anthropic-specific features (notably the built-in web-search
+tool) cannot be produced by open-weights models. [Agentic Physics
+Analysis](5_analysis.html) uses exactly this setup to run a full analysis
+framework on NRP.
 :::
 
 ---
