@@ -1,5 +1,5 @@
 title: LPC HATS -- NRP as a Resource for USCMS
-subtitle: Intro to NRP, Running batch jobs, using Jupyterhub
+subtitle: Hands-on introduction to the National Research Platform for US-CMS — Kubernetes fundamentals, GPU batch jobs, and CMS data access with grid certificates and XRootD
 length: 3 hours
 date: 2026-08-10
 indico_url: https://indico.cern.ch/event/1716267/
