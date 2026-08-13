@@ -1,0 +1,9 @@
+title: "NAIRR AI Education Webinar Series: Prototype National Research Platform Classroom"
+subtitle: Stand up your own JupyterHub classroom on the National Research Platform — access, resources, and a custom hub deployed with Helm
+length: 1 hour
+date: 2026-08-17
+published: true
+materials_branch: materials/nairr-webinar
+lessons:
+  - 1_intro
+  - 2_custom_jupyterhub
