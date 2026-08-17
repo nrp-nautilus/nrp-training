@@ -29,6 +29,86 @@ per-profile resource limits, shared storage — then see how to build custom
 container images with NRP GitLab CI/CD. This is the recipe instructors and PIs
 use to stand up course and lab hubs on NRP.
 
+::: important Read this before you deploy a real hub
+
+This tutorial takes a deliberate shortcut so it fits in a webinar. Every hub you
+deploy **after** today should follow the documented path in [Deploy
+JupyterHub](https://nrp.ai/documentation/userdocs/jupyter/jupyterhub/), and the
+difference that matters is **authentication**.
+
+| | This tutorial | A hub you actually run |
+|---|---|---|
+| Authenticator | `DummyAuthenticator` | `CILogonOAuthenticator` |
+| Who can sign in | anyone who knows the shared password | your campus IdP, narrowed by `allowed_idps` / `allowed_users` |
+| Prerequisite | none | an OAuth client registered with CILogon |
+| Lead time | zero | **plan on several days to more than a week** |
+
+`DummyAuthenticator` is a password in a values file. It is fine for a
+throwaway namespace for one hour; it is **not** acceptable for a hub with a
+public hostname. NRP's docs are blunt about this: leaving a hub open for anyone
+to sign in can get your namespace locked.
+
+The real path uses **CILogon**, the same federated login NRP itself uses — your
+students sign in with their existing campus credentials. The catch is that
+CILogon is an **independent service, not operated by NRP**, and you register
+your own OAuth client with them at
+[cilogon.org/oauth2/register](https://cilogon.org/oauth2/register):
+
+- **Callback URL:** `https://<your-hostname>.nrp-nautilus.io/hub/oauth_callback`
+- **Client type:** Confidential · **Refresh tokens:** No
+- **Scopes:** `org.cilogon.userinfo,openid,profile,email`
+
+CILogon staff review each registration by hand and email you a client ID and
+secret once it is approved — **budget a few days, and it can stretch past a
+week**. Two consequences for planning a course:
+
+1. **Start the registration well before the term.** It is the long pole, and
+   nothing on the NRP side unblocks it.
+2. **Pick your hostname first.** It is baked into the callback URL you register,
+   so changing it later means going back to CILogon.
+
+Everything else on this page — Helm, the values file, profiles, resource
+limits, shared storage, custom images — is identical either way. Only the
+`hub.config` authentication block changes, plus an
+[`allowed_idps` allowlist](https://cilogon.org/idplist/) for your institution.
+`yamls/cilogon-jupyterhub-config.yaml` in the workspace is a working example of
+that block — see [5.4 Real authentication](#5-4-real-authentication).
+:::
+
+::: prereq Tools you need on your own machine
+
+The training hub has all of this preinstalled, so nothing below is needed
+*today*. To run the same commands from your laptop against your own namespace,
+you need three tools and the cluster config:
+
+| What | Why | Where |
+|---|---|---|
+| `kubectl` | talks to the Kubernetes API — every `kubectl` command on this page | [kubernetes.io/docs/tasks/tools](https://kubernetes.io/docs/tasks/tools/) |
+| **`kubelogin`** | CILogon/OIDC login for `kubectl`. **The NRP kubeconfig does not work without it** | [github.com/int128/kubelogin](https://github.com/int128/kubelogin) |
+| `helm` | installs and upgrades the JupyterHub chart | [helm.sh/docs/intro/install](https://helm.sh/docs/intro/install/) |
+| **Nautilus kubeconfig** | points `kubectl` at Nautilus and carries your CILogon identity — save it as `~/.kube/config`, no extension | [nrp.ai/config](https://nrp.ai/config) |
+
+`kubelogin` is a `kubectl` plugin, so the binary must land on your `PATH` under
+the name **`kubectl-oidc_login`** — that exact name is how `kubectl` finds it.
+The NRP docs give a copy-paste installer for Linux and macOS, plus fixes for
+headless machines, WSL, and port conflicts:
+[cluster access via `kubectl`](https://nrp.ai/documentation/userdocs/start/getting-started/#cluster-access-via-kubectl).
+
+Fetch the kubeconfig and confirm the whole chain works:
+
+```bash
+mkdir -p ~/.kube
+curl -o ~/.kube/config -fSL https://nrp.ai/config
+
+kubectl config get-contexts     # should list the `nautilus` context
+kubectl auth whoami             # triggers the CILogon browser login the first time
+helm version --short
+```
+
+You also need to be an **admin** of the namespace you deploy into — a plain
+member cannot install a chart.
+:::
+
 **Conventions.** Each participant works in their **own pre-created namespace**
 (`nrp-training-000` … `nrp-training-099`) — JupyterHub can only be deployed
 once per namespace. Set your short username, render your personal manifests,
@@ -151,10 +231,60 @@ openssl rand -hex 32
 
 ## 3. Deploy
 
+### First — what's already running in your namespace?
+
+JupyterHub can only be deployed **once per namespace**: a second release fights
+the first one over the `proxy-public` service and the hub database. Your claimed
+slot should be empty, but check before you install — if you've run this tutorial
+before, or the slot was recycled, there may already be a hub sitting in it.
+
+```bash
+helm list -n $NRP_NAMESPACE
+kubectl get pods -n $NRP_NAMESPACE
+```
+
+<details>
+<summary>Expected output</summary>
+
+```text
+NAME	NAMESPACE	REVISION	STATUS	CHART	APP VERSION
+No resources found in nrp-training-042 namespace.
+```
+</details>
+
+An empty `helm list` and no pods means you're clear — skip ahead and deploy.
+
+If a release *is* listed, look at the `NAME` column. Tear it down only if it's
+yours; in a shared namespace someone else's class may be running on it. Set
+`OLD_RELEASE` to that name — otherwise leave it alone and ask whoever owns the
+namespace.
+
+```bash
+# ⚠️  Optional — only if the command above listed a JupyterHub you want gone.
+OLD_RELEASE=changeme   # ✏️ the NAME shown by `helm list` above
+
+if [ "$OLD_RELEASE" = changeme ]; then
+  echo "Nothing to do — set OLD_RELEASE only if you need to remove an existing hub."
+else
+  helm uninstall "$OLD_RELEASE" -n $NRP_NAMESPACE
+  # wait for the pods to actually go away before redeploying
+  kubectl wait --for=delete pod -l app=jupyterhub -n $NRP_NAMESPACE --timeout=120s 2>/dev/null || true
+  helm list -n $NRP_NAMESPACE
+  kubectl get pods -n $NRP_NAMESPACE
+fi
+```
+
+`helm uninstall` leaves PVCs behind on purpose — the hub database and any user
+home directories survive, so a reinstall picks them back up. [Section
+8](#8-cleanup) shows how to delete those too if you really want
+a clean slate.
+
+### Install the chart
+
 ```bash
 helm upgrade --cleanup-on-fail --install $NRP_RELEASE jupyterhub/jupyterhub \
   --namespace $NRP_NAMESPACE \
-  --values yamls/jhub-values.yaml \
+  --values my-yamls/jhub-values.yaml \
   --wait \
   --timeout=10m
 ```
@@ -194,18 +324,27 @@ You should see the **hub** pod (auth, sessions, spawning), the **proxy** pod
 
 ## 4. Expose it with an Ingress
 
-Add an `ingress` section to `yamls/jhub-values.yaml` — pick a globally unique
-hostname:
+`my-yamls/jhub-values.yaml` already ends with an `ingress` block, commented out,
+with **your** hostname rendered in — the setup step substituted `<username>` for
+you, so it is globally unique:
 
 ```yaml
 ingress:
   enabled: true
   ingressClassName: haproxy
-  hosts: ["<your-jupyterhub-name>.nrp-nautilus.io"]
+  hosts: ["jhub-<username>.nrp-nautilus.io"]
   pathSuffix: ''
   tls:
     - hosts:
-      - <your-jupyterhub-name>.nrp-nautilus.io
+      - jhub-<username>.nrp-nautilus.io
+```
+
+The quickest way to enable it is a one-liner that strips the leading `#` from
+those lines:
+
+```bash
+sed -i '/^#ingress:/,$ s/^#//' my-yamls/jhub-values.yaml
+tail -9 my-yamls/jhub-values.yaml
 ```
 
 Upgrade the release and verify:
@@ -213,7 +352,7 @@ Upgrade the release and verify:
 ```bash
 helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
   --namespace $NRP_NAMESPACE \
-  --values yamls/jhub-values.yaml \
+  --values my-yamls/jhub-values.yaml \
   --wait --timeout=10m
 ```
 
@@ -222,7 +361,7 @@ kubectl get ingress -n $NRP_NAMESPACE
 ```
 
 After ~a minute for HAProxy + Let's Encrypt, open
-`https://<your-jupyterhub-name>.nrp-nautilus.io`, log in as `admin` with the
+`https://jhub-$NRP_USER.nrp-nautilus.io`, log in as `admin` with the
 Dummy password, and spawn a server. **You now have a working multi-user
 JupyterHub on national research infrastructure.**
 
@@ -303,6 +442,10 @@ For production, replace the Dummy authenticator with institutional login.
 configuration — campus credentials, an allowlist or admin-managed access, no
 passwords to distribute. For a class roster, the allowlist is your enrollment
 list.
+
+Swapping it in needs a `client_id` and `client_secret` from CILogon, which you
+have to request from them and wait on — see the lead-time warning at the top of
+this page. That wait is the reason today's hub uses the Dummy authenticator.
 
 ## 6. Operating your hub
 
@@ -401,8 +544,8 @@ values file close idle student sessions automatically.
 > `latest` moves every time CI runs. Pinning profiles to a SHA (or release tag) means the same image all semester — reproducibility is the whole reason you built a custom image.
 
 4. You edited `jhub-values.yaml` to add an ingress. How do the changes reach your running hub?
-- [x] `helm upgrade $NRP_RELEASE jupyterhub/jupyterhub --values yamls/jhub-values.yaml`
-- [ ] `kubectl apply -f yamls/jhub-values.yaml`
+- [x] `helm upgrade $NRP_RELEASE jupyterhub/jupyterhub --values my-yamls/jhub-values.yaml`
+- [ ] `kubectl apply -f my-yamls/jhub-values.yaml`
 - [ ] Delete the release and reinstall from scratch
 > A values file is chart *input*, not a Kubernetes manifest — `kubectl apply` on it fails. `helm upgrade` re-renders the templates with your new values and rolls out only what changed.
 
@@ -426,3 +569,5 @@ values file close idle student sessions automatically.
 This is the open Q&A — your own course, GPU and allocation policy, migrating an
 existing class onto NRP. Ask away.
 :::
+
+<iframe src="https://app.sli.do/event/8FY6gX1uNxrVyYpeSyWPA3" height="100%" width="100%" frameBorder="0" style="min-height: 560px;" allow="clipboard-write" title="Slido"></iframe>
