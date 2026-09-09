@@ -1,0 +1,16 @@
+title: CLARIPHY — AI agents and Large Language Models for Scientific Discovery
+subtitle: This hands-on tutorial introduces AI for scientific research, covering LLMs, multimodal data, RAG, and AI agents, using NRP resources. It culminates in JFC, a multi-agent framework demonstrating end-to-end HEP analysis workflows
+length: 3 hours
+date: 2026-09-14
+published: true
+materials_branch: materials/clariphy
+facilitators:
+  - Daniel Diaz
+  - Andrzej Novak (MIT)
+lessons:
+  - 0_setup
+  - 1_intro
+  - 2_chat
+  - 3_agentic
+  - 4_agent
+  - 5_analysis
