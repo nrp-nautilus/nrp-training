@@ -5,57 +5,41 @@ wide: true
 
 ## Before the session
 
-This training is light on setup — there is no Kubernetes tooling to install, no
-`kubectl`, no grid certificate. You need three things:
+Setup is deliberately minimal — there is no Kubernetes tooling to install, no
+`kubectl`, no grid certificate. Just two things need to happen ahead of time:
 
-1. **An NRP account.**
-2. **Membership in a namespace that has LLM access enabled.**
-3. **A personal LLM API token.**
+### 1. Log into nrp.ai
 
-Steps 1 and 2 have to be done ahead of time. Step 3 takes about thirty seconds
-and is covered in the first lesson.
+Go to [nrp.ai](https://nrp.ai/) and sign in with your institutional credentials
+through Authentik. Access is open to users at US academic institutions and their
+collaborators.
 
----
+If anything is unclear, [Getting Started with NRP](https://nrp.ai/documentation/userdocs/start/getting-started/)
+is the authoritative walkthrough — accounts, namespaces, and the portal.
 
-### 1. Get an NRP account
-
-Follow [Getting Started with NRP](https://nrp.ai/documentation/userdocs/start/getting-started/).
-You sign in with your institutional credentials through Authentik; access is
-open to users at US academic institutions and their collaborators.
-
-That page is the authoritative walkthrough — accounts, namespaces, and the
-portal — so we won't duplicate it here.
-
-### 2. Join a namespace with LLM access
+### 2. Ask to be added to the CLARIPHY namespace
 
 ::: important
 An NRP account by itself is **not** enough to use the managed LLM service. Your
-account must belong to a namespace that has **LLM access enabled** — this is a
-per-namespace feature flag, not an account-level one. If you are in a namespace
-but LLM access was never turned on for it, tokens will be issued but requests
-will be rejected.
+account must belong to a namespace that has **LLM access enabled** — a
+per-namespace feature flag, not an account-level one.
 :::
 
-Check which namespaces you belong to at
+The **CLARIPHY namespace already has LLM access enabled**. Message
+**<TODO: CLARIPHY namespace contact>** to be added to it before the session. You
+can see which namespaces you belong to at
 [https://nrp.ai/namespaces/](https://nrp.ai/namespaces/).
 
-For this tutorial there is a **CLARIPHY namespace with LLM access already
-enabled**. Message **<TODO: CLARIPHY namespace contact>** to be added to it
-before the session. If you already work in another namespace that has LLM
-access enabled, that works just as well — you do not need to switch.
+If you already work in another namespace that has LLM access enabled, that works
+just as well — you do not need to switch.
 
-If you are not in any namespace yet:
+---
 
-- **Students** — ask your research supervisor to add you to theirs.
-- **Faculty / researchers** — request namespace admin status via
-  [NRP contact](https://nrp.ai/contact/).
-
-### 3. Get your LLM token
-
-Go to [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) and click **Get LLM
-token**. This is covered in detail, with a verification step, in
-[Introduction — LLMs on NRP](1_intro.html#getting-access) — you can leave it
-until the session starts.
+That's it for advance setup. Your personal LLM API token is the third thing you
+need, but it takes about thirty seconds to get and is covered — with a
+verification step — at the start of
+[Introduction — LLMs on NRP](1_intro.html#getting-access). Leave it until the
+session starts.
 
 ---
 

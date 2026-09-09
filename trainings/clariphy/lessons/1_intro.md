@@ -79,7 +79,7 @@ For workloads requiring full model control — custom weights, fine-tuning, cust
 
 You need an NRP account associated with your institutional credentials. If you don't have one yet, follow [Getting Started with NRP](https://nrp.ai/documentation/userdocs/start/getting-started/).
 
-You also need to belong to a **namespace with LLM access enabled** — this is a per-namespace feature flag, so an account alone is not sufficient. For this tutorial, ask **<TODO: CLARIPHY namespace contact>** to add you to the CLARIPHY namespace, which already has it enabled. See [Setup](0_setup.html#2-join-a-namespace-with-llm-access).
+You also need to belong to a **namespace with LLM access enabled** — this is a per-namespace feature flag, so an account alone is not sufficient. For this tutorial, ask **<TODO: CLARIPHY namespace contact>** to add you to the CLARIPHY namespace, which already has it enabled. See [Setup](0_setup.html#2-ask-to-be-added-to-the-clariphy-namespace).
 
 ### Step 2: Get an API Token
 
