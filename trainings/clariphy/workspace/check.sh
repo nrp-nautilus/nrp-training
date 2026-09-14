@@ -19,12 +19,12 @@ llm_check() {
     # /models answers even without a token, so check with a one-token chat request instead.
     code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 60 -X POST "$OPENAI_API_BASE/chat/completions" \
       -H "Authorization: Bearer $OPENAI_API_KEY" -H "Content-Type: application/json" \
-      -d '{"model":"gemma-small","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}')
+      -d '{"model":"gpt-oss","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}')
     case "$code" in
       200)     ok "NRP accepted your token ($OPENAI_API_BASE)" ;;
       401|403) bad "NRP rejected your token (HTTP $code)" "token invalid/expired, or not in a namespace with LLM access? get one at nrp.ai/llmtoken, or ask an instructor" ;;
       000)     bad "could not reach $OPENAI_API_BASE" "check your network connection" ;;
-      *)       bad "LLM endpoint answered HTTP $code" "gemma-small may be down (nrp.ai/llm-status), or ask an instructor" ;;
+      *)       bad "LLM endpoint answered HTTP $code" "gpt-oss may be down (nrp.ai/llm-status), or ask an instructor" ;;
     esac
   else bad "OPENAI_API_KEY / OPENAI_API_BASE not set" "export your personal token from nrp.ai/llmtoken (see Lesson 1)"; fi
 }
@@ -66,9 +66,10 @@ case "$EP" in
       *)    ok "token saved for opencode (~/.nrp-llm-token)" ;;
     esac
   else skip "~/.nrp-llm-token (token step, Part 1)"; fi
-  # A fresh terminal has no token exported; fall back to the one saved for opencode.
-  if [ -z "${OPENAI_API_KEY:-}" ] && [ -s "$TOKEN_FILE" ]; then
-    OPENAI_API_KEY="$(cat "$TOKEN_FILE")"; OPENAI_API_BASE="${OPENAI_API_BASE:-https://ellm.nrp-nautilus.io/v1}"
+  # opencode reads its token from this file, so check that one rather than any
+  # OPENAI_API_KEY already in the environment (the training hub may set a shared one).
+  if [ -s "$TOKEN_FILE" ]; then
+    OPENAI_API_KEY="$(cat "$TOKEN_FILE")"; OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
   fi
   llm_check
   ;;
@@ -85,8 +86,9 @@ case "$EP" in
   JFC="${JFC_WORK:-$HOME/jfc-exercise}"
   ROGUE_DIR="$JFC/jfc/analyses/h4l_rogue"
   export PATH="$HOME/.local/bin:$HOME/.pixi/bin:$PATH"
-  # A fresh terminal has no token exported; reuse the one saved by Part 1 / jfc_setup.sh.
-  if [ -z "${OPENAI_API_KEY:-}" ] && [ -f "$JFC/nrp-env.sh" ]; then . "$JFC/nrp-env.sh"; fi
+  # The agent uses the token saved by Part 1 / jfc_setup.sh, so check that one rather than
+  # any OPENAI_API_KEY already in the environment (the training hub may set a shared one).
+  if [ -f "$JFC/nrp-env.sh" ]; then . "$JFC/nrp-env.sh"; fi
   if command -v claude >/dev/null 2>&1; then ok "claude CLI installed ($(claude --version 2>/dev/null | head -1))"
   else skip "claude not on PATH (Part 1, or run jfc_setup.sh)"; fi
   if command -v pixi >/dev/null 2>&1; then ok "pixi installed ($(pixi --version 2>/dev/null))"

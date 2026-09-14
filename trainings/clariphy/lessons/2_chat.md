@@ -67,20 +67,30 @@ Quick reference — the same catalog from [Lesson 1](1_intro.html#1-managed-llm-
 
 ## 1. Setup Check
 
-Verify the environment variables and OpenAI client.
+Verify your token and the OpenAI client.
 
-Edit the `OPENAI_API_KEY` line in the cell below with your own personal token
-from [Lesson 1](1_intro.html#step-2-get-an-api-token), on the training hub or
-locally.
+Paste your own personal token from [Lesson 1](1_intro.html#step-2-get-an-api-token)
+into `TOKEN` in the cell below, then run it. It replaces any token set before —
+including a shared one the training hub may provide — so every request in this
+notebook uses yours.
 
 ```python
 import os
 
-# The endpoint is fixed, but you always need to paste your own personal
-# token below.
-os.environ.setdefault("OPENAI_API_BASE", "https://ellm.nrp-nautilus.io/v1")
-os.environ.setdefault("OPENAI_API_KEY", "<paste-your-token-here>")
+# Paste your personal token from https://nrp.ai/llmtoken between the quotes.
+TOKEN = "<paste-your-token-here>"
+
+if TOKEN.startswith("<"):
+    raise ValueError("Paste your token into TOKEN above, then run this cell again.")
+
+# Set both explicitly, replacing anything already in the environment.
+os.environ["OPENAI_API_KEY"] = TOKEN.strip()
+os.environ["OPENAI_API_BASE"] = "https://ellm.nrp-nautilus.io/v1"
 ```
+
+Listing the models shows the endpoint is reachable, but NRP answers that request
+even without a valid token — so the check also sends one tiny request to each
+model this notebook uses.
 
 ```python
 import os
@@ -99,12 +109,25 @@ models = client.models.list()
 print(f"\n{len(models.data)} models available:")
 for m in sorted(models.data, key=lambda x: x.id):
     print(f"  {m.id}")
+
+# Listing models doesn't check your token, so send one tiny request per model we use.
+print()
+for model in ["gemma-small", "minimax-m2", "gpt-oss", "qwen3-embedding"]:
+    try:
+        if model == "qwen3-embedding":
+            client.embeddings.create(model=model, input=["hi"])
+        else:
+            client.chat.completions.create(
+                model=model, max_tokens=1, messages=[{"role": "user", "content": "hi"}])
+        print(f"  ✅ {model}")
+    except Exception as e:
+        print(f"  ❌ {model}: {type(e).__name__} {getattr(e, 'status_code', '')}")
 ```
 
 **Example output:**
 ```
 OPENAI_API_BASE = https://ellm.nrp-nautilus.io/v1
-OPENAI_API_KEY  = rifgnLi8...
+OPENAI_API_KEY  = abcd1234...
 
 10 models available:
   deepseek-v4-flash
@@ -117,7 +140,19 @@ OPENAI_API_KEY  = rifgnLi8...
   qwen3
   qwen3-embedding
   qwen3-small
+
+  ✅ gemma-small
+  ✅ minimax-m2
+  ✅ gpt-oss
+  ✅ qwen3-embedding
 ```
+
+If you see **`PermissionDeniedError 403`**: when *every* model fails, NRP is
+rejecting your token — check that you pasted your own token from
+[nrp.ai/llmtoken](https://nrp.ai/llmtoken) and re-ran both cells, and that your
+account is in a namespace with LLM access ([Lesson 1](1_intro.html#step-1-nrp-account)).
+When only one model fails, that model is unavailable to you right now — use another
+from the table above, e.g. `model="gpt-oss"`, wherever that model appears.
 
 ---
 

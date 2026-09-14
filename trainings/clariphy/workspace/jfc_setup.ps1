@@ -188,7 +188,7 @@ if ($Token -match '^<.*>$') { Die 'That is the placeholder, not a token.' 'Get y
 if ($Token.Contains('"')) { Die 'The token contains a double quote, which this script cannot store safely.' }
 
 # /v1/models answers even without a token, so check with a one-token chat request instead.
-$probe = '{"model":"gemma-small","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}'
+$probe = '{"model":"gpt-oss","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}'
 $r = Invoke-Nrp -Uri "$NrpUrl/v1/chat/completions" -Method 'POST' -Body $probe -TimeoutSec 60 `
         -Headers @{ Authorization = "Bearer $Token" }
 if ($r.Code -eq 200) {

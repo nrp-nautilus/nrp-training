@@ -222,7 +222,7 @@ case "$TOKEN" in "<"*">") die "That is the placeholder, not a token." "Get yours
 # /v1/models answers even without a token, so check with a one-token chat request instead.
 code=$(curl_auth "Authorization" -s -o /dev/null -w '%{http_code}' --max-time 60 \
     -X POST "$NRP_URL/v1/chat/completions" -H "content-type: application/json" \
-    -d '{"model":"gemma-small","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}')
+    -d '{"model":"gpt-oss","max_tokens":1,"messages":[{"role":"user","content":"hi"}]}')
 case "$code" in
     200)     ok "Token accepted by $NRP_URL" ;;
     401|403) die "NRP rejected the token (HTTP $code)." \
