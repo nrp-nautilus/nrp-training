@@ -1,0 +1,14 @@
+# Python packages for running the CLARIPHY notebooks on your own machine.
+# (On the NRP training hub they are already installed.)
+#
+# Install them into a virtual environment, from the tutorial folder:
+#   macOS / Linux / WSL:   python3 -m venv .venv
+#                          source .venv/bin/activate
+#                          python -m pip install -r workspace/requirements.txt
+#   Windows (PowerShell):  py -m venv .venv
+#                          .venv\Scripts\python -m pip install -r workspace\requirements.txt
+openai>=1.40
+numpy
+matplotlib
+requests
+jupyterlab

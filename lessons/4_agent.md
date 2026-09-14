@@ -45,6 +45,8 @@ Work through the notebook top to bottom (**Shift+Enter** to run each cell). The 
 **Prerequisites:** `OPENAI_API_BASE` and `OPENAI_API_KEY` must be set — export
 your personal token from [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken)
 (covered in [Lesson 1](1_intro.html#getting-access)). CPU-only is sufficient.
+Running on your own machine instead? Follow the
+[local setup](0_setup.html#your-own-machine-alternative) first.
 
 ---
 
@@ -594,5 +596,6 @@ RAG" works in production systems.
   exact loop with file-editing and shell tools attached. You now know how
   they work.
 
-**Next:** [Agentic Physics Analysis](5_analysis.html) — the same loop scaled up
-to a full research framework, running a H→4ℓ measurement on NRP models.
+**Next:** [Check In on the Agent](5_analysis.html) — go back to the JFC agent you
+launched at the start: the same loop, scaled up to a full research framework, has
+been running a H→4ℓ measurement on NRP models while you worked.

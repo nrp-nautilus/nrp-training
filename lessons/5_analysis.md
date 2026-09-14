@@ -1,53 +1,76 @@
 ---
-title: Agentic Physics Analysis — Running JFC on NRP LLMs
-teaching: 10
-exercises: 15
+title: Check In on the Agent — How JFC Ran, and What It Found
+teaching: 5
+exercises: 5
 questions:
-  - Can an agent run a complete physics analysis, not just write a script?
-  - How do I point Claude Code at NRP instead of paying for a subscription?
+  - Did the agent you launched at the start produce a credible physics result?
+  - What did the setup actually do to run Claude Code on NRP?
   - What does a production agentic research framework actually encode?
 objectives:
-  - Configure Claude Code against NRP's Anthropic-compatible endpoint.
-  - Stage and launch the JFC H→4ℓ analysis on CMS Open Data.
+  - Explain how Claude Code was pointed at NRP's Anthropic-compatible endpoint without touching your own settings.
+  - Reproduce each setup step by hand.
   - Judge an agent's analysis output against a known physics target.
   - Identify what the JFC specification adds beyond a bare agent loop.
 keypoints:
   - NRP speaks the Anthropic API at `/anthropic`, so Claude Code runs on NRP models with no subscription.
+  - A workshop-only `CLAUDE_CONFIG_DIR` keeps your own `~/.claude` untouched.
   - JFC is an orchestrator + subagents across seven phases — the Lesson 4 loop, scaled up.
   - The framework's value is encoded process — typed findings, bounded iteration, versioned prompts.
   - Open-weights models substituting for Opus is an experiment; where it degrades is the result.
 ---
 
-::: important Run this lesson on your own machine — not on JupyterHub
-Unlike Lessons 2–4, this one is **not** meant to be run on the NRP training hub.
-Work through it in a local terminal on your laptop or workstation (macOS or
-Linux).
+At the start of the tutorial you ran one setup script and [launched the JFC agent](1b_jfc_launch.html)
+on a H→4ℓ mass measurement. It has been working through CMS Open Data on NRP GPUs ever since,
+while you built a ~30-line agent yourself in [Build a Simple Agent](4_agent.html).
 
-Why: this lesson hands an agent a real machine to work on. It installs its own
-toolchain (`claude`, `pixi`), downloads ~865 MiB of samples, spawns parallel
-worker processes, and runs unattended for tens of minutes. Hub sessions are
-resource-capped and time-limited, the interactive `claude` TUI wants a real
-terminal rather than a notebook cell, and a session that culls mid-run takes the
-agent's work with it. Locally, none of that is in your way.
+This lesson has three parts: check on the agent, walk through what the setup did to get Claude
+Code running on NRP, and judge what the agent produced.
 
-Inference still happens on **NRP GPUs** — only the agent process and the data
-are local. Everything you need is the same NRP token from
-[Lesson 1](1_intro.html#getting-access).
-
-A copy of these commands is in `workspace/notebooks/5_analysis.ipynb` in the
-[materials branch](https://github.com/nrp-nautilus/nrp-training/tree/materials/clariphy)
-for reference, but run them in a terminal.
+::: callout Didn't get the agent running?
+You can still do this lesson. [Launch it now](1b_jfc_launch.html) — or use the
+[JupyterHub backup notebook](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fclariphy&targetpath=clariphy&urlpath=lab%2Ftree%2Fclariphy%2Fworkspace%2Fnotebooks%2F5_analysis.ipynb)
+— even ten minutes of agent work gives you something to look at, and the reference analysis
+notes in Part 6 give you a comparison point either way.
 :::
 
-In [Build a Simple Agent](4_agent.html) you built a ~30-line agent with two tools. This lesson
-jumps to the other end of the scale: **[JFC](https://github.com/jfc-mit/jfc)** ("Just Furnish
-Context"), a framework from Eric Moreno, Sam Bright-Thonney, Andre Novak, Daniel Garcia and
-Phil Harris that runs a *complete* HEP analysis — strategy, event selection, statistical
-inference, and a 50–100 page analysis note — from a single physics prompt.
+---
 
-It is the same loop you just built, scaled up: an **orchestrator** that writes no code itself,
-spawning **executor** and **reviewer** subagents across seven phases, with a human gate before
-unblinding.
+## First: where is your agent?
+
+Go back to the agent's terminal. It is either still working, waiting for you to answer a
+question, or finished. If it stopped to ask something, answer it and let it carry on while we
+look at how it got started.
+
+From a **second terminal**, the check script summarises the state of the exercise — whether
+Claude Code is pointed at NRP, whether the data is staged, and how much the agent has written
+(macOS, Linux or WSL; on Windows, browse `%USERPROFILE%\jfc-exercise\jfc\analyses\h4l_rogue`
+in File Explorer instead):
+
+```bash
+source ~/jfc-exercise/nrp-env.sh
+curl -fsSL https://raw.githubusercontent.com/nrp-nautilus/nrp-training/materials/clariphy/workspace/check.sh | bash -s 5
+```
+
+Then look at what it has produced so far:
+
+```bash
+cd "$ROGUE"
+echo "=== files produced so far ==="
+find . -maxdepth 2 -newer prompt.md -type f \
+     -not -path './.git/*' -not -path './data/*' -not -path './docs/*' 2>/dev/null | head -30
+
+echo
+echo "=== figures ==="
+find . -name '*.png' -o -name '*.pdf' 2>/dev/null | grep -v '^./docs/' | head -10
+```
+
+---
+
+## JFC: the loop you built, scaled up
+
+JFC is the same loop as your `run_agent()`, scaled up: an **orchestrator** that writes no code
+itself, spawning **executor** and **reviewer** subagents across seven phases, with a human gate
+before unblinding.
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -63,9 +86,9 @@ unblinding.
 Each phase runs **execute → review → check → commit**, and a reviewer finding a physics problem
 traceable to an earlier phase triggers a formal *regression* back to that phase.
 
-The exercise here follows Phil Harris's
-[h4l_agent_test](https://github.com/violatingcp/h4l_agent_test) tutorial: a **H→4ℓ mass
-measurement on CMS Open Data**, reproducing the spirit of JHEP 11 (2017) 047.
+Where your `run_agent()` had two tools and an eight-turn cap, JFC has typed review findings,
+phase gates, and regressions back to earlier phases. The fast path you launched stripped most of
+that away — which is exactly what makes its output worth judging now.
 
 ---
 
@@ -77,7 +100,7 @@ JFC drives **Claude Code**, which speaks the Anthropic API. NRP exposes an
 | Endpoint | Speaks | Used by |
 |---|---|---|
 | `https://ellm.nrp-nautilus.io/v1` | OpenAI API | `openai` SDK, opencode, VS Code (Lessons 2–4) |
-| `https://ellm.nrp-nautilus.io/anthropic` | Anthropic API | **Claude Code** — this lesson |
+| `https://ellm.nrp-nautilus.io/anthropic` | Anthropic API | **Claude Code** — the JFC agent |
 
 So Claude Code can be pointed at NRP's open-weights models with the same LLM token you've been
 using, and the entire JFC framework runs on NRP GPUs.
@@ -85,23 +108,36 @@ using, and the entire JFC framework runs on NRP GPUs.
 ::: callout Set expectations honestly
 This is a **research-grade experiment, not a guaranteed-success demo.** JFC's specification
 explicitly requires every subagent to run on Claude Opus (*"Never use Sonnet or Haiku for any
-analysis subagent. This is non-negotiable."*). You are about to substitute open-weights models
-for that. Expect rougher plans, more review iterations, and occasional stalls. NRP's own docs
-also warn that **not all models route cleanly through the Anthropic-compatible endpoint**, and
-that Anthropic's built-in web-search tool cannot be produced by open-weights models — which
-matters because JFC's methodology asks agents to fetch and cite numeric constants.
+analysis subagent. This is non-negotiable."*). You substituted open-weights models for that.
+Expect rougher plans, more review iterations, and occasional stalls. NRP's own docs also warn
+that **not all models route cleanly through the Anthropic-compatible endpoint**, and that
+Anthropic's built-in web-search tool cannot be produced by open-weights models — which matters
+because JFC's methodology asks agents to fetch and cite numeric constants.
 
-Finding *where* it degrades is the interesting result. Keep notes.
+Finding *where* it degrades is the interesting result.
 :::
 
-**Time budget.** The setup below runs ~10–15 minutes, most of it the data download. The agent
-run itself is open-ended — Phil budgets ~20–30 minutes for the fast path to produce something
-worth looking at. A *complete* JFC analysis runs for hours and is deliberately out of scope; see
-[Take it further](#take-it-further) at the end.
+---
+
+## What it takes to run
+
+**Why your laptop, not JupyterHub.** This exercise hands an agent a real machine to work on. It
+installs its own toolchain (`claude`, `pixi`), downloads ~865 MiB of samples, spawns parallel
+worker processes, and runs unattended for tens of minutes. Hub sessions are resource-capped and
+time-limited, the interactive `claude` TUI wants a real terminal rather than a notebook cell,
+and a session that culls mid-run takes the agent's work with it. Locally, none of that is in
+your way — and inference still happens on NRP GPUs; only the agent process and the data are
+local.
+
+**Time budget.** By hand, the setup takes ~10–15 minutes, most of it the data download; the
+setup script does the same work unattended. The agent run itself is open-ended — Phil budgets
+~20–30 minutes for the fast path to produce something worth looking at, which is why it ran in
+the background during the other lessons. A *complete* JFC analysis runs for hours and is
+deliberately out of scope; see [Take it further](#take-it-further).
 
 **Resources.** Your local machine wants at least:
 
-| | Fast path (this lesson) | Full JFC path (take-home) |
+| | Fast path (today) | Full JFC path (take-home) |
 |---|---|---|
 | CPU | **4 cores** | 8 cores |
 | RAM | **8 GB** (16 GB comfortable) | 16 GB |
@@ -134,8 +170,27 @@ RAM is driven by that same `ZZTo4L.root`: ROOT files are internally compressed, 
 all of its branches at once lands in the multi-gigabyte range. Note the irony — JFC's own coding
 rules say *"Prototype on a slice. ~1000 events first, full data only for production"*, but the
 fast path deliberately strips those rules out, so a naive agent is **more** likely to exhaust
-memory here than under the full specification. If a subagent gets OOM-killed, that is the
+memory here than under the full specification. If a subagent got OOM-killed, that is the
 reason, and telling the agent to read a slice or specific branches fixes it.
+
+---
+
+## How the setup worked
+
+At the start, `jfc_setup.sh` (or `jfc_setup.ps1` on Windows) ran **Parts 1–4** below for you,
+and you ran **Part 5** yourself. Each part shows the plain commands for that step and why it is
+done that way — run them in order and you end up where the script left you. The script only
+adds guard rails around the same commands: it checks your token before downloading anything,
+resumes an interrupted download, skips finished steps on a re-run, and never copies over files
+the agent has changed.
+
+The commands below are the macOS, Linux and WSL version (bash or zsh); on Windows,
+`jfc_setup.ps1` does the equivalent. Every path is under `~/jfc-exercise`, and each block
+`cd`s where it needs to be, so it doesn't matter where your terminal starts.
+
+One principle runs through all of it: **nothing touches your own configuration.** Everything
+lives in `~/jfc-exercise`, apart from the `claude` and `pixi` binaries — so undoing it is
+`rm -rf ~/jfc-exercise`.
 
 ---
 
@@ -147,42 +202,55 @@ or `conda`).
 
 ```bash
 curl -fsSL https://claude.ai/install.sh | bash
-curl -fsSL https://pixi.sh/install.sh | sh
+curl -fsSL https://pixi.sh/install.sh | PIXI_NO_PATH_UPDATE=1 sh   # don't edit shell rc files
 
 export PATH="$HOME/.local/bin:$HOME/.pixi/bin:$PATH"
 claude --version
 pixi --version
 ```
 
-The agent will open subprocesses and you will likely open a second terminal to watch it, so
-persist the `PATH` and your token rather than exporting them in one shell:
+The agent runs in its own terminal and you will likely open a second one to watch it, so save
+your token and paths to a small file that any terminal can load with `source`. This
+deliberately does **not** edit `~/.bashrc` or `~/.zshrc`: the settings apply only in terminals
+where you source the file, and deleting `~/jfc-exercise` removes them.
 
 ```bash
 # Paste your personal token from https://nrp.ai/llmtoken if it isn't already set.
-: "${OPENAI_API_BASE:=https://ellm.nrp-nautilus.io/v1}"
 : "${OPENAI_API_KEY:=<paste-your-token-here>}"
 
-for RC in ~/.bashrc ~/.bash_profile; do
-    touch "$RC"
-    grep -v -E 'OPENAI_API_BASE=|OPENAI_API_KEY=|\.opencode/bin|\.pixi/bin|NRP managed LLM \(clariphy training\)' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
-    cat >> "$RC" <<EOF
-
-# --- NRP managed LLM (clariphy training) ---
-export OPENAI_API_BASE="$OPENAI_API_BASE"
+export WORK="$HOME/jfc-exercise"
+mkdir -p "$WORK"
+cat > "$WORK/nrp-env.sh" <<EOF
+# NRP settings for the CLARIPHY JFC exercise. Load with: source ~/jfc-exercise/nrp-env.sh
+export OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
 export OPENAI_API_KEY="$OPENAI_API_KEY"
-export PATH="\$HOME/.local/bin:\$HOME/.pixi/bin:\$HOME/.opencode/bin:\$PATH"
+export WORK="$WORK"
+export ROGUE="$WORK/jfc/analyses/h4l_rogue"
+export CLAUDE_CONFIG_DIR="$WORK/claude-config"
+export PATH="\$HOME/.local/bin:\$HOME/.pixi/bin:\$PATH"
 EOF
-done
+chmod 600 "$WORK/nrp-env.sh"
 
-echo "Persisted. OPENAI_API_KEY = ${OPENAI_API_KEY:0:8}..."
+source "$WORK/nrp-env.sh"
+echo "Saved to $WORK/nrp-env.sh. OPENAI_API_KEY = ${OPENAI_API_KEY:0:8}..."
 ```
 
 ---
 
 ## Part 2: Point Claude Code at NRP
 
-Claude Code reads an `env` block from `~/.claude/settings.json`. This is where the
+Claude Code reads an `env` block from its user-level `settings.json`. This is where the
 Anthropic-compatible endpoint and your NRP token go.
+
+That file normally lives in `~/.claude/` — and if you already use Claude Code for your own
+work, it is your real configuration. Writing the NRP settings there means backing it up and
+overwriting it, and one accidental second run overwrites the backup as well.
+
+**So we leave it alone.** Claude Code honours a `CLAUDE_CONFIG_DIR` environment variable that
+moves its whole user configuration somewhere else, and `nrp-env.sh` sets it to
+`~/jfc-exercise/claude-config`. Any terminal where you have run
+`source ~/jfc-exercise/nrp-env.sh` gets the NRP setup; every other terminal keeps your normal
+Claude Code; and re-running this step only rewrites a workshop file you can throw away.
 
 **Model choice matters more than usual here.** Claude Code speaks the Anthropic protocol, and
 NRP's `/anthropic` endpoint is a *translation layer* over an OpenAI-style backend. That
@@ -202,19 +270,19 @@ the reference PDFs in `docs/` are the citable source. `WebFetch` is a different,
 tool and still works if the agent has a specific URL.
 
 ::: important
-This writes your **user-level** Claude Code settings. If you already use Claude Code against
-Anthropic's API, the cell below backs up any existing file to `~/.claude/settings.json.bak`
-first — restore it after the workshop.
+This step does **not** read or modify `~/.claude`. Claude Code only uses the NRP config in
+terminals where `CLAUDE_CONFIG_DIR` points at it — the ones where you sourced `nrp-env.sh`. For
+your normal Claude Code, open a fresh terminal.
 :::
 
 ```bash
 NRP_MODEL="gpt-oss"        # vLLM's documented Claude Code example — see note above
 NRP_CONTEXT="131072"
 
-mkdir -p ~/.claude
-[ -f ~/.claude/settings.json ] && cp ~/.claude/settings.json ~/.claude/settings.json.bak && echo "Backed up existing settings to ~/.claude/settings.json.bak"
+export CLAUDE_CONFIG_DIR="$HOME/jfc-exercise/claude-config"   # workshop-only, NOT ~/.claude
+mkdir -p "$CLAUDE_CONFIG_DIR"
 
-cat > ~/.claude/settings.json <<EOF
+cat > "$CLAUDE_CONFIG_DIR/settings.json" <<EOF
 {
   "env": {
     "ANTHROPIC_BASE_URL": "https://ellm.nrp-nautilus.io/anthropic",
@@ -239,8 +307,9 @@ cat > ~/.claude/settings.json <<EOF
   }
 }
 EOF
+chmod 600 "$CLAUDE_CONFIG_DIR/settings.json"
 
-python3 -m json.tool ~/.claude/settings.json
+cat "$CLAUDE_CONFIG_DIR/settings.json"
 ```
 
 Confirm the Anthropic-compatible endpoint answers with your token before handing it a
@@ -295,14 +364,16 @@ typically hits on the agent's very first tool call. The same bug is documented a
 
 In order:
 
-1. Set `NRP_MODEL="glm-5"` or `"minimax-m2"`, re-run the settings cell, relaunch.
+1. Set `NRP_MODEL="glm-5"` or `"minimax-m2"`, re-run the settings step, relaunch. (Used the
+   setup script? Re-run it as `NRP_MODEL=glm-5 bash jfc_setup.sh` — only the config changes.)
 2. **Fall back to opencode.** The fast path stages only `prompt.md`, `docs/` and
    `h4l_ntuplize.py` — none of JFC's subagent machinery — so nothing about it actually requires
    Claude Code. opencode talks to NRP over `/v1` with no Anthropic translation in the way, and
-   you already configured it in [Agentic Workflows](3_agentic.html):
+   you configured it in [Agentic Workflows](3_agentic.html):
 
    ```bash
-   cd ~/jfc-exercise/jfc/analyses/h4l_rogue
+   source ~/jfc-exercise/nrp-env.sh
+   cd "$ROGUE"
    opencode
    ```
 
@@ -342,7 +413,7 @@ cd "$WORK"
 if [ -d data ]; then
     echo "data/ already present — skipping download."
 else
-    curl -L -o data.tgz "$DATA_URL"
+    curl -fL -o data.tgz "$DATA_URL"
     tar xzf data.tgz && rm -f data.tgz    # drop the 857 MiB tarball once extracted
 fi
 du -sh data 2>/dev/null; ls data | head
@@ -355,6 +426,7 @@ Two repositories: `jfc` on the `jfc_lite` branch (the framework and its specific
 
 ```bash
 cd "$WORK"
+# needs git; without it, the setup script downloads GitHub snapshots instead
 [ -d h4l_agent_test ] || git clone -q https://github.com/violatingcp/h4l_agent_test.git
 [ -d jfc ]            || git clone -q -b jfc_lite https://github.com/violatingcp/jfc.git
 ls -d h4l_agent_test jfc
@@ -366,7 +438,7 @@ ls -d h4l_agent_test jfc
 
 Phil's tutorial offers two routes, and this is the deliberate trade:
 
-| | **Standard** (slow) | **Fast / "go rogue"** ← *we do this* |
+| | **Standard** (slow) | **Fast / "go rogue"** ← *we did this* |
 |---|---|---|
 | JFC methodology, agent roles, conventions | ✅ full spec | ❌ none |
 | Phase structure and multi-agent review | ✅ enforced | ❌ agent improvises |
@@ -392,18 +464,17 @@ cp "$WORK/h4l_agent_test/prompt.md" .
 ls -a
 ```
 
-What you just staged:
+What got staged:
 
 | File | Role |
 |---|---|
 | `prompt.md` | The physics ask — channel, samples with cross-sections, and explicit scope cuts ("just increase the overall normalization on the backgrounds", "cut the exploration steps short") |
 | `docs/` | The reference papers, including arXiv:1706.09936 — the CMS H→4ℓ publication this follows |
 | `h4l_ntuplize.py` | How the ntuples were produced from NANOAOD, so the agent can read the branch structure |
-| `.claude/` | Project-level Claude Code settings. Different file from the `~/.claude/settings.json` you wrote in Part 2 — project scope, no overlapping keys, so your NRP config still applies |
+| `.claude/` | Project-level Claude Code settings. A different file from the `settings.json` written in Part 2 (which lives in `~/jfc-exercise/claude-config`) — project scope, no overlapping keys, so the NRP config still applies |
 | `data/` | Symlink to the samples |
 
-Skim the prompt before launching — it is the analysis's founding document, and everything the
-agent does traces back to it:
+The prompt is the analysis's founding document — everything the agent does traces back to it:
 
 ```bash
 head -5 "$ROGUE/prompt.md"
@@ -413,45 +484,37 @@ head -5 "$ROGUE/prompt.md"
 
 ## Part 5: Launch the agent
 
-🖥️ `claude` is an interactive terminal UI. If your terminal was open before you ran the
-persistence step in Part 1, run `source ~/.bashrc` first, or just open a fresh one.
+This is the one step you ran yourself, in a fresh terminal:
 
 ```bash
-cd ~/jfc-exercise/jfc/analyses/h4l_rogue
-export PATH="$HOME/.local/bin:$HOME/.pixi/bin:$PATH"
+source ~/jfc-exercise/nrp-env.sh      # token, PATH and the workshop-only Claude Code config
+cd "$ROGUE"
 cat prompt.md | claude --permission-mode auto
 ```
+
+`source` loads the settings from Part 1 into that terminal only — including
+`CLAUDE_CONFIG_DIR`, which is what makes this `claude` use the NRP config from Part 2 rather than
+your own. `cat prompt.md |` hands the physics prompt from Part 4 to Claude Code as its opening
+message. (On Windows, `start-agent.cmd` does the same, passing an instruction to read
+`prompt.md` as a command-line argument.)
 
 `--permission-mode auto` lets the agent write files and run commands without confirming each
 one — appropriate here because it is working in a scratch directory it created, and it is about
 to run hundreds of steps. Everything it touches lives under `h4l_rogue/`.
 
-::: callout Watch it think
-The interesting part is not the final number — it is the trajectory. Keep an eye on:
-
-- **Where does it start?** A good agent inspects the ntuple branches before writing selection code.
-- **Does it plan or dive in?** JFC forces plan-mode first; without the spec, weaker models tend to start coding immediately.
-- **Does it check itself?** Watch for a cutflow, a data/MC comparison, a sanity plot — or the absence of one.
-- **Where does it get stuck?** Long silences, repeated failed edits, or looping on the same error are the honest signal about open-weights models driving a long agentic task.
-:::
-
-While it runs, watch what it is producing from a **second terminal** — the agent writes to
-disk continuously, so you can inspect artifacts without interrupting it:
-
-```bash
-cd "$ROGUE"
-echo "=== files produced so far ==="
-find . -maxdepth 2 -newer prompt.md -type f \
-     -not -path './.git/*' -not -path './data/*' -not -path './docs/*' 2>/dev/null | head -30
-
-echo
-echo "=== figures ==="
-find . -name '*.png' -o -name '*.pdf' 2>/dev/null | grep -v '^./docs/' | head -10
-```
-
 ---
 
 ## Part 6: What "good" looks like
+
+::: callout Read back how it thought
+The interesting part is not only the final number — it is the trajectory. Scroll back through
+the agent's terminal:
+
+- **Where did it start?** A good agent inspects the ntuple branches before writing selection code.
+- **Did it plan or dive in?** JFC forces plan-mode first; without the spec, weaker models tend to start coding immediately.
+- **Did it check itself?** Look for a cutflow, a data/MC comparison, a sanity plot — or the absence of one.
+- **Where did it get stuck?** Long silences, repeated failed edits, or looping on the same error are the honest signal about open-weights models driving a long agentic task.
+:::
 
 For this analysis the physics target is concrete, which makes grading the agent easy: a
 four-lepton invariant mass spectrum with a **Higgs peak near 125 GeV** sitting on a ZZ
@@ -485,6 +548,7 @@ Run this **after the workshop** (the `pixi install` alone pulls a full scientifi
 and the analysis runs for hours):
 
 ```bash
+source ~/jfc-exercise/nrp-env.sh      # token, PATH and the workshop-only Claude Code config
 cd ~/jfc-exercise/jfc
 pixi run scaffold analyses/h4l_analysis --type measurement
 cd analyses/h4l_analysis
@@ -532,9 +596,26 @@ system you build.
   result about open-weights models on long agentic tasks. Bring it to the discussion — the
   failure modes are more useful to this community right now than a clean success.
 
-**Where this came from:** JFC is by Eric Moreno, Sam Bright-Thonney, Andre Novak, Daniel Garcia
+**Where this came from:** JFC is by Eric Moreno, Sam Bright-Thonney, Andrzej Novak, Daniel Garcia
 and Phil Harris — *AI Agents Can Already Autonomously Perform Experimental High Energy Physics*.
 The H→4ℓ exercise is Phil Harris's USCMS tutorial, adapted here to run on NRP.
+
+---
+
+## After the workshop: clean up
+
+Stop the agent with **Ctrl+C** in its terminal. Copy anything you want to keep out of
+`~/jfc-exercise/jfc/analyses/h4l_rogue`, then remove the exercise:
+
+```bash
+rm -rf ~/jfc-exercise
+```
+
+That deletes the samples, the repositories, the agent's output, the workshop-only Claude Code
+config, and `nrp-env.sh` — the files that hold your token. On Windows, delete
+`%USERPROFILE%\jfc-exercise`. Your own `~/.claude` was never modified. `claude` and `pixi` stay
+installed; see the [Claude Code](https://code.claude.com/docs/en/setup#uninstall-claude-code)
+and [Pixi](https://pixi.sh/latest/installation/) docs if you want to remove them too.
 
 ---
 
@@ -542,7 +623,8 @@ The H→4ℓ exercise is Phil Harris's USCMS tutorial, adapted here to run on NR
 
 - [JFC framework](https://github.com/jfc-mit/jfc) · [`jfc_lite` branch used here](https://github.com/violatingcp/jfc/tree/jfc_lite)
 - [h4l_agent_test tutorial](https://github.com/violatingcp/h4l_agent_test)
-- [NRP client configurations](https://nrp.ai/documentation/userdocs/ai/llm-managed/client-configs/) — the Claude Code settings used in Part 2
+- [NRP client configurations](https://nrp.ai/documentation/userdocs/ai/llm-managed/client-configs/) — the Claude Code settings used in [Part 2](#part-2-point-claude-code-at-nrp)
+- [Claude Code settings](https://code.claude.com/docs/en/settings) — including `CLAUDE_CONFIG_DIR`
 - [NRP available models](https://nrp.ai/documentation/userdocs/ai/llm-managed/models/) · [LLM status dashboard](https://nrp.ai/llm-status/)
 - [CMS H→4ℓ, JHEP 11 (2017) 047](https://arxiv.org/abs/1706.09936) — the reference analysis
 - [Pixi](https://pixi.sh) · [Claude Code](https://github.com/anthropics/claude-code)
