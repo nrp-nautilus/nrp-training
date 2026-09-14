@@ -79,7 +79,7 @@ For workloads requiring full model control — custom weights, fine-tuning, cust
 
 You need an NRP account associated with your institutional credentials. If you don't have one yet, follow [Getting Started with NRP](https://nrp.ai/documentation/userdocs/start/getting-started/).
 
-You also need to belong to a **namespace with LLM access enabled** — this is a per-namespace feature flag, so an account alone is not sufficient. For this tutorial, ask **<TODO: CLARIPHY namespace contact>** to add you to the CLARIPHY namespace, which already has it enabled. See [Setup](0_setup.html#2-ask-to-be-added-to-the-clariphy-namespace).
+You also need to belong to a **namespace with LLM access enabled** — this is a per-namespace feature flag, so an account alone is not sufficient. For this tutorial, ask **Daniel Diaz** to add you to the CLARIPHY namespace, which already has it enabled. See [Setup](0_setup.html#2-ask-to-be-added-to-the-clariphy-namespace).
 
 ### Step 2: Get an API Token
 
@@ -91,21 +91,30 @@ Go to [https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) and click **Get LLM tok
 Treat your personal token like a password. Do not commit it to git or share it publicly. In notebooks and scripts, read it from an environment variable (`OPENAI_API_KEY`) rather than hard-coding it.
 :::
 
-Whether you're on the NRP training hub or your own machine, export
-your own personal token and the endpoint URL yourself:
+To use it from a terminal, set your token and the endpoint URL in that
+terminal — they last until you close it. In a JupyterHub terminal, or on
+macOS, Linux or WSL:
 
 ```bash
 export OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
 export OPENAI_API_KEY="<paste-your-token-here>"
 ```
 
-Setting these from inside a notebook works a little differently — see the
-setup check at the start of [Lesson 2](2_chat.html).
+In Windows PowerShell:
+
+```powershell
+$env:OPENAI_API_BASE = "https://ellm.nrp-nautilus.io/v1"
+$env:OPENAI_API_KEY = "<paste-your-token-here>"
+```
+
+Replace the placeholder with your token. Setting these from inside a notebook
+works a little differently — see the setup check at the start of
+[Lesson 2](2_chat.html).
 
 ### Step 3: Verify Access
 
-From a terminal (JupyterHub terminal or local machine with `curl`), send a real
-chat request — this actually exercises the model, not just the endpoint, so
+From a bash terminal — a JupyterHub terminal, or macOS, Linux or WSL — send a
+real chat request. This actually exercises the model, not just the endpoint, so
 it's a more meaningful check than listing models:
 
 ```bash
@@ -125,8 +134,10 @@ curl -s -X POST "$OPENAI_API_BASE/chat/completions" \
      -H "Authorization: Bearer $OPENAI_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{"model": "minimax-m2", "messages": [{"role": "user", "content": "What is the National Research Platform?"}]}' \
-  | python3 -c 'import json, sys; print(json.load(sys.stdin)["choices"][0]["message"]["content"])'
+  | python3 -c 'import json, sys; d = json.load(sys.stdin); print(d["choices"][0]["message"]["content"] if "choices" in d else d)'
 ```
+
+If the token is wrong, this prints the error message from the endpoint instead of a reply.
 
 You can also list the full model catalog:
 
@@ -135,6 +146,10 @@ curl -s -H "Authorization: Bearer $OPENAI_API_KEY" \
      "$OPENAI_API_BASE/models" \
   | python3 -m json.tool | head -20
 ```
+
+On Windows, or if you'd rather stay in Python, the
+[Setup Check](2_chat.html#1-setup-check) at the start of the Chat notebook runs
+the same test from a notebook cell.
 
 ---
 
@@ -160,10 +175,18 @@ curl -s -H "Authorization: Bearer $OPENAI_API_KEY" \
 ## Run the Notebooks
 
 You can run the notebooks for this training either on the NRP training hub or
-on your own machine locally — the training hub is **recommended** since the
-packages are already installed for you. You'll still need your own
+on your own machine ([local setup](0_setup.html#your-own-machine-alternative))
+— the training hub is **recommended** since the packages are already installed
+for you. You'll still need your own
 personal API token either way (see [Getting Access](#getting-access) above).
 
 ::: callout Launch the workspace in JupyterHub
 **[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fclariphy&targetpath=clariphy&urlpath=lab%2Ftree%2Fclariphy%2Fworkspace)** — signs you in at jh-training.nrp-nautilus.io, pulls the tutorial workspace, and opens JupyterLab with the notebooks for this training.
+:::
+
+::: important Before you open the notebooks: start the JFC agent
+The next page, [Launch the Agent](1b_jfc_launch.html), sets up an AI agent that runs a
+complete physics analysis from your own laptop. It needs tens of minutes of unattended time,
+so start it **first** — it keeps working while you do the notebook lessons, and you check
+its results in the last lesson.
 :::

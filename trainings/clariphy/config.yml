@@ -10,6 +10,7 @@ facilitators:
 lessons:
   - 0_setup
   - 1_intro
+  - 1b_jfc_launch
   - 2_chat
   - 3_agentic
   - 4_agent

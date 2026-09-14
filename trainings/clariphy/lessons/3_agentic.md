@@ -14,6 +14,7 @@ objectives:
 keypoints:
   - Any tool that accepts a custom OpenAI-compatible `base_url` works against NRP.
   - opencode is a terminal agentic coding CLI — plan, edit, run, iterate.
+  - A project-level `opencode.json` points opencode at NRP without touching your own opencode setup.
   - VS Code connects to NRP via Chat→Manage Language Models→Custom Endpoint.
   - The NRP endpoint, token, and model list are the same regardless of which client you use.
 ---
@@ -38,9 +39,14 @@ inside a notebook cell. Those are called out individually below. You can work
 from either:
 - The **notebook**, for the runnable parts, plus a JupyterHub terminal (**File
   → New → Terminal**) for the interactive `opencode` steps
-- Your **local machine** (macOS or Linux), running the same commands directly
+- Your **own machine** (macOS, Linux or WSL), running the same commands in a
+  terminal. On native Windows, use the training hub — opencode itself recommends
+  WSL there.
 
-All commands are the same either way.
+The commands are bash and work unchanged in both places. They don't edit your
+shell startup files or any opencode configuration you already have: everything
+the exercise needs lives in a new `~/opencode-exercise` folder, plus one small
+file holding your token.
 
 ---
 
@@ -52,48 +58,64 @@ project files, plans changes, edits code, and iterates.
 
 ### Install
 
+If you already have opencode (for example from Homebrew), this keeps your copy;
+otherwise it runs the official installer, which puts `opencode` in
+`~/.opencode/bin`:
+
 ```bash
-curl -fsSL https://opencode.ai/install | bash
 export PATH="$HOME/.opencode/bin:$PATH"
+command -v opencode >/dev/null || curl -fsSL https://opencode.ai/install | bash
 opencode --version
 ```
 
-Terminals in JupyterLab are **separate processes** from a notebook's own shell
-— `export`s in one don't reach the other. The most common failure mode from
-this: opencode returns `Forbidden` because the terminal's shell never saw
-`OPENAI_API_KEY`. Persist the endpoint, your token, and opencode's `PATH` into
-your shell startup files once, so **every new terminal** picks them up
-automatically:
+### Create the exercise folder
+
+opencode scopes file writes to the nearest `.git` directory, not simply your
+shell's current directory — without one, it can fall back to a much wider
+default and write generated files somewhere you don't expect (a
+[known opencode behavior](https://github.com/anomalyco/opencode/issues/15192),
+not something specific to this training). So the exercise gets its own fresh
+folder, turned into a git project:
 
 ```bash
-: "${OPENAI_API_BASE:=https://ellm.nrp-nautilus.io/v1}"
-: "${OPENAI_API_KEY:=<paste-your-token-here>}"
-
-for RC in ~/.bashrc ~/.bash_profile; do
-    touch "$RC"
-    grep -v -E 'OPENAI_API_BASE=|OPENAI_API_KEY=|\.opencode/bin|NRP managed LLM \(clariphy training\)' "$RC" > "$RC.tmp" && mv "$RC.tmp" "$RC"
-    cat >> "$RC" <<EOF
-
-# --- NRP managed LLM (clariphy training) ---
-export OPENAI_API_BASE="$OPENAI_API_BASE"
-export OPENAI_API_KEY="$OPENAI_API_KEY"
-export PATH="\$HOME/.opencode/bin:\$PATH"
-EOF
-done
+mkdir -p ~/opencode-exercise && cd ~/opencode-exercise
+git init -q
+pwd
 ```
-
-A terminal that's already open needs `source ~/.bashrc` — or just close it and
-open a fresh one.
 
 ### Configure NRP as the provider
 
-Write the config file that tells opencode to use NRP's endpoint. (See the
+opencode needs two things: where NRP's endpoint is, and your token.
+
+Terminals are **separate processes** — a token you `export` in one (or in the
+notebook) doesn't reach the next, and the usual workaround of adding it to
+`~/.bashrc` edits your shell setup. Instead, save the token once to a private
+file in your home directory. It sits outside the project, so it never ends up
+in the agent's working files or in git:
+
+```bash
+# Paste your personal token from https://nrp.ai/llmtoken if OPENAI_API_KEY isn't already set.
+: "${OPENAI_API_KEY:=<paste-your-token-here>}"
+
+if [[ "$OPENAI_API_KEY" == "<"* ]]; then
+    echo "Replace <paste-your-token-here> with your token, then run this again."
+else
+    touch ~/.nrp-llm-token && chmod 600 ~/.nrp-llm-token
+    printf '%s' "$OPENAI_API_KEY" > ~/.nrp-llm-token
+    echo "Token saved to ~/.nrp-llm-token (readable only by you)."
+fi
+```
+
+Then write the NRP provider as a **project config** — an `opencode.json` inside the
+exercise folder. opencode merges it with any global config you have, with the
+project taking priority, so your own `~/.config/opencode` settings are left alone
+and this only applies inside `~/opencode-exercise`. (See the
 [full client-config reference](https://nrp.ai/documentation/userdocs/ai/llm-managed/client-configs/)
 for opencode, VS Code, Claude Code, and more.)
 
 ```bash
-mkdir -p ~/.config/opencode
-cat > ~/.config/opencode/opencode.json <<'JSON'
+cd ~/opencode-exercise
+cat > opencode.json <<'JSON'
 {
   "$schema": "https://opencode.ai/config.json",
   "provider": {
@@ -102,7 +124,7 @@ cat > ~/.config/opencode/opencode.json <<'JSON'
       "name": "NRP LLM",
       "options": {
         "baseURL": "https://ellm.nrp-nautilus.io/v1",
-        "apiKey": "{env:OPENAI_API_KEY}"
+        "apiKey": "{file:~/.nrp-llm-token}"
       },
       "models": {
         "minimax-m2":  { "name": "MiniMax M2"  },
@@ -116,13 +138,11 @@ cat > ~/.config/opencode/opencode.json <<'JSON'
   "model": "nrp/gpt-oss"
 }
 JSON
+cat opencode.json
 ```
 
-`{env:OPENAI_API_KEY}` tells opencode to read the token from your environment
-at runtime. The persistence step above makes sure any terminal you open has
-it — edit the placeholder in that step to your own personal token from
-[https://nrp.ai/llmtoken](https://nrp.ai/llmtoken) first, on the training hub
-or your own machine.
+`{file:~/.nrp-llm-token}` tells opencode to read your token from that file when it
+starts — so opencode works in **any** terminal, with nothing to export first.
 
 ::: callout Switching models
 Inside opencode, press **Ctrl+P** and select *Switch models* to change the active
@@ -132,23 +152,18 @@ model mid-session. Try the same task with `gpt-oss` (strong at code) vs `qwen3`
 
 ### Exercise: Build a CMS analysis helper
 
-opencode scopes file writes to the nearest `.git` directory, not simply your
-shell's current directory — without one, it can fall back to a much wider
-default and write generated files somewhere you don't expect (a
-[known opencode behavior](https://github.com/anomalyco/opencode/issues/15192),
-not something specific to this training). `git init` the project directory
-first so it's scoped correctly, then launch opencode:
+🖥️ `opencode` is an interactive terminal UI — on the training hub, launch it from a
+JupyterLab terminal (**File → New → Terminal**), not the notebook:
 
 ```bash
-mkdir -p ~/opencode-exercise && cd ~/opencode-exercise
-git init -q
+cd ~/opencode-exercise
 export PATH="$HOME/.opencode/bin:$PATH"
 opencode
 ```
 
-Getting `Forbidden` responses once inside opencode? That means this shell
-doesn't have `OPENAI_API_KEY` — go back and rerun the persistence step above,
-then open a new terminal.
+Getting `Forbidden` or `401` responses once inside opencode? It couldn't read a
+valid token — re-run the token step above (with the placeholder replaced), then
+restart opencode.
 
 The prompt is active as soon as opencode opens — just type your task and press
 Enter. (`/` opens the slash-command menu for things like `/models` or
@@ -177,13 +192,17 @@ Also write a requirements.txt pinning uproot>=5 and tabulate.
 ```
 
 opencode will plan the implementation, write the files, and tell you how to run
-them. Install and test:
+them. Install the script's requirements into a **virtual environment** inside the
+project — its own private Python, so the install can't clash with (or be refused
+by) your system Python. Calling `.venv/bin/python` uses that environment directly,
+so there is nothing to activate:
 
 ```bash
 cd ~/opencode-exercise
-pip install -r requirements.txt
-# For the exercise, point to any NanoAOD file you have access to, or use:
-python cms_nano_summary.py --help
+python3 -m venv .venv
+grep -qsxF '.venv/' .gitignore || echo '.venv/' >> .gitignore   # keep it out of git and the agent's searches
+.venv/bin/python -m pip install -r requirements.txt
+.venv/bin/python cms_nano_summary.py --help
 ```
 
 ### Test it on a real NanoAOD file
@@ -214,16 +233,17 @@ the training hub.
 cd ~/opencode-exercise
 
 # Option B: pull the same NanoAOD file from NRP S3 — no proxy, no credentials (~20 MB).
-# Skip this if you already copied it with xrdcp above.
-[ -f nanoout_1.root ] || curl -L -o nanoout_1.root \
-  "https://s3-west.nrp-nautilus.io/transfer-bucket/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8_nano.root"
+# Skipped if you already copied it with xrdcp above; a failed download is cleaned up.
+[ -f nanoout_1.root ] || curl -fL -o nanoout_1.root \
+  "https://s3-west.nrp-nautilus.io/transfer-bucket/QCD_Bin-Pt-15to7000_TuneCP5_13p6TeV_pythia8_nano.root" \
+  || rm -f nanoout_1.root
 
 ls -lh nanoout_1.root
 ```
 
 ```bash
 cd ~/opencode-exercise
-python cms_nano_summary.py nanoout_1.root | head -40
+.venv/bin/python cms_nano_summary.py nanoout_1.root | head -40
 ```
 
 This is the real test of the agent's work: does the script actually survive
@@ -330,7 +350,7 @@ The same NRP endpoint works with any tool that supports a custom OpenAI-compatib
 
 | Tool | How to point at NRP |
 |---|---|
-| **opencode** | `"baseURL": "https://ellm.nrp-nautilus.io/v1"` in `~/.config/opencode/opencode.json` |
+| **opencode** | `"baseURL": "https://ellm.nrp-nautilus.io/v1"` in an `opencode.json` — in a project folder (as in Part 1), or in `~/.config/opencode/` for every project |
 | **VS Code Copilot Chat** | Chat: Manage Language Models → Custom Endpoint (see Part 2) |
 | **Claude Code** | `"ANTHROPIC_BASE_URL": "https://ellm.nrp-nautilus.io/anthropic"` in `~/.claude/settings.json` |
 | **Continue** (VS Code/JetBrains) | Set `apiBase` in `~/.continue/config.json` |
@@ -356,9 +376,10 @@ environment variables:
 
 Note that not all NRP models route cleanly through the Anthropic-compatible
 endpoint, and Anthropic-specific features (notably the built-in web-search
-tool) cannot be produced by open-weights models. [Agentic Physics
-Analysis](5_analysis.html) uses exactly this setup to run a full analysis
-framework on NRP.
+tool) cannot be produced by open-weights models. The JFC agent you
+[launched at the start](1b_jfc_launch.html) uses exactly this setup to run a
+full analysis framework on NRP — with the settings kept in a workshop-only
+`CLAUDE_CONFIG_DIR`, so your own `~/.claude/settings.json` is left untouched.
 :::
 
 ---
@@ -391,4 +412,4 @@ tool-calling loop that powers these tools yourself, in ~30 lines of Python.
 - [Available models](https://nrp.ai/documentation/userdocs/ai/llm-managed/models/)
 - [Client configs (opencode, VS Code, Claude Code, …)](https://nrp.ai/documentation/userdocs/ai/llm-managed/client-configs/)
 - [Get your LLM token](https://nrp.ai/llmtoken)
-- [opencode documentation](https://opencode.ai)
+- [opencode documentation](https://opencode.ai) · [opencode config files and `{file:…}` variables](https://opencode.ai/docs/config/)

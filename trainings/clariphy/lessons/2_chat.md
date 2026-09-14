@@ -12,7 +12,7 @@ objectives:
   - Demonstrate multi-turn conversation, system prompts, and persona switching.
   - Send an image to a vision-capable model.
   - Embed text with `qwen3-embedding` and perform semantic similarity search.
-  - Build a minimal RAG pipeline over CMS documentation.
+  - Build a minimal RAG pipeline over a real web page.
 keypoints:
   - One `openai.OpenAI` client, one `base_url`, covers chat, embeddings, and vision.
   - System prompts control model behavior without changing the user-facing interface.
@@ -34,9 +34,9 @@ Work through the notebook top to bottom (**Shift+Enter** to run each cell). The 
 | 4 | Multi-turn interactive chat |
 | 5 | Embeddings and semantic similarity |
 | 6 | Multimodal — send a detector image |
-| 7 | RAG over CMS documentation |
+| 7 | RAG over the CLARIPHY website |
 
-**Prerequisites:** your own personal `OPENAI_API_KEY` from [Lesson 1](1_intro.html#step-2-get-an-api-token), set alongside `OPENAI_API_BASE` (covered in the Setup Check below). A CPU-only session is sufficient for all exercises.
+**Prerequisites:** your own personal `OPENAI_API_KEY` from [Lesson 1](1_intro.html#step-2-get-an-api-token), set alongside `OPENAI_API_BASE` (covered in the Setup Check below). A CPU-only session is sufficient for all exercises. Running on your own machine instead? Follow the [local setup](0_setup.html#your-own-machine-alternative) first.
 
 ---
 
@@ -317,7 +317,7 @@ Why this matters for this audience — a few CMS-adjacent uses:
 - **Semantic search over your own docs** — searching TWiki pages, analysis
   notes, or meeting minutes by meaning instead of exact keyword match. This
   is exactly what powers the RAG pipeline in
-  [Section 7](#7-rag-answer-from-cms-documentation) below.
+  [Section 7](#7-rag-answer-from-the-clariphy-website) below.
 - **Finding related work** — given an abstract or analysis strategy, surface
   similar past PAS/AN documents or papers.
 - **Dataset curation for model training** — deduplicating or filtering a
@@ -421,18 +421,19 @@ print("Model sees:\n", r.choices[0].message.content)
 
 ---
 
-## 7. RAG — Answer from CMS Documentation
+## 7. RAG — Answer from the CLARIPHY Website
 
 **RAG** (Retrieval-Augmented Generation) = embed your documents, retrieve the
 most relevant chunks for a question, then ask the LLM to answer **only from
 that context**. This keeps answers grounded and prevents hallucination on
 domain-specific content.
 
-Here we point it at the [LPC Physics Forum schedule](https://lpc.fnal.gov/programs/lpcpf/index.shtml) —
-a real page that's updated regularly with upcoming talks. That's a good
-demonstration of RAG's real value: the LLM's own training data has a cutoff,
-but RAG lets it answer correctly about content added *after* that cutoff,
-as long as you retrieve it at question time.
+Here we point it at the [CLARIPHY overview page](https://clariphy.org/about/overview) —
+the collaboration's own description of its mission and how its research is
+organized. That's a good demonstration of RAG's real value: a model's training
+data is unlikely to cover the specifics of a young collaboration like CLARIPHY,
+and it knows nothing written after its training cutoff — but RAG lets it answer
+correctly from the source, as long as you retrieve it at question time.
 
 Both the embedding model and the LLM are NRP-managed — nothing to install.
 
@@ -440,20 +441,22 @@ Both the embedding model and the LLM are NRP-managed — nothing to install.
 import html, re, requests
 
 # --- Corpus: load and chunk a document ---
-# The LPC Physics Forum schedule — a real, frequently-updated page, and a
-# good stand-in for "a live doc I want an LLM to answer from correctly."
-RAW_URL = "https://lpc.fnal.gov/programs/lpcpf/index.shtml"
+# The CLARIPHY overview page — the collaboration's own description, and a
+# good stand-in for "a doc I want an LLM to answer from correctly."
+RAW_URL = "https://clariphy.org/about/overview"
 raw_html = requests.get(RAW_URL, timeout=30).text
 
-# Strip tags/scripts and decode HTML entities to get plain text
-text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", raw_html, flags=re.S | re.I)
+# Strip comments, scripts and tags, and decode HTML entities to get plain text
+text = re.sub(r"<!--.*?-->", " ", raw_html, flags=re.S)
+text = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", text, flags=re.S | re.I)
 text = re.sub(r"<[^>]+>", " ", text)
 text = html.unescape(text)
 text = re.sub(r"[ \t]+", " ", text)
 text = re.sub(r"\n\s*\n+", "\n", text).strip()
 
-# Chunk with slight overlap so context isn't cut mid-sentence
-CHUNK_SIZE, OVERLAP = 700, 150
+# Chunk with overlap so context isn't cut mid-sentence. The chunks are large
+# enough that a short section, such as a list, usually stays in one chunk.
+CHUNK_SIZE, OVERLAP = 1500, 300
 chunks = [text[i:i+CHUNK_SIZE] for i in range(0, len(text), CHUNK_SIZE - OVERLAP)]
 print(f"Loaded {len(text):,} chars → {len(chunks)} chunks.")
 ```
@@ -484,12 +487,18 @@ def ask_rag(question, model="minimax-m2"):
     )
 
 # Try a question that IS in the document
-q1 = "When is the next LPC Physics Forum talk, and what is it about?"
+q1 = "How many Grand Challenges does CLARIPHY define? List them."
 print(f"Q: {q1}\nRetrieved chunks:")
 for text, score in retrieve(q1):
     print(f"  score={score:.3f}  {text[:65].strip()}...")
 print("\nAnswer:", ask_rag(q1))
 ```
+
+Check the answer against the page: it defines **four** Grand Challenges —
+Accelerated Experimental Design, Intelligent Sensing & Instrumentation,
+Autonomous Experiments, and From Data to Discovery. If the answer misses one,
+look at the retrieved chunks first: when the right text never reaches the model,
+it is retrieval that failed, not the LLM.
 
 ```python
 # Try a question that is NOT in the document — model should decline
