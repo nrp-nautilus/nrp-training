@@ -215,8 +215,11 @@ deliberately does **not** edit `~/.bashrc` or `~/.zshrc`: the settings apply onl
 where you source the file, and deleting `~/jfc-exercise` removes them.
 
 ```bash
-# Paste your personal token from https://nrp.ai/llmtoken if it isn't already set.
-: "${OPENAI_API_KEY:=<paste-your-token-here>}"
+# Paste your personal token from https://nrp.ai/llmtoken between the quotes
+# (or leave the placeholder to use an OPENAI_API_KEY you have already exported).
+TOKEN="<paste-your-token-here>"
+[[ "$TOKEN" == "<"* ]] || export OPENAI_API_KEY="$TOKEN"
+[[ -n "$OPENAI_API_KEY" && "$OPENAI_API_KEY" != "<"* ]] || echo "⚠️  No token yet: paste it into TOKEN above and run this again."
 
 export WORK="$HOME/jfc-exercise"
 mkdir -p "$WORK"

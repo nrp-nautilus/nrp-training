@@ -57,16 +57,25 @@ The content below is the notebook rendered as Markdown with example outputs. Run
 ## 1. Setup
 
 Same client as in the Chat notebook — one `OpenAI` client pointed at NRP. This
-notebook is a separate kernel from Lesson 2, so it needs its own token set —
-edit the `OPENAI_API_KEY` line below with your personal token from
-[Lesson 1](1_intro.html#step-2-get-an-api-token).
+notebook is a separate kernel from Lesson 2, so it needs its own token — paste
+your personal token from [Lesson 1](1_intro.html#step-2-get-an-api-token) into
+`TOKEN` below (it replaces any token set before, including a shared one the
+training hub may provide). If the cell stops with `PermissionDeniedError: 403`, NRP refused
+your token or the model; the [Setup Check](2_chat.html#1-setup-check) in the Chat
+notebook tells you which.
 
 ```python
 import os, json, math
 from openai import OpenAI
 
-os.environ.setdefault("OPENAI_API_BASE", "https://ellm.nrp-nautilus.io/v1")
-os.environ.setdefault("OPENAI_API_KEY", "<paste-your-token-here>")
+# Paste your personal token from https://nrp.ai/llmtoken between the quotes.
+TOKEN = "<paste-your-token-here>"
+if TOKEN.startswith("<"):
+    raise ValueError("Paste your token into TOKEN above, then run this cell again.")
+
+# Set both explicitly, replacing anything already in the environment.
+os.environ["OPENAI_API_KEY"] = TOKEN.strip()
+os.environ["OPENAI_API_BASE"] = "https://ellm.nrp-nautilus.io/v1"
 
 client = OpenAI(
     api_key=os.environ["OPENAI_API_KEY"],
@@ -77,7 +86,10 @@ client = OpenAI(
 # qwen3-small also works well. Small models call tools less consistently.
 MODEL = "gpt-oss"
 
-print("Client ready, using model:", MODEL)
+# One tiny request, so a token problem shows up here rather than halfway through.
+client.chat.completions.create(
+    model=MODEL, max_tokens=1, messages=[{"role": "user", "content": "hi"}])
+print("Client ready, token accepted, using model:", MODEL)
 ```
 
 ---

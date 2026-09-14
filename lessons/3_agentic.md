@@ -94,14 +94,16 @@ file in your home directory. It sits outside the project, so it never ends up
 in the agent's working files or in git:
 
 ```bash
-# Paste your personal token from https://nrp.ai/llmtoken if OPENAI_API_KEY isn't already set.
-: "${OPENAI_API_KEY:=<paste-your-token-here>}"
+# Paste your personal token from https://nrp.ai/llmtoken between the quotes.
+TOKEN="<paste-your-token-here>"
 
-if [[ "$OPENAI_API_KEY" == "<"* ]]; then
-    echo "Replace <paste-your-token-here> with your token, then run this again."
+if [[ "$TOKEN" == "<"* ]]; then
+    echo "Paste your token into TOKEN above, then run this again."
 else
+    # Set explicitly, replacing any token already in the environment.
+    export OPENAI_API_KEY="$TOKEN" OPENAI_API_BASE="https://ellm.nrp-nautilus.io/v1"
     touch ~/.nrp-llm-token && chmod 600 ~/.nrp-llm-token
-    printf '%s' "$OPENAI_API_KEY" > ~/.nrp-llm-token
+    printf '%s' "$TOKEN" > ~/.nrp-llm-token
     echo "Token saved to ~/.nrp-llm-token (readable only by you)."
 fi
 ```
@@ -142,7 +144,9 @@ cat opencode.json
 ```
 
 `{file:~/.nrp-llm-token}` tells opencode to read your token from that file when it
-starts — so opencode works in **any** terminal, with nothing to export first.
+starts — so opencode works in **any** terminal, with nothing to export first — and
+with *your* token, even on the training hub, where a shared `OPENAI_API_KEY` may
+already be set.
 
 ::: callout Switching models
 Inside opencode, press **Ctrl+P** and select *Switch models* to change the active
