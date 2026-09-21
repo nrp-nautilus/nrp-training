@@ -25,7 +25,7 @@ and walk through what the setup did to get it running.
 ## What you're launching
 
 **[JFC](https://github.com/jfc-mit/jfc)** ("Just Furnish Context") is a framework from Eric
-Moreno, Sam Bright-Thonney, Andrzej Novak, Daniel Garcia and Phil Harris that runs a *complete*
+Moreno, Sam Bright-Thonney, Andrzej Novak, Dolores Garcia, Yiyang Zhao and Philip Harris that runs a *complete*
 HEP analysis — strategy, event selection, statistical inference, and a 50–100 page analysis
 note — from a single physics prompt. An **orchestrator** that writes no code itself spawns
 **executor** and **reviewer** subagents across seven phases, with a human gate before
