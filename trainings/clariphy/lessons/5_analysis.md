@@ -599,8 +599,8 @@ system you build.
   result about open-weights models on long agentic tasks. Bring it to the discussion — the
   failure modes are more useful to this community right now than a clean success.
 
-**Where this came from:** JFC is by Eric Moreno, Sam Bright-Thonney, Andrzej Novak, Daniel Garcia
-and Phil Harris — *AI Agents Can Already Autonomously Perform Experimental High Energy Physics*.
+**Where this came from:** JFC is by Eric Moreno, Sam Bright-Thonney, Andrzej Novak, Dolores Garcia, Yiyang Zhao
+and Philip Harris — *AI Agents Can Already Autonomously Perform Experimental High Energy Physics*.
 The H→4ℓ exercise is Phil Harris's USCMS tutorial, adapted here to run on NRP.
 
 ---
