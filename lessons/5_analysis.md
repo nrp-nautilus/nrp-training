@@ -24,8 +24,8 @@ keypoints:
 
 In [Build a Simple Agent](4_agent.html) you built a ~30-line agent with two tools. This lesson
 jumps to the other end of the scale: **[JFC](https://github.com/jfc-mit/jfc)** ("Just Furnish
-Context"), a framework from Eric Moreno, Sam Bright-Thonney, Andre Novak, Daniel Garcia and
-Phil Harris that runs a *complete* HEP analysis — strategy, event selection, statistical
+Context"), a framework from Eric Moreno, Sam Bright-Thonney, Andrzej Novak, Dolores Garcia, Yiyang Zhao and
+Philip Harris that runs a *complete* HEP analysis — strategy, event selection, statistical
 inference, and a 50–100 page analysis note — from a single physics prompt.
 
 It is the same loop you just built, scaled up: an **orchestrator** that writes no code itself,
@@ -517,8 +517,8 @@ system you build.
   result about open-weights models on long agentic tasks. Bring it to the discussion — the
   failure modes are more useful to this community right now than a clean success.
 
-**Where this came from:** JFC is by Eric Moreno, Sam Bright-Thonney, Andre Novak, Daniel Garcia
-and Phil Harris — *AI Agents Can Already Autonomously Perform Experimental High Energy Physics*.
+**Where this came from:** JFC is by Eric Moreno, Sam Bright-Thonney, Andrzej Novak, Dolores Garcia, Yiyang Zhao
+and Philip Harris — *AI Agents Can Already Autonomously Perform Experimental High Energy Physics*.
 The H→4ℓ exercise is Phil Harris's USCMS tutorial, adapted here to run on NRP.
 
 ---
