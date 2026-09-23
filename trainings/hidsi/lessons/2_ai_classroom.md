@@ -148,6 +148,49 @@ meaning anything the moment you accept a fix.
 
 Run them, then select a cell and ask the chat panel what went wrong.
 
+::: callout `/fix` only works on cells that crashed
+Jupyter AI's `/fix` command requires a selected cell **with error output** —
+otherwise it answers *"`/fix` requires an active code cell with error output."*
+
+So the first two cells get the one-click treatment and `sensor average` does
+not. The assistant's whole error-shaped affordance disappears at exactly the
+moment the bug goes quiet, which is the real argument for teaching the third
+case: a student who only knows how to react to red text has no move here.
+:::
+
+```python
+# 🐞 BROKEN — temperature conversion   (this one crashes)
+temperatures_c = [18, 21, 25, 30, 12]
+
+def to_fahrenheit(c):
+    return c * 9 / 5 + 32
+
+for t in temperatures_c:
+    print(t, "C =", to_farenheit(t), "F")
+```
+
+```python
+# 🐞 BROKEN — class average   (this one crashes)
+student_scores = {"ana": 88, "ben": 92, "cleo": 79}
+
+total = 0
+for name in student_scores:
+    total += name
+
+print("class average:", total / len(student_scores))
+```
+
+```python
+# 🐞 BROKEN — sensor average   (no crash; the answer is just wrong)
+readings = [3, 7, 2, 9, 4, 8]
+
+# intended: the average of every reading after the first
+average = sum(readings[1:]) / len(readings)
+
+print("average of readings 2..6 =", average)
+print("expected:", (7 + 2 + 9 + 4 + 8) / 5)
+```
+
 **The `sensor average` cell is the one worth dwelling on in front of a class.**
 It runs, prints a number, and the number is wrong — it divides by 6 when it
 should divide by 5. There is no traceback to paste, so the assistant has to
@@ -165,8 +208,12 @@ that is not Python, which here gets you an assistant that *can* see the kernel.
 
 ### First, a confusing bit
 
-Run `%ai list` and you get a long table of providers and models —
-`openai-chat:gpt-4o`, `ai21:j2-jumbo`, and so on.
+```python
+%ai list
+```
+
+That prints a long table of providers and models — `openai-chat:gpt-4o`,
+`ai21:j2-jumbo`, and so on.
 
 ::: callout Those are not NRP models
 That table is a catalog **hardcoded inside Jupyter AI**, listing what each
@@ -208,7 +255,21 @@ cell first.
 **2. Ask about your actual values.** Anything in `{curly braces}` inside a
 `%%ai` prompt is replaced with the *live value* of that variable from the
 kernel. This is the fix for "why is this number what it is?" — you hand it the
-number:
+number.
+
+Re-run it so `readings` and `average` are live in the kernel — and still
+wrong — right where the next prompt needs them:
+
+```python
+# 🐞 BROKEN — sensor average, again   (re-run so the wrong values are live below)
+readings = [3, 7, 2, 9, 4, 8]
+
+# intended: the average of every reading after the first
+average = sum(readings[1:]) / len(readings)
+
+print("average of readings 2..6 =", average)
+print("expected:", (7 + 2 + 9 + 4 + 8) / 5)
+```
 
 ```text
 %%ai openai-chat:minimax-m2

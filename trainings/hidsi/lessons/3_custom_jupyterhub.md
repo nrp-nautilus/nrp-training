@@ -319,7 +319,7 @@ singleuser:
       storageClass: rook-ceph-block-east
       pvcNameTemplate: claim-{username}{servername}
   defaultUrl: "/lab"
-  profileList:                          # the spawn-page menu — more in 4.1
+  profileList:                          # the spawn-page menu — more in 5.1
   - display_name: Scipy
     kubespawner_override:
       image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
