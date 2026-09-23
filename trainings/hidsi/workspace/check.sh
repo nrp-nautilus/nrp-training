@@ -87,7 +87,7 @@ case "$EP" in
   if [ "${nsrv:-0}" -gt 0 ]; then ok "$nsrv user server(s) spawned — someone logged in to your hub 🎓"
   else skip "user servers (log in to your hub and spawn one to complete the loop)"; fi
   host=$(kubectl get ingress -n "$NSP" -l app=jupyterhub -o jsonpath='{.items[0].spec.rules[0].host}' 2>/dev/null)
-  if [ -z "$host" ]; then skip "ingress (section 4 of the lesson)"
+  if [ -z "$host" ]; then skip "ingress (deployed with the chart in section 3)"
   else
     body=$(curl -s "https://$host/hub/login" --max-time 15)
     code=$(curl -s -o /dev/null -w '%{http_code}' "https://$host/hub/login" --max-time 15)

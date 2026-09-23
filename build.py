@@ -1233,6 +1233,14 @@ def render_index(config, lessons):
         if indico_url else ""
     )
 
+    event_url = config.get("event_url")
+    event_label = config.get("event_label") or "the event page"
+    event = (
+        '<p class="resources-note">Registration, logistics, and more on '
+        f'<a href="{html.escape(event_url)}">{html.escape(event_label)}</a>.</p>'
+        if event_url else ""
+    )
+
     names = [n for n in (config.get("facilitators") or []) if str(n).strip()]
     if len(names) > 1:
         joined = ", ".join(html.escape(n) for n in names[:-1])
@@ -1251,6 +1259,7 @@ def render_index(config, lessons):
         f"{facilitators}"
         f"<h2>Schedule</h2>{schedule}"
         f"{indico}"
+        f"{event}"
         '<p class="hint">Times are cumulative and assume a prompt start.</p>'
         f"{resources}"
     )

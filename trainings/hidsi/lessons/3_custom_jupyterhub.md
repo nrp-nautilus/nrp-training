@@ -7,8 +7,7 @@ questions:
   - How do I give students a menu of environments and resource sizes?
   - How do I build a custom course image and keep it stable all semester?
 objectives:
-  - Deploy JupyterHub with Helm from a values file.
-  - Expose it on a public hostname with an Ingress.
+  - Deploy JupyterHub with Helm from a values file, on a public HTTPS hostname.
   - Add image profiles, per-profile resource limits, and shared class storage.
   - Build a custom course image with NRP GitLab CI/CD.
 keypoints:
@@ -72,7 +71,7 @@ shared storage, custom images — is identical either way. Only the `hub.config`
 authentication block changes, plus an [`allowed_idps`
 allowlist](https://cilogon.org/idplist/) for your institution.
 `yamls/cilogon-jupyterhub-config.yaml` in the workspace is a working example of
-that block — see [5.4 Real authentication](#5-4-real-authentication).
+that block — see [4.4 Real authentication](#4-4-real-authentication).
 :::
 
 ::: prereq Tools you need on your own machine
@@ -125,8 +124,8 @@ echo "namespace=$NRP_NAMESPACE release=$NRP_RELEASE"
 <summary>Expected output</summary>
 
 ```text
-✅ my-yamls/ rendered for alice
-namespace=nrp-training-042 release=jhub-alice
+✅ my-yamls/ rendered for nautilus
+namespace=nrp-training-042 release=jhub-nautilus
 ```
 </details>
 
@@ -212,6 +211,14 @@ cull:                                  # required on NRP — close inactive sess
   enabled: true
   timeout: 3600
   every: 600
+ingress:                               # public HTTPS hostname — your name is already rendered in
+  enabled: true
+  ingressClassName: haproxy
+  hosts: ["jhub-<username>.nrp-nautilus.io"]
+  pathSuffix: ''
+  tls:
+    - hosts:
+      - jhub-<username>.nrp-nautilus.io
 ```
 
 Generate a real proxy token and put it in the file in place of `secret_token`:
@@ -271,7 +278,37 @@ fi
 
 `helm uninstall` leaves PVCs behind on purpose — the hub database and any user
 home directories survive, so a reinstall picks them back up. [Section
-8](#8-cleanup) shows how to delete those too.
+7](#7-cleanup) shows how to delete those too.
+
+### The ingress — how anyone reaches your hub
+
+The `ingress` block at the end of your values file is what puts the hub on the
+public internet, so it goes in from the start — no second deploy to expose it.
+The hostname has to be globally unique, which is why the setup step substituted
+`<username>` for you. `ingressClassName: haproxy` hands routing to the cluster's
+HAProxy controller, and the `tls` block makes cert-manager request a Let's
+Encrypt certificate for that name — no certificate files for you to manage.
+
+Confirm your rendered copy has your name in it:
+
+```bash
+tail -8 my-yamls/jhub-values.yaml
+```
+
+<details>
+<summary>Expected output</summary>
+
+```text
+ingress:
+  enabled: true
+  ingressClassName: haproxy
+  hosts: ["jhub-nautilus.nrp-nautilus.io"]
+  pathSuffix: ''
+  tls:
+    - hosts:
+      - jhub-nautilus.nrp-nautilus.io
+```
+</details>
 
 ### Install the chart
 
@@ -287,8 +324,8 @@ helm upgrade --cleanup-on-fail --install $NRP_RELEASE jupyterhub/jupyterhub \
 <summary>Expected output</summary>
 
 ```text
-Release "jhub-alice" does not exist. Installing it now.
-NAME: jhub-alice
+Release "jhub-nautilus" does not exist. Installing it now.
+NAME: jhub-nautilus
 NAMESPACE: nrp-training-042
 STATUS: deployed
 REVISION: 1
@@ -312,46 +349,15 @@ kubectl get services -n $NRP_NAMESPACE
 kubectl get pvc -n $NRP_NAMESPACE
 ```
 
-You should see the **hub** pod (auth, sessions, spawning), the **proxy** pod
-(routing), a `hub-db-dir` PVC — and, once someone logs in, per-user pods and
-`claim-<user>` PVCs.
-
-## 4. Expose it with an Ingress
-
-`my-yamls/jhub-values.yaml` already ends with an `ingress` block, commented out,
-with **your** hostname rendered in — the setup step substituted `<username>` for
-you, so it is globally unique:
-
-```yaml
-ingress:
-  enabled: true
-  ingressClassName: haproxy
-  hosts: ["jhub-<username>.nrp-nautilus.io"]
-  pathSuffix: ''
-  tls:
-    - hosts:
-      - jhub-<username>.nrp-nautilus.io
-```
-
-The quickest way to enable it is a one-liner that strips the leading `#`:
-
-```bash
-sed -i '/^#ingress:/,$ s/^#//' my-yamls/jhub-values.yaml
-tail -9 my-yamls/jhub-values.yaml
-```
-
-Upgrade the release and verify:
-
-```bash
-helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
-  --namespace $NRP_NAMESPACE \
-  --values my-yamls/jhub-values.yaml \
-  --wait --timeout=10m
-```
-
 ```bash
 kubectl get ingress -n $NRP_NAMESPACE
 ```
+
+You should see the **hub** pod (auth, sessions, spawning), the **proxy** pod
+(routing), a `hub-db-dir` PVC, an ingress carrying your hostname — and, once
+someone logs in, per-user pods and `claim-<user>` PVCs.
+
+### Log in
 
 After ~a minute for HAProxy and Let's Encrypt, open
 `https://jhub-$NRP_USER.nrp-nautilus.io`, log in as `admin` with the Dummy
@@ -360,9 +366,9 @@ national research infrastructure.**
 
 ![JupyterHub spawn page](images/jhub-1.png)
 
-## 5. Make it yours
+## 4. Make it yours
 
-### 5.1 Multiple image profiles
+### 4.1 Multiple image profiles
 
 Give users a menu of environments — add to `singleuser`:
 
@@ -384,7 +390,7 @@ singleuser:
       image_spec: quay.io/jupyter/datascience-notebook:2024-04-22
 ```
 
-### 5.2 Per-profile resource limits
+### 4.2 Per-profile resource limits
 
 ```yaml
   - display_name: Small (2 CPU, 4GB RAM)
@@ -413,7 +419,7 @@ and the deep-learning unit a GPU profile, and students pick the right one from a
 dropdown instead of you managing machines — or fielding "how much memory should
 I ask for?" forty times.
 
-### 5.3 Shared storage for the whole class
+### 4.3 Shared storage for the whole class
 
 Mount one RWX CephFS volume into **every** user server:
 
@@ -432,7 +438,7 @@ singleuser:
 Instructors drop datasets and notebooks into `/home/shared` once; every student
 sees them instantly. Mount it read-only for students in production.
 
-### 5.4 Real authentication
+### 4.4 Real authentication
 
 For production, replace the Dummy authenticator with institutional login.
 `yamls/cilogon-jupyterhub-config.yaml` in the workspace shows a CILogon/OIDC
@@ -444,7 +450,7 @@ Swapping it in needs a `client_id` and `client_secret` from CILogon, which you
 request from them and wait on — see the lead-time warning at the top of this
 page. That wait is the reason today's hub uses the Dummy authenticator.
 
-## 6. Operating your hub
+## 5. Operating your hub
 
 ```bash
 helm list -n $NRP_NAMESPACE
@@ -468,7 +474,7 @@ Check your work at any point:
 bash check.sh 3
 ```
 
-## 7. Building custom course images in NRP GitLab
+## 6. Building custom course images in NRP GitLab
 
 The stock Jupyter images only go so far — real courses need their own package
 stacks. NRP GitLab ([gitlab.nrp-nautilus.io](https://gitlab.nrp-nautilus.io))
@@ -509,7 +515,7 @@ build-and-push-job:
 environment never changes under your students mid-semester; use `--cache=true`
 for fast rebuilds; keep credentials in CI variables, never in the Dockerfile.
 
-## 8. Cleanup
+## 7. Cleanup
 
 If this was a trial run, uninstall your Helm release so the cluster is left
 clean:
@@ -546,7 +552,7 @@ student sessions automatically.
 - [ ] Because GitLab requires unique tags
 > `latest` moves every time CI runs. Pinning profiles to a SHA means the same image all semester — reproducibility is the whole reason you built a custom image.
 
-4. You edited `jhub-values.yaml` to add an ingress. How do the changes reach your running hub?
+4. You edited `jhub-values.yaml` to add an image profile. How do the changes reach your running hub?
 - [x] `helm upgrade $NRP_RELEASE jupyterhub/jupyterhub --values my-yamls/jhub-values.yaml`
 - [ ] `kubectl apply -f my-yamls/jhub-values.yaml`
 - [ ] Delete the release and reinstall from scratch
