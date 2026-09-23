@@ -71,7 +71,7 @@ shared storage, custom images — is identical either way. Only the `hub.config`
 authentication block changes, plus an [`allowed_idps`
 allowlist](https://cilogon.org/idplist/) for your institution.
 `yamls/cilogon-jupyterhub-config.yaml` in the workspace is a working example of
-that block — see [4.4 Real authentication](#4-4-real-authentication).
+that block — see [5.4 Real authentication](#5-4-real-authentication).
 :::
 
 ::: prereq Tools you need on your own machine
@@ -237,7 +237,7 @@ hub:
     JupyterHub:
       authenticator_class: dummy
       admin_access: true
-      admin_users: ["admin"]
+      admin_users: ["admin", "admin2"]
     DummyAuthenticator:
       password: "training123"
     # Allow all users to sign in (for tutorial purposes)
@@ -248,11 +248,13 @@ hub:
 `authenticator_class: dummy` accepts **any** username with the shared
 `password` — which is why this is a workshop hub and not a course hub.
 `admin_users` gets the admin panel: other people's servers, the user list, a
-shutdown button. `allowed_users: set()` is an *empty allowlist*, and empty here
-means "no list — let everyone in".
+shutdown button. There are **two** of them so you can be two people at once
+later — [5.3](#5-3-shared-storage-for-the-whole-class) has you log in as both to
+watch a shared folder work. `allowed_users: set()` is an *empty allowlist*, and
+empty here means "no list — let everyone in".
 
 That last line is the first thing to change in production. With CILogon
-([4.4](#4-4-real-authentication)) the allowlist stops being a formality and
+([5.4](#5-4-real-authentication)) the allowlist stops being a formality and
 becomes your enrollment list.
 
 ### 2.2 The hub
@@ -407,23 +409,22 @@ An empty `helm list` and no pods means you are clear — deploy.
 If a release *is* listed, look at the `NAME` column. Tear it down only if it is
 yours; in a shared namespace someone else's class may be running on it.
 
+<details>
+<summary>Clear an existing JupyterHub</summary>
+
 ```bash
-# ⚠️  Optional — only if the command above listed a JupyterHub you want gone.
 OLD_RELEASE=changeme   # ✏️ the NAME shown by `helm list` above
 
-if [ "$OLD_RELEASE" = changeme ]; then
-  echo "Nothing to do — set OLD_RELEASE only if you need to remove an existing hub."
-else
-  helm uninstall "$OLD_RELEASE" -n $NRP_NAMESPACE
-  kubectl wait --for=delete pod -l app=jupyterhub -n $NRP_NAMESPACE --timeout=120s 2>/dev/null || true
-  helm list -n $NRP_NAMESPACE
-  kubectl get pods -n $NRP_NAMESPACE
-fi
+helm uninstall "$OLD_RELEASE" -n $NRP_NAMESPACE
+kubectl wait --for=delete pod -l app=jupyterhub -n $NRP_NAMESPACE --timeout=120s 2>/dev/null || true
+helm list -n $NRP_NAMESPACE
+kubectl get pods -n $NRP_NAMESPACE
 ```
 
 `helm uninstall` leaves PVCs behind on purpose — the hub database and any user
 home directories survive, so a reinstall picks them back up. [Section
-7](#7-cleanup) shows how to delete those too.
+6](#6-cleanup) shows how to delete those too.
+</details>
 
 ### Install the chart
 
@@ -481,12 +482,47 @@ someone logs in, per-user pods and `claim-<user>` PVCs.
 
 After ~a minute for HAProxy and Let's Encrypt, open
 `https://jhub-$NRP_USER.nrp-nautilus.io`, log in as `admin` with the Dummy
-password, and spawn a server. **You now have a working multi-user JupyterHub on
-national research infrastructure.**
+password (`training123`), and spawn a server. `admin2` is a second account on
+the same password — you will need it in 5.3. **You now have a working
+multi-user JupyterHub on national research infrastructure.**
 
 ![JupyterHub spawn page](images/jhub-1.png)
 
-## 4. Make it yours
+## 4. Operating your hub
+
+```bash
+helm list -n $NRP_NAMESPACE
+```
+
+```bash
+sleep 5
+kubectl logs -n $NRP_NAMESPACE -l app=jupyterhub,component=hub --tail=50
+```
+
+```bash
+kubectl get pods -n $NRP_NAMESPACE -l app=jupyterhub,component=singleuser-server
+```
+
+Troubleshooting is the standard Kubernetes trio: `describe` the failing pod,
+read namespace `events`, check hub/proxy `logs`.
+
+Check your work at any point:
+
+```bash
+bash check.sh 3
+```
+
+::: callout A good place to stop
+That is a complete, working, publicly reachable JupyterHub — if this is as far
+as you need to go today, tear it down in [6. Cleanup](#6-cleanup) so the
+namespace is left clean.
+
+Staying on? Section 5 turns it into *your* hub: an image menu, per-profile
+sizes, a folder the whole class shares. Nothing below is required for the hub
+you already have.
+:::
+
+## 5. Make it yours
 
 Your hub is running, so every change below is one you can make right now. They
 all follow the same pattern: write a small **overlay** file holding just the
@@ -537,7 +573,7 @@ One thing to know before you start: **each command below layers only its own
 overlay**, so it undoes the previous experiment. Pass several `--values` flags
 to stack them.
 
-### 4.1 Multiple image profiles
+### 5.1 Multiple image profiles
 
 The file already ships with fifteen profiles. Replace them with a shorter menu —
 this is the `singleuser.profileList` from [2.4](#2-4-the-single-user-servers):
@@ -591,7 +627,7 @@ helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
 Reload the spawn page — the menu is four entries now. A server that is already
 running keeps its old image until you stop and restart it.
 
-### 4.2 Per-profile resource limits
+### 5.2 Per-profile resource limits
 
 Each entry's `kubespawner_override` can set size as well as image, which is how
 one hub serves an intro unit and a deep-learning unit at once:
@@ -659,7 +695,7 @@ and the deep-learning unit a GPU profile, and students pick the right one from a
 dropdown instead of you managing machines — or fielding "how much memory should
 I ask for?" forty times.
 
-### 4.3 Shared storage for the whole class
+### 5.3 Shared storage for the whole class
 
 Mount one RWX CephFS volume into **every** user server:
 
@@ -719,21 +755,148 @@ helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
 
 Stop and restart your server from the hub's control panel — a mount only
 appears in a pod that starts with it — and `/home/shared` is there in the file
-browser. Instructors drop datasets and notebooks in once; every student sees
-them instantly. Mount it read-only for students in production.
+browser.
 
-### 4.4 Real authentication
+**Now prove it is actually shared.** One browser session is one logged-in user,
+so being two people at once needs a second session:
 
-For production, replace the Dummy authenticator with institutional login.
-`yamls/cilogon-jupyterhub-config.yaml` in the workspace shows a CILogon/OIDC
-configuration — campus credentials, an allowlist or admin-managed access, no
-passwords to distribute. **For a class roster, the allowlist is your enrollment
-list.**
+1. As `admin`, open a terminal in your hub (**File ▸ New ▸ Terminal**) and drop
+   a file in:
 
-This is the one change on this page you cannot try right now: it needs a
-`client_id` and `client_secret` that CILogon issues by hand, and that wait — see
-the lead-time warning at the top of this page — is the reason today's hub uses
-the Dummy authenticator at all.
+   ```bash
+   echo "hello from admin" > /home/shared/hello.txt
+   ```
+
+2. Open a **private/incognito window** on the same
+   `https://jhub-$NRP_USER.nrp-nautilus.io`, and log in as **`admin2`** with the
+   same password. Spawn a server.
+
+3. `admin2` gets its *own* empty home directory — but `/home/shared/hello.txt`
+   is right there, and editing it from either account shows up in the other.
+
+That is the classroom pattern in miniature: private homes, one common folder.
+Instructors drop datasets and notebooks in once; every student sees them
+instantly. Mount it read-only for students in production.
+
+### 5.4 Real authentication
+
+For production, replace the Dummy authenticator with institutional login:
+campus credentials, no passwords to distribute, and a list of who is allowed in
+that you control. `yamls/cilogon-jupyterhub-config.yaml` in the workspace is a
+working `CILogonOAuthenticator` config; what changes between a departmental hub
+and a locked-down course hub is only *which allow rule you write*.
+
+This is the one change on this page you cannot try right now — it needs a
+`client_id` and `client_secret` that CILogon issues by hand, and that wait is
+the reason today's hub uses the Dummy authenticator at all. The patterns below
+are what you will write once those arrive.
+
+::: important Look your entity ID up — do not guess it
+The key under `allowed_idps` is your identity provider's **entity ID**, and the
+format varies a lot from campus to campus. Real ones:
+
+```text
+https://shib.unl.edu/idp/shibboleth            # Nebraska
+https://idpz.utorauth.utoronto.ca/shibboleth   # Toronto — not "shib.utoronto.ca"
+http://google.com/accounts/o8/id               # Google — http, and no hostname you would guess
+https://github.com/login/oauth/authorize       # GitHub
+```
+
+There is no pattern to derive yours from — look it up in the
+**[CILogon IdP list](https://cilogon.org/idplist/)** and paste it exactly. A
+key that does not match an entity ID CILogon knows simply never matches a
+login, and nobody gets in.
+:::
+
+#### Everyone at one campus
+
+Name your institution's identity provider and let any address on its domain in:
+
+```yaml
+hub:
+  config:
+    JupyterHub:
+      authenticator_class: cilogon
+    CILogonOAuthenticator:
+      client_id: <OIDC client>
+      client_secret: <OIDC secret>
+      oauth_callback_url: https://<your-name>.nrp-nautilus.io/hub/oauth_callback
+      admin_users:
+      - you@your-institution.edu
+      # IDP Lookup: https://cilogon.org/idplist/
+      allowed_idps:
+        https://shib.your-institution.edu/idp/shibboleth:
+          allowed_domains:
+          - your-institution.edu
+          username_derivation:
+            username_claim: email
+```
+
+Good for a lab or departmental hub. `allowed_domains` takes shell-style
+wildcards, so `"*.your-institution.edu"` picks up `cs.your-institution.edu` and
+friends.
+
+#### A class roster
+
+Drop `allowed_domains` and name the people instead — the enrollment list *is*
+the config. Campus login still gates the door; the roster decides who gets
+through it:
+
+```yaml
+    CILogonOAuthenticator:
+      # …client_id, client_secret, oauth_callback_url as above…
+      # IDP Lookup: https://cilogon.org/idplist/
+      allowed_idps:
+        https://shib.your-institution.edu/idp/shibboleth:
+          username_derivation:
+            username_claim: email
+      admin_users:
+      - you@your-institution.edu
+      - your-ta@your-institution.edu
+      allowed_users:
+      - student1@your-institution.edu
+      - student2@your-institution.edu
+      - student3@your-institution.edu
+```
+
+Students who drop the course lose access the next time you `helm upgrade`.
+Admins are allowed implicitly — you do not repeat them in `allowed_users`.
+
+#### Both at once
+
+Allow rules are **additive**: a user gets in if *any* rule admits them. So a
+course open to your campus plus a handful of outside collaborators is both
+rules together —
+
+```yaml
+      # IDP Lookup: https://cilogon.org/idplist/
+      allowed_idps:
+        https://shib.your-institution.edu/idp/shibboleth:
+          allowed_domains:
+          - your-institution.edu          # anyone on campus…
+          username_derivation:
+            username_claim: email
+      allowed_users:
+      - collaborator@other-university.edu # …plus these specific people
+      blocked_users:
+      - former-student@your-institution.edu
+```
+
+`blocked_users` wins over every allow rule, which is how you remove one person
+without rewriting the roster.
+
+::: callout Notice
+**Usernames are whatever claim you pick.** `username_claim: email` makes the
+JupyterHub username `jdoe@your-institution.edu`, and that is the string your
+`allowed_users` entries and per-user PVC names must match. Adding
+`action: strip_idp_domain` with `domain: your-institution.edu` under
+`username_derivation` gives you a plain `jdoe` instead.
+
+**`allowed_idps` was renamed `idps`** in oauthenticator 17.4. NRP's example
+file — and the snippets above, which follow it — still use `allowed_idps`; it
+is accepted as an alias and logs a deprecation warning, so prefer `idps` on a
+hub you are building fresh.
+:::
 
 ### Putting it back
 
@@ -746,31 +909,119 @@ helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
   --wait --timeout=10m
 ```
 
-## 5. Operating your hub
+## 6. Cleanup
+
+If this was a trial run, uninstall your Helm release so the cluster is left
+clean:
 
 ```bash
-helm list -n $NRP_NAMESPACE
+helm uninstall $NRP_RELEASE -n $NRP_NAMESPACE
 ```
+
+User PVCs are kept by default; delete them only if you are sure:
 
 ```bash
-sleep 5
-kubectl logs -n $NRP_NAMESPACE -l app=jupyterhub,component=hub --tail=50
+kubectl delete pvc -n $NRP_NAMESPACE -l app=jupyterhub,component=singleuser-storage
 ```
+
+`helm uninstall` does not touch the shared volume either, because nothing in the
+release owns it — if you created it in [5.3](#5-3-shared-storage-for-the-whole-class),
+it is still there:
 
 ```bash
-kubectl get pods -n $NRP_NAMESPACE -l app=jupyterhub,component=singleuser-server
+kubectl delete pvc jupyterhub-shared-volume -n $NRP_NAMESPACE --ignore-not-found
 ```
 
-Troubleshooting is the standard Kubernetes trio: `describe` the failing pod,
-read namespace `events`, check hub/proxy `logs`.
+If this is a real course hub, leave it running — the `cull` settings close idle
+student sessions automatically.
 
-Check your work at any point:
+## 7. Deploying your own hub at NRP
+
+Today's hub was built to fit a workshop: Dummy auth, a throwaway namespace, a
+chart version left floating. A hub you actually run for a course differs in a
+handful of specific places, and NRP documents the whole path:
+
+> 📘 [Deploy JupyterHub](https://nrp.ai/documentation/userdocs/jupyter/jupyterhub/)
+> · [the full example values file](https://nrp.ai/documentation/userdocs/jupyter/values/)
+
+### The minimum that has to change
+
+**1. Register an OAuth client with CILogon** at
+[cilogon.org/oauth2/register](https://cilogon.org/oauth2/register). Pick your
+hostname *first* — it is baked into the callback URL:
+
+| Field | Value |
+|---|---|
+| Callback URL | `https://<your-name>.nrp-nautilus.io/hub/oauth_callback` |
+| Client type | Confidential |
+| Scopes | `org.cilogon.userinfo,openid,profile,email` |
+| Refresh tokens | No |
+
+They review registrations by hand and email you a client ID and secret — days,
+sometimes more than a week. **Start this before anything else.**
+
+**2. Set six fields in your values file.** `yamls/cilogon-jupyterhub-config.yaml`
+in your workspace is a working copy of NRP's example; these are the parts only
+you can fill in:
+
+```yaml
+hub:
+  config:
+    CILogonOAuthenticator:
+      client_id: <OIDC client>                  # from CILogon
+      client_secret: <OIDC secret>              # from CILogon
+      oauth_callback_url: https://<your-name>.nrp-nautilus.io/hub/oauth_callback
+      admin_users:
+      - you@your-institution.edu
+    JupyterHub:
+      authenticator_class: cilogon              # not dummy
+proxy:
+  secretToken: '<openssl rand -hex 32>'
+httpRoute:
+  enabled: true
+  hostnames:
+    - <your-name>.nrp-nautilus.io
+  gateway:
+    name: ingress
+    namespace: haproxy
+```
+
+`httpRoute` is the Gateway API route NRP uses now; the `ingress` block you
+deployed with today still works but is marked for deprecation in NRP's own
+example, so new hubs should prefer `httpRoute`.
+
+::: danger Do not leave the door open
+Our workshop hub has `allowed_users: set()` — an empty allowlist that lets
+**anyone** sign in. That is fine for a namespace that lives 40 minutes; on a
+public hostname with real login it is how your namespace gets locked. A real
+hub narrows access with `allowed_idps` (your institution's identity provider,
+from the [CILogon IdP list](https://cilogon.org/idplist/)) or an explicit
+`allowed_users` list — which, for a course, is your enrollment roster.
+
+`cull` is not optional either: deploying without it is against cluster policy,
+and `timeout` may not exceed 21600 (6 hours).
+:::
+
+**3. Install it the same way you did today** — same chart, your values file, a
+namespace you are admin of:
 
 ```bash
-bash check.sh 3
+helm upgrade --cleanup-on-fail --install jhub jupyterhub/jupyterhub \
+  --namespace <your-namespace> \
+  --values config.yaml
 ```
 
-## 6. Building custom course images in NRP GitLab
+Pin `--version` once you are in production so a chart release never changes the
+hub underneath your students mid-semester — the same reasoning as pinning image
+tags in [section 8](#8-building-custom-course-images-in-nrp-gitlab).
+
+Everything else on this page — profiles, resource limits, shared storage,
+culling, custom images — is identical whether the hub is yours or a workshop's.
+
+## 8. Building custom course images in NRP GitLab
+
+> This is the take-home section — if the workshop ran out of time, it is the
+> part to read afterwards. Nothing earlier on this page depends on it.
 
 The stock Jupyter images only go so far — real courses need their own package
 stacks. NRP GitLab ([gitlab.nrp-nautilus.io](https://gitlab.nrp-nautilus.io))
@@ -810,32 +1061,6 @@ build-and-push-job:
 **Best practices for a course:** tag with commit SHAs (not just `latest`) so the
 environment never changes under your students mid-semester; use `--cache=true`
 for fast rebuilds; keep credentials in CI variables, never in the Dockerfile.
-
-## 7. Cleanup
-
-If this was a trial run, uninstall your Helm release so the cluster is left
-clean:
-
-```bash
-helm uninstall $NRP_RELEASE -n $NRP_NAMESPACE
-```
-
-User PVCs are kept by default; delete them only if you are sure:
-
-```bash
-kubectl delete pvc -n $NRP_NAMESPACE -l app=jupyterhub,component=singleuser-storage
-```
-
-`helm uninstall` does not touch the shared volume either, because nothing in the
-release owns it — if you created it in [4.3](#4-3-shared-storage-for-the-whole-class),
-it is still there:
-
-```bash
-kubectl delete pvc jupyterhub-shared-volume -n $NRP_NAMESPACE --ignore-not-found
-```
-
-If this is a real course hub, leave it running — the `cull` settings close idle
-student sessions automatically.
 
 ::: quiz Quick check
 1. What role does the Helm values file play in your deployment?

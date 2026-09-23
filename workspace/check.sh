@@ -51,12 +51,8 @@ case "$EP" in
     else bad "chat/completions did not return choices" "token rejected, or the model is down — see https://nrp.ai/llm-status/"; fi
   fi
 
-  if command -v opencode >/dev/null 2>&1 || [ -x "$HOME/.opencode/bin/opencode" ]; then ok "opencode installed"
-  else skip "opencode (install step in section 6 of the lesson)"; fi
-  if [ -f "$HOME/.config/opencode/opencode.json" ]; then
-    if grep -q 'ellm.nrp-nautilus.io' "$HOME/.config/opencode/opencode.json"; then ok "opencode configured against the NRP endpoint"
-    else bad "opencode.json does not reference ellm.nrp-nautilus.io" "re-run the config heredoc in section 6"; fi
-  else skip "~/.config/opencode/opencode.json (section 6)"; fi
+  if python3 -c 'import openai' >/dev/null 2>&1; then ok "the openai SDK is importable (section 2 of the notebook)"
+  else bad "python3 -c 'import openai' failed" "the training hub image ships it; elsewhere: pip install openai"; fi
   ;;
 
 3)
