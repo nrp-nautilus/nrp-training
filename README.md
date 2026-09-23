@@ -15,7 +15,7 @@ of equal relevance to research.
 | # | Lesson | Time | Covers |
 |---|---|---|---|
 | 1 | [NRP, Access & Requesting Resources](lessons/1_intro.md) | 20 min | What NRP is, CILogon access, namespaces, CPUs and GPUs, the three ways to request resources |
-| 2 | [AI for the Classroom](lessons/2_ai_classroom.md) | 20 min | The managed LLM endpoint from Python, and Jupyter AI fixing broken code |
+| 2 | [AI for the Classroom](lessons/2_ai_classroom.md) | 20 min | The managed LLM endpoint from Python, notebook magics, and Jupyter AI fixing broken code |
 | 3 | [Deploy a Custom JupyterHub](lessons/3_custom_jupyterhub.md) | 40 min | Helm deploy, ingress, profiles and resource limits, shared class storage, CILogon, custom images in NRP GitLab CI |
 
 ## Layout
