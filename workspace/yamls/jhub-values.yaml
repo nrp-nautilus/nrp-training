@@ -161,14 +161,13 @@ cull:
   concurrency: 10
   maxAge: 0
 
-# Section 4 — expose the hub on a public hostname. Uncomment the block below,
-# then `helm upgrade`. The hostname must be globally unique; your rendered copy
-# in my-yamls/ already has your name filled in.
-#ingress:
-#  enabled: true
-#  ingressClassName: haproxy
-#  hosts: ["jhub-<username>.nrp-nautilus.io"]
-#  pathSuffix: ''
-#  tls:
-#    - hosts:
-#      - jhub-<username>.nrp-nautilus.io
+# Expose the hub on a public hostname. The hostname must be globally unique;
+# your rendered copy in my-yamls/ already has your name filled in.
+ingress:
+  enabled: true
+  ingressClassName: haproxy
+  hosts: ["jhub-<username>.nrp-nautilus.io"]
+  pathSuffix: ''
+  tls:
+    - hosts:
+      - jhub-<username>.nrp-nautilus.io
