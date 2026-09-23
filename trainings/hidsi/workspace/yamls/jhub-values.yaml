@@ -3,7 +3,7 @@ hub:
     JupyterHub:
       authenticator_class: dummy
       admin_access: true
-      admin_users: ["admin"]
+      admin_users: ["admin", "admin2"]
     DummyAuthenticator:
       password: "training123"
     # Allow all users to sign in (for tutorial purposes)

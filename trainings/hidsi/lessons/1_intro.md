@@ -8,7 +8,7 @@ questions:
   - What accelerators are available, and how do I ask for them?
 objectives:
   - Describe what NRP provides and where JupyterHub fits for teaching.
-  - Sign in through CILogon and reach a working terminal.
+  - Sign in through CILogon and request a namespace of your own.
   - Name the three ways of requesting resources and pick the right one for a course.
 keypoints:
   - NRP is shared national cyberinfrastructure built on the Nautilus Kubernetes cluster.
@@ -16,10 +16,6 @@ keypoints:
   - Compute lives in a **namespace**, which for teaching maps onto a course.
   - JupyterHub is the lowest-barrier way in; `kubectl` and Coder are there when you outgrow it.
 ---
-
-::: callout Launch the workspace in JupyterHub
-**[▶ Launch the workspace in JupyterHub](https://jh-training.nrp-nautilus.io/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fnrp-nautilus%2Fnrp-training&branch=materials%2Fhidsi&targetpath=hidsi&urlpath=lab%2Ftree%2Fhidsi%2Fworkspace)** — signs you in at `jh-training.nrp-nautilus.io`, pulls these materials, and opens JupyterLab in the workspace directory. Do this now; the download takes a moment and you will need it in the next section.
-:::
 
 **Time:** 00:00–00:20
 
@@ -41,15 +37,15 @@ multi-user JupyterHub on national infrastructure.
 
 | Time | Topic | What you walk away with |
 |---|---|---|
-| 00:00–00:20 | **NRP, access & requesting resources** | An account path, a namespace, and a working terminal |
-| 00:20–00:50 | **[AI for the classroom](2_ai_classroom.html)** | Chatbots for students, LLM-as-a-service, and an agentic workflow |
+| 00:00–00:20 | **NRP, access & requesting resources** | An account path and a namespace of your own |
+| 00:20–00:40 | **[AI for the classroom](2_ai_classroom.html)** | An LLM call from a notebook, and an assistant that fixes code |
 | 00:50–01:30 | **[Your own JupyterHub](3_custom_jupyterhub.html)** | A deployed course hub and a custom image pipeline |
 
 ## What NRP is
 
 The National Research Platform is shared national cyberinfrastructure built on
 the **Nautilus** Kubernetes cluster: hundreds of nodes, many NVIDIA GPU types,
-Qualcomm Cloud AI 100 accelerators, shared storage, and hosted services —
+shared storage, and hosted services —
 JupyterHub, GitLab, S3, a managed vector database, and a managed LLM inference
 endpoint.
 
@@ -145,23 +141,6 @@ class that matches the job.
   <img src="images/GPUModels.png" alt="GPU model list" style="width:45%; min-width:280px; max-width:520px;">
 </div>
 
-**Qualcomm Cloud AI 100 / Cloud AI 100 Ultra.** Inference accelerators, requested
-with the `qualcomm.com/qaic` resource key instead of `nvidia.com/gpu`. They are
-built for serving models rather than training them, and an Ultra card carries
-substantially more on-card memory than the original Cloud AI 100 — enough to
-hold a large model resident for a class to query. The point worth teaching:
-because a vLLM server on a Qualcomm card exposes the **same OpenAI-compatible
-API** as one on an NVIDIA GPU, the accelerator underneath is an implementation
-detail your students' code never sees. `workspace/yamls/qaic-vllm-server.yaml`
-in this workspace is a complete working example.
-
-::: callout Qualcomm capacity is limited
-There are far fewer Qualcomm nodes than GPU nodes, and a full-size vLLM server
-on one needs more CPU and memory than the default bare-pod limits allow — so it
-needs an [NRP resource exception](https://nrp.ai/documentation/userdocs/start/policies/).
-Treat it as something to plan for, not something to grab mid-class.
-:::
-
 ### Seeing what is actually available
 
 Before requesting anything, look at what the cluster has right now — GPU models
@@ -208,26 +187,20 @@ account — there is no separate NRP password to issue or reset. For a course
 this is the single biggest operational win: **enrollment is an allowlist, not a
 credential-distribution problem.**
 
-If you are following along in the training hub, confirm your terminal is wired
-up. Open a **Terminal** in JupyterLab and run:
+When you sign in, CILogon asks **which identity provider** to authenticate
+against. The order of preference:
 
-```bash
-kubectl version --client
-kubectl auth whoami
-kubectl config current-context
-```
+1. **Your own institution.** Search for it by name — this is the right answer
+   whenever it is available, because your account is then tied to your campus
+   identity and survives as long as your affiliation does.
+2. **Google or Microsoft, using your campus email address.** Many institutions
+   are not listed as CILogon identity providers. If yours is not, sign in with
+   Google or Microsoft and choose your `@your-institution.edu` address, not a
+   personal one — access is judged on the institutional address behind it.
 
-<details>
-<summary>Expected output</summary>
-
-```text
-Client Version: v1.30.2
-ATTRIBUTE   VALUE
-Username    http://cilogon.org/serverA/users/000000
-Groups      [system:authenticated]
-nautilus
-```
-</details>
+Whichever you pick, use the same one every time: a different provider produces
+a different NRP identity, and namespace membership is attached to the identity,
+not to you.
 
 ## Namespaces: where a course lives
 
@@ -252,43 +225,33 @@ naturally onto one course hub.
 
 ## Getting your own access
 
-Three steps, and none of them need to happen live today:
+Two steps, neither of which has to happen live today:
 
-**1. Register your identity.** Go to
-**[portal.nrp.ai](https://portal.nrp.ai)** and sign in with CILogon (pick your
-institution), then complete
-[Getting started](https://nrp.ai/documentation/userdocs/start/getting-started/).
+**1. Sign in once at [nrp.ai](https://nrp.ai/)** with CILogon, as above. That
+creates your NRP identity — nothing is allocated to you yet, but the identity
+has to exist before anything can be.
 
-**2. Get into a namespace.**
+**2. Request a namespace** with the form at
+**[get-started.nrp-nautilus.io](https://get-started.nrp-nautilus.io/)**. It asks
+who you are, your institution, the email on your NRP account, and whether you
+want the hosted LLM endpoints. An administrator reviews it, usually within a
+working day, and replies by email.
 
-- **Joining an existing project?** Ask its admin to add you — send them the
-  identity shown in the portal.
-- **Starting a course?** Request a namespace and allocation through
-  **[nrp.ai/contact](https://nrp.ai/contact/)**, which is also the Matrix
-  channel used for live help. Say what you are teaching and roughly what you
-  need — number of students, whether the course needs GPUs, and when the term
-  starts.
+> **Namespaces are requested by faculty, staff, and research scientists.** If
+> you are a student, your advisor or instructor submits the request — and for a
+> course, that is the right shape anyway: the instructor owns the namespace and
+> adds students to it.
 
-**3. Point `kubectl` at NRP.** Install `kubectl` and the **kubelogin** plugin,
-then grab your kubeconfig ([cluster access via
-`kubectl`](https://nrp.ai/documentation/userdocs/start/getting-started/#cluster-access-via-kubectl)):
+Already have a namespace and just want to be added? Ask its admin, and send
+them the identity shown when you sign in at [nrp.ai](https://nrp.ai/).
 
-```bash
-mkdir -p ~/.kube
-curl -o ~/.kube/config -fSL https://nrp.ai/config
-kubectl config get-contexts
-kubectl get pods -n <your-namespace>
-```
-
-::: important Start the CILogon registration early
-If you plan to run a **production** hub for a course, the OAuth client you
-register with CILogon is the long pole — reviewed by hand, and it can take
-several days to more than a week. Section 3 covers this in detail. Nothing on
-the NRP side unblocks it, so start it well before the term.
-:::
+From there, [**NRP's Getting
+started**](https://nrp.ai/documentation/userdocs/start/getting-started/) is the
+reference for everything that follows — installing `kubectl` and the
+`kubelogin` plugin, downloading your kubeconfig, and your first pod. We will not
+work through it today; everything in this workshop runs in the browser.
 
 ::: callout Next
-With access and a namespace, everything in the rest of the workshop works
-against your own course. Next: [AI for the
+Next we put NRP's hosted LLMs to work from a Jupyter notebook: [AI for the
 classroom](2_ai_classroom.html).
 :::

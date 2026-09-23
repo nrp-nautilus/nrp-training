@@ -4,7 +4,7 @@ Files attendees open or run during the workshop.
 
 | Path | What it is |
 |---|---|
-| `notebooks/2_ai_classroom.ipynb` | Runnable notebook for [AI for the Classroom](https://training.nrp-nautilus.io/hidsi/2_ai_classroom.html) — chatbots, the managed LLM endpoint, Jupyter AI, `opencode` |
+| `notebooks/2_ai_classroom.ipynb` | Runnable notebook for [AI for the Classroom](https://training.nrp-nautilus.io/hidsi/2_ai_classroom.html) — the managed LLM endpoint from Python, and Jupyter AI |
 | `notebooks/3_custom_jupyterhub.ipynb` | Runnable notebook for [Deploy a Custom JupyterHub](https://training.nrp-nautilus.io/hidsi/3_custom_jupyterhub.html) — Helm, ingress, profiles, GitLab CI images |
 | `check.sh` | Verifies your work against the live cluster: `bash check.sh <1-3>` |
 | `yamls/jhub-values.yaml` | The Helm values file the JupyterHub deploy uses |
@@ -25,7 +25,7 @@ overwrites it.
 
 ```bash
 bash check.sh 1   # access: kubectl, cluster auth, helm
-bash check.sh 2   # AI: token, endpoint, a real chat/completions call, opencode
+bash check.sh 2   # AI: token, endpoint, a real chat/completions call, openai SDK
 bash check.sh 3   # JupyterHub: helm release, hub/proxy pods, PVC, ingress
 ```
 
