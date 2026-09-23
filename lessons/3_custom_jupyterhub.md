@@ -148,6 +148,59 @@ bundle of templates) and tune it through a **values file**. The [Zero to
 JupyterHub chart](https://z2jh.jupyter.org) packages the entire
 hub/proxy/spawner stack; your whole deployment is one YAML file of values.
 
+The values file looks long until you see what it stands in for. Your 173 lines
+render into **thirteen Kubernetes objects**, about 1,400 lines of manifests:
+
+<svg viewBox="0 0 720 300" width="100%" role="img" aria-labelledby="helm-dia-t" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;height:auto;display:block;margin:0 auto;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+<title id="helm-dia-t">One values file renders into thirteen Kubernetes objects</title>
+<text x="360" y="18" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".75">What Kubernetes actually needs &#8212; 13 objects, ~1,400 lines of YAML</text>
+<rect x="14" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="80" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Deployment</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="154" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="220" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Deployment</tspan><tspan opacity=".65"> &#183; proxy</tspan></text>
+<rect x="294" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="360" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Service</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="434" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="500" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Service</tspan><tspan opacity=".65"> &#183; proxy-api</tspan></text>
+<rect x="574" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="640" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Service</tspan><tspan opacity=".65"> &#183; proxy-public</tspan></text>
+<rect x="14" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="80" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Ingress</tspan><tspan opacity=".65"> &#183; jupyterhub</tspan></text>
+<rect x="154" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="220" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">ConfigMap</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="294" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="360" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Secret</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="434" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="500" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">PVC</tspan><tspan opacity=".65"> &#183; hub-db-dir</tspan></text>
+<rect x="574" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="640" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">ServiceAccount</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="154" y="110" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="220" y="129" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Role</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="294" y="110" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="360" y="129" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">RoleBinding</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="434" y="110" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="500" y="129" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">NetworkPolicy</tspan><tspan opacity=".65"> &#183; proxy</tspan></text>
+<path d="M14 152 L706 152 L442 204 L278 204 Z" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="4 3"/>
+<text x="360" y="176" text-anchor="middle" font-size="12" fill="currentColor" font-weight="600">Helm &#8212; the z2jh chart</text>
+<text x="360" y="192" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">45 templates, rendered and kept in sync</text>
+<path d="M360 204 L360 214" stroke="currentColor" stroke-opacity=".5" stroke-width="1.5" marker-end="url(#helm-dia-a)"/>
+<defs><marker id="helm-dia-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" fill-opacity=".5"/></marker></defs>
+<rect x="250" y="220" width="220" height="40" rx="6" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-opacity=".6" stroke-width="1.5"/>
+<text x="360" y="245" text-anchor="middle" font-size="13.5" fill="currentColor" font-weight="700">jhub-values.yaml</text>
+<text x="360" y="278" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".75">What you write &#8212; 173 lines, six blocks that matter</text>
+</svg>
+
+And they all have to agree with each other. The hub's Deployment carries a
+checksum of the ConfigMap and the Secret, so changing either restarts the hub
+instead of leaving it running on stale config. The ServiceAccount needs a Role
+granting `create` and `delete` on pods and PVCs — that is *how* the hub spawns a
+user's server. `proxy-public` has to route to the proxy, which has to route to
+the hub, which has to know its own public URL.
+
+Hand-written, changing the single-user image means editing several files and
+re-checking every reference between them. With the chart it is one line in one
+file, and `helm upgrade` works out what has to change.
+
 In the training hub, `helm` is preinstalled — verify, then add the chart
 repository:
 
@@ -173,45 +226,137 @@ jupyterhub   https://jupyterhub.github.io/helm-chart/
 
 ## 2. Examine the values file
 
-Open `yamls/jhub-values.yaml`. The sections that matter:
+The chart brings the templates; this one file brings every decision. Read it a
+block at a time — the whole thing is at the end of the section.
+
+### 2.1 Who can log in
 
 ```yaml
 hub:
   config:
     JupyterHub:
-      authenticator_class: dummy      # workshop only — swap for CILogon/OIDC in production
+      authenticator_class: dummy
       admin_access: true
       admin_users: ["admin"]
     DummyAuthenticator:
       password: "training123"
+    # Allow all users to sign in (for tutorial purposes)
+    Authenticator:
+      allowed_users: set()
+```
+
+`authenticator_class: dummy` accepts **any** username with the shared
+`password` — which is why this is a workshop hub and not a course hub.
+`admin_users` gets the admin panel: other people's servers, the user list, a
+shutdown button. `allowed_users: set()` is an *empty allowlist*, and empty here
+means "no list — let everyone in".
+
+That last line is the first thing to change in production. With CILogon
+([4.4](#4-4-real-authentication)) the allowlist stops being a formality and
+becomes your enrollment list.
+
+### 2.2 The hub
+
+```yaml
+hub:
   db:
     type: sqlite-pvc
     pvc:
       accessModes: [ReadWriteOnce]
       storage: 1Gi
       storageClassName: rook-ceph-block-east
+  resources:
+    limits: {cpu: "2", memory: 1Gi}
+    requests: {cpu: 100m, memory: 512Mi}
+```
+
+The hub process keeps its state — users, running servers, API tokens — in
+SQLite on its own 1Gi volume, so restarting the hub does not lose who is logged
+in. `rook-ceph-block-east` is NRP block storage; `ReadWriteOnce` is all a single
+database pod needs.
+
+### 2.3 The proxy
+
+```yaml
 proxy:
-  secretToken: 'secret_token'         # replace before deploying!
+  secretToken: 'secret_token'
+  service:
+    type: ClusterIP
+```
+
+Every request to a user's server goes through the proxy, and `secretToken` is
+the shared secret the hub uses to reprogram its routes. `secret_token` is a
+placeholder that must never reach a real deployment — the install step in
+[section 3](#install-the-chart) mints a real one into your copy before Helm
+sees it.
+
+`ClusterIP` keeps the proxy inside the cluster; the ingress
+([2.6](#2-6-the-ingress)) is what faces the internet.
+
+### 2.4 The single-user servers
+
+Abridged to the decisions you will actually change — the environment, the size,
+and the home directory:
+
+```yaml
 singleuser:
-  storage:
+  image:                                # the default environment
+    name: quay.io/jupyter/scipy-notebook
+    tag: 2024-04-22
+  cpu:                                  # what every server gets
+    limit: 3
+    guarantee: 3
+  memory:
+    limit: 10G
+    guarantee: 10G
+  storage:                              # a private home volume per user
     type: dynamic
     capacity: 5Gi
     homeMountPath: /home/jovyan
     dynamic:
       storageClass: rook-ceph-block-east
       pvcNameTemplate: claim-{username}{servername}
-      storageAccessModes: [ReadWriteOnce]
-  image:
-    name: quay.io/jupyter/scipy-notebook
-    tag: 2024-04-22
-  cpu: {limit: 3, guarantee: 3}
-  memory: {limit: 10G, guarantee: 10G}
   defaultUrl: "/lab"
-cull:                                  # required on NRP — close inactive sessions
+  profileList:                          # the spawn-page menu — more in 4.1
+  - display_name: Scipy
+    kubespawner_override:
+      image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
+    default: True
+```
+
+**`image`** is the environment a server starts in — pin the tag, never `latest`.
+**`cpu`/`memory`** apply to every server, and setting `guarantee` equal to
+`limit` reserves the resources instead of overcommitting them. **`storage:
+dynamic`** gives each user their own PVC, named from `pvcNameTemplate` and
+mounted at `homeMountPath`, so `/home/jovyan` survives logouts, restarts and
+culls. **`profileList`** is the menu on the spawn page; each entry's
+`kubespawner_override` replaces the defaults above. The file ships with fifteen
+profiles — one is shown here.
+
+### 2.5 Culling idle servers
+
+```yaml
+cull:
   enabled: true
   timeout: 3600
   every: 600
-ingress:                               # public HTTPS hostname — your name is already rendered in
+```
+
+Every 10 minutes (`every`) the culler shuts down servers idle for more than an
+hour (`timeout`). Home volumes are untouched, so a student logs back in and
+picks up where they left off.
+
+::: callout Why `cull` is not optional
+A student who closes their laptop lid leaves a pod holding CPU and memory. On
+shared national infrastructure that is the fastest way to make your namespace
+unpopular — and for a class of 40, it is the difference between a hub that fits
+its allocation and one that does not.
+:::
+
+### 2.6 The ingress
+
+```yaml
+ingress:
   enabled: true
   ingressClassName: haproxy
   hosts: ["jhub-<username>.nrp-nautilus.io"]
@@ -221,19 +366,19 @@ ingress:                               # public HTTPS hostname — your name is 
       - jhub-<username>.nrp-nautilus.io
 ```
 
-Generate a real proxy token and put it in the file in place of `secret_token`:
+This is what puts the hub on the public internet, and it goes in from the start
+— no second deploy to expose it. The hostname has to be globally unique, which
+is why the setup step substituted `<username>` for you. `ingressClassName:
+haproxy` hands routing to the cluster's HAProxy controller, and the `tls` block
+makes cert-manager request a Let's Encrypt certificate for that name — no
+certificate files for you to manage.
 
-```bash
-openssl rand -hex 32
-```
+### The whole file
 
-::: callout Why `cull` is not optional
-A student who closes their laptop lid leaves a pod holding CPU and memory. On
-shared national infrastructure that is the fastest way to make your namespace
-unpopular — and for a class of 40, it is the difference between a hub that fits
-its allocation and one that does not. `cull` closes idle servers automatically;
-`timeout: 3600` is one hour.
-:::
+Those are the blocks worth explaining; the rest is node affinity, image
+pre-pullers and scheduler settings you can leave alone. Read it end to end in
+the workspace at `yamls/jhub-values.yaml`, or
+[on GitHub](https://github.com/nrp-nautilus/nrp-training/blob/materials/hidsi/workspace/yamls/jhub-values.yaml).
 
 ## 3. Deploy
 
@@ -280,39 +425,14 @@ fi
 home directories survive, so a reinstall picks them back up. [Section
 7](#7-cleanup) shows how to delete those too.
 
-### The ingress — how anyone reaches your hub
-
-The `ingress` block at the end of your values file is what puts the hub on the
-public internet, so it goes in from the start — no second deploy to expose it.
-The hostname has to be globally unique, which is why the setup step substituted
-`<username>` for you. `ingressClassName: haproxy` hands routing to the cluster's
-HAProxy controller, and the `tls` block makes cert-manager request a Let's
-Encrypt certificate for that name — no certificate files for you to manage.
-
-Confirm your rendered copy has your name in it:
-
-```bash
-tail -8 my-yamls/jhub-values.yaml
-```
-
-<details>
-<summary>Expected output</summary>
-
-```text
-ingress:
-  enabled: true
-  ingressClassName: haproxy
-  hosts: ["jhub-nautilus.nrp-nautilus.io"]
-  pathSuffix: ''
-  tls:
-    - hosts:
-      - jhub-nautilus.nrp-nautilus.io
-```
-</details>
-
 ### Install the chart
 
 ```bash
+# mint a proxy secret token — only replaces the placeholder, so re-runs keep the same token
+if grep -q "'secret_token'" my-yamls/jhub-values.yaml; then
+  sed -i "s|secretToken: .*|secretToken: '$(openssl rand -hex 32)'|" my-yamls/jhub-values.yaml
+fi
+
 helm upgrade --cleanup-on-fail --install $NRP_RELEASE jupyterhub/jupyterhub \
   --namespace $NRP_NAMESPACE \
   --values my-yamls/jhub-values.yaml \
@@ -368,9 +488,59 @@ national research infrastructure.**
 
 ## 4. Make it yours
 
+Your hub is running, so every change below is one you can make right now. They
+all follow the same pattern: write a small **overlay** file holding just the
+change, then hand Helm both files.
+
+```bash
+helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
+  --namespace $NRP_NAMESPACE \
+  --values my-yamls/jhub-values.yaml \
+  --values my-yamls/<overlay>.yaml \
+  --wait --timeout=10m
+```
+
+::: callout Overlays — the tool you will still be using next semester
+`--values` can be passed as many times as you like. Helm **merges** the files
+rather than replacing one with the next, so the second file is not a
+replacement for the first — it is a patch on top of it:
+
+| In the base file | In the overlay | Result |
+|---|---|---|
+| `cull.timeout: 3600` | *not mentioned* | kept |
+| `singleuser.image` | `singleuser.image` | the overlay's value wins |
+| `profileList` — 15 entries | `profileList` — 2 entries | **replaced, not appended** |
+
+Maps merge key by key, at any depth: an overlay that sets one field inside
+`singleuser.storage` leaves the rest of `singleuser` alone. Lists are the
+exception — they replace wholesale, which is why an overlay's `profileList`
+becomes the entire menu rather than a longer one. Order matters, so the overlay
+goes last.
+
+This is worth keeping past today. Your base file is the hub you agreed to run,
+and it stays in version control untouched; each change is a small file that
+reads as a diff of one decision — a GPU profile for the deep-learning unit,
+this term's dataset mounted, a longer cull timeout during finals week. Rolling
+one back is deleting a flag rather than editing YAML under pressure, and
+stacking several is just more `--values`.
+
+When you come back to a hub months later and cannot remember what it is
+actually running with, ask it:
+
+```bash
+helm get values $NRP_RELEASE -n $NRP_NAMESPACE      # what you supplied
+helm get values $NRP_RELEASE -n $NRP_NAMESPACE -a   # everything, chart defaults included
+```
+:::
+
+One thing to know before you start: **each command below layers only its own
+overlay**, so it undoes the previous experiment. Pass several `--values` flags
+to stack them.
+
 ### 4.1 Multiple image profiles
 
-Give users a menu of environments — add to `singleuser`:
+The file already ships with fifteen profiles. Replace them with a shorter menu —
+this is the `singleuser.profileList` from [2.4](#2-4-the-single-user-servers):
 
 ```yaml
 singleuser:
@@ -390,7 +560,41 @@ singleuser:
       image_spec: quay.io/jupyter/datascience-notebook:2024-04-22
 ```
 
+**Try it:**
+
+```bash
+cat > my-yamls/overlay-profiles.yaml <<'EOF'
+singleuser:
+  profileList:
+  - display_name: Scipy
+    kubespawner_override:
+      image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
+    default: True
+  - display_name: Tensorflow (CUDA)
+    kubespawner_override:
+      image_spec: quay.io/jupyter/tensorflow-notebook:cuda-2024-04-22
+  - display_name: Pytorch (CUDA 12)
+    kubespawner_override:
+      image_spec: quay.io/jupyter/pytorch-notebook:cuda12-2024-04-22
+  - display_name: Datascience (scipy, Julia, R)
+    kubespawner_override:
+      image_spec: quay.io/jupyter/datascience-notebook:2024-04-22
+EOF
+
+helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
+  --namespace $NRP_NAMESPACE \
+  --values my-yamls/jhub-values.yaml \
+  --values my-yamls/overlay-profiles.yaml \
+  --wait --timeout=10m
+```
+
+Reload the spawn page — the menu is four entries now. A server that is already
+running keeps its old image until you stop and restart it.
+
 ### 4.2 Per-profile resource limits
+
+Each entry's `kubespawner_override` can set size as well as image, which is how
+one hub serves an intro unit and a deep-learning unit at once:
 
 ```yaml
   - display_name: Small (2 CPU, 4GB RAM)
@@ -409,8 +613,44 @@ singleuser:
       mem_guarantee: 16G
 ```
 
-Add a profile or two, `helm upgrade` again, and reload the spawn page — the menu
-updates live. A GPU profile adds `extra_resource_limits: {"nvidia.com/gpu": "1"}`.
+**Try it:**
+
+```bash
+cat > my-yamls/overlay-sizes.yaml <<'EOF'
+singleuser:
+  profileList:
+  - display_name: Small (2 CPU, 4GB RAM)
+    default: True
+    kubespawner_override:
+      image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
+      cpu_limit: 2
+      cpu_guarantee: 2
+      mem_limit: 4G
+      mem_guarantee: 4G
+  - display_name: Large (8 CPU, 16GB RAM)
+    kubespawner_override:
+      image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
+      cpu_limit: 8
+      cpu_guarantee: 8
+      mem_limit: 16G
+      mem_guarantee: 16G
+EOF
+
+helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
+  --namespace $NRP_NAMESPACE \
+  --values my-yamls/jhub-values.yaml \
+  --values my-yamls/overlay-sizes.yaml \
+  --wait --timeout=10m
+```
+
+Reload the spawn page and pick **Small** — then check what the pod actually got:
+
+```bash
+kubectl get pod -n $NRP_NAMESPACE -l app=jupyterhub,component=singleuser-server \
+  -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.containers[0].resources}{"\n"}{end}'
+```
+
+A GPU profile adds `extra_resource_limits: {"nvidia.com/gpu": "1"}`.
 
 ![JupyterHub profile menu](images/jhub-2.png)
 
@@ -435,8 +675,52 @@ singleuser:
         mountPath: /home/shared
 ```
 
-Instructors drop datasets and notebooks into `/home/shared` once; every student
-sees them instantly. Mount it read-only for students in production.
+This one needs a volume to mount, so create the claim first. `rook-cephfs` is
+the RWX class — `rook-ceph-block-east`, which your home directories use, only
+attaches to one pod at a time and would fail the moment a second student
+spawned.
+
+**Try it:**
+
+```bash
+kubectl apply -n $NRP_NAMESPACE -f - <<'EOF'
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyterhub-shared-volume
+spec:
+  storageClassName: rook-cephfs
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 5Gi
+EOF
+
+kubectl get pvc jupyterhub-shared-volume -n $NRP_NAMESPACE
+
+cat > my-yamls/overlay-shared.yaml <<'EOF'
+singleuser:
+  storage:
+    extraVolumes:
+      - name: jupyterhub-shared
+        persistentVolumeClaim:
+          claimName: jupyterhub-shared-volume
+    extraVolumeMounts:
+      - name: jupyterhub-shared
+        mountPath: /home/shared
+EOF
+
+helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
+  --namespace $NRP_NAMESPACE \
+  --values my-yamls/jhub-values.yaml \
+  --values my-yamls/overlay-shared.yaml \
+  --wait --timeout=10m
+```
+
+Stop and restart your server from the hub's control panel — a mount only
+appears in a pod that starts with it — and `/home/shared` is there in the file
+browser. Instructors drop datasets and notebooks in once; every student sees
+them instantly. Mount it read-only for students in production.
 
 ### 4.4 Real authentication
 
@@ -446,9 +730,21 @@ configuration — campus credentials, an allowlist or admin-managed access, no
 passwords to distribute. **For a class roster, the allowlist is your enrollment
 list.**
 
-Swapping it in needs a `client_id` and `client_secret` from CILogon, which you
-request from them and wait on — see the lead-time warning at the top of this
-page. That wait is the reason today's hub uses the Dummy authenticator.
+This is the one change on this page you cannot try right now: it needs a
+`client_id` and `client_secret` that CILogon issues by hand, and that wait — see
+the lead-time warning at the top of this page — is the reason today's hub uses
+the Dummy authenticator at all.
+
+### Putting it back
+
+Drop the overlay flags and your hub returns to the base file:
+
+```bash
+helm upgrade $NRP_RELEASE jupyterhub/jupyterhub \
+  --namespace $NRP_NAMESPACE \
+  --values my-yamls/jhub-values.yaml \
+  --wait --timeout=10m
+```
 
 ## 5. Operating your hub
 
@@ -528,6 +824,14 @@ User PVCs are kept by default; delete them only if you are sure:
 
 ```bash
 kubectl delete pvc -n $NRP_NAMESPACE -l app=jupyterhub,component=singleuser-storage
+```
+
+`helm uninstall` does not touch the shared volume either, because nothing in the
+release owns it — if you created it in [4.3](#4-3-shared-storage-for-the-whole-class),
+it is still there:
+
+```bash
+kubectl delete pvc jupyterhub-shared-volume -n $NRP_NAMESPACE --ignore-not-found
 ```
 
 If this is a real course hub, leave it running — the `cull` settings close idle
