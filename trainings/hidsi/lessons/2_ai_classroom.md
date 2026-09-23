@@ -7,11 +7,13 @@ questions:
   - What does an AI assistant inside JupyterLab actually change for a student?
 objectives:
   - Call NRP's managed LLM from a notebook using the token the hub already provides.
-  - Use Jupyter AI to explain and repair broken code in place.
+  - Use notebook magics to inspect, time, and shell out from a running kernel.
+  - Use Jupyter AI to explain the last error and reason about live variables.
 keypoints:
   - One OpenAI-compatible endpoint serves notebooks, assistants, agents and scripts.
   - Only `base_url` changes between NRP, your own GPU pod, and a commercial API.
   - The hub exports the token, so no student ever handles a credential.
+  - The Jupyter AI chat panel cannot see your kernel; the `%%ai` magics can.
 ---
 
 ::: callout Open the runnable notebook
@@ -45,16 +47,58 @@ key = os.environ.get("OPENAI_API_KEY", "")
 print("key: ", (key[:8] + "…") if key else "(not set)")
 ```
 
-## 2. Ask it something
+## 2. What models are on offer
 
-The `openai` SDK talks to NRP unchanged — only `base_url` differs from the
-commercial API:
+One endpoint fronts the whole catalog — chat models large and small, a code
+model, and an embeddings model:
 
 ```python
 from openai import OpenAI
 
 client = OpenAI(base_url=os.environ["OPENAI_API_BASE"])
 
+for m in client.models.list().data:
+    print(m.id)
+```
+
+<details>
+<summary>Expected output (the catalog rotates)</summary>
+
+```text
+glm-5
+qwen3
+qwen3-embedding
+qwen3-small
+gemma-small-e4b
+gpt-oss
+gemma
+kimi
+minimax-m2
+deepseek-v4-flash
+gemma-small
+gemma4-small
+gemma4-12b
+```
+</details>
+
+Models come and go as the team rotates capacity, so check the
+[models page](https://nrp.ai/documentation/userdocs/ai/llm-managed/models/)
+before pinning a name into a syllabus — and prefer a small model for classwork,
+since it answers faster and leaves the big ones free.
+
+::: callout What `/models` does and does not prove
+On the NRP gateway the model list answers **without authentication**, so a
+successful listing proves only that the endpoint is reachable. The first call
+that actually checks your token is a chat completion — that is the real smoke
+test, and it is the next cell.
+:::
+
+## 3. Ask it something
+
+Picking one of those names is the only change needed; the `openai` SDK talks to
+NRP unchanged, because only `base_url` differs from the commercial API:
+
+```python
 resp = client.chat.completions.create(
     model="gpt-oss",
     messages=[
@@ -70,20 +114,52 @@ print(resp.choices[0].message.content)
 > `OPENAI_API_BASE`. Pass it explicitly, as above, or the client quietly calls
 > `api.openai.com` instead and fails on your NRP token.
 
-**That is the whole trick.** Those eight lines work against a commercial API,
+**That is the whole trick.** Those few lines work against a commercial API,
 against NRP, or against a vLLM server you run yourself on a GPU pod — you change
 `base_url` and nothing else. Teach the OpenAI-compatible API once and the skill
 outlives whatever model is fashionable this year.
 
-Other models are a string away — `qwen3`, `gemma`, `kimi`, `minimax-m2`,
-`deepseek-v4-flash` and more:
+## 4. A detour: notebook magics
+
+A **magic** is a notebook command that is not Python. Line magics start with
+`%`, cell magics with `%%` and take the whole cell. They are worth ten minutes
+of any intro course, because they cover the things students otherwise ask you
+about one at a time.
 
 ```python
-for m in client.models.list().data:
-    print(m.id)
+%who            # every variable you have defined so far
+%whos           # …the same, with types and values
 ```
 
-## 3. Jupyter AI
+```python
+%%time
+total = sum(i * i for i in range(2_000_000))
+print(total)
+```
+
+```python
+%timeit sum(range(10_000))     # times a statement, averaged over many runs
+```
+
+```python
+# a "!" line runs in the shell, so the terminal is never far away
+!nvidia-smi --query-gpu=name,memory.total --format=csv 2>/dev/null || echo "no GPU on this server"
+!df -h /home/jovyan | tail -1
+```
+
+`%lsmagic` lists every magic available, and `%magic_name?` explains one. A
+handful worth knowing beyond the above:
+
+| Magic | What it does |
+|---|---|
+| `%%writefile name.py` | dumps the cell to a file — how you hand students a script |
+| `%run script.py` | runs a file in the current kernel, variables and all |
+| `%matplotlib inline` | renders plots in the notebook |
+| `%%bash` | runs the whole cell as a shell script |
+| `%debug` | drops into a debugger at the last exception |
+| `%load_ext` | loads an extension — which is exactly how the next section starts |
+
+## 5. Jupyter AI
 
 The hub ships [Jupyter AI](https://jupyter-ai.readthedocs.io/) already pointed
 at the NRP endpoint — no install, no key to paste.
@@ -91,9 +167,22 @@ at the NRP endpoint — no install, no key to paste.
 - **Chat panel:** click the **chat icon** in the left sidebar and ask a question.
 - **In a cell:** load the magics and prefix a cell with `%%ai`.
 
+::: important The chat panel cannot see your notebook
+It has no access to the kernel, your variables, or your cell outputs. Ask it
+*"why is 86.333 the average?"* and it will quite reasonably ask what you are
+talking about, because nothing in the conversation says. `/learn` does not help
+either — it indexes **files on disk**, not the running kernel.
+
+The `%%ai` magics *can* reach into the kernel, through the two mechanisms below.
+:::
+
 ```python
 %load_ext jupyter_ai_magics
 ```
+
+Load that **before** you run anything that fails: it also installs the
+exception hook that `%ai error` reads from, so errors raised earlier are not
+recorded. `%ai list` then shows every model registered with Jupyter AI.
 
 ```text
 %%ai openai-chat:gpt-oss
@@ -102,21 +191,55 @@ Explain what a Kubernetes namespace is, for someone who has never used one.
 
 ### Breaking things on purpose
 
-The notebook ends with three cells that are broken on purpose. Run them, then
-hand the error to Jupyter AI — paste the traceback into the chat panel and ask
-what went wrong.
+The notebook ends with three cells that are broken on purpose. Each names the
+bug it carries rather than a position, because Jupyter AI will happily rewrite a
+cell in place **or** drop a corrected copy underneath it — so "the third cell"
+stops meaning anything the moment you accept a fix.
 
-| Cell | What happens | What it demonstrates |
+| Broken cell | What happens | What it demonstrates |
 |---|---|---|
-| 1 | `NameError` — a misspelled function name | The instant win: assistant reads the traceback and points at the typo |
-| 2 | `TypeError` — iterating a dict yields *keys*, not values | A real conceptual bug, not a slip |
-| 3 | **No error at all** — and the answer is wrong | The interesting one |
+| `temperature conversion` | `NameError` — a misspelled function name | The instant win: the assistant reads the traceback and points at the typo |
+| `class average` | `TypeError` — iterating a dict yields *keys*, not values | A real conceptual bug, not a slip |
+| `sensor average` | **No error at all** — and the answer is wrong | The interesting one |
 
-That third cell is the one worth dwelling on in front of a class. It runs, it
-prints a number, and the number is wrong — an average divided by the wrong
-count. Ask Jupyter AI *"why do these two numbers differ?"* and it has to reason
-about the code rather than just read a stack trace. That is the failure mode
-that quietly survives into a student's homework.
+### Asking about what just happened
+
+Two things the magics do that the chat panel cannot.
+
+**1. Explain the last error.** `%ai error` reaches into the kernel for the most
+recent traceback and explains it — nothing to copy or paste:
+
+```python
+%ai error openai-chat:gpt-oss
+```
+
+**2. Ask about your actual values.** Anything in `{curly braces}` inside a
+`%%ai` prompt is replaced with the *live value* of that variable from the
+kernel. This is the fix for "why is this number what it is?" — you hand it the
+number:
+
+```text
+%%ai openai-chat:gpt-oss
+Here are some sensor readings: {readings}
+
+My code computed an average of {average}, but what I wanted was the average of
+every reading *after the first one*. Is {average} the right answer? Show the
+arithmetic either way.
+```
+
+That prompt reaches the model with the real list and the real number already
+substituted in, which is why it can answer instead of asking for context.
+
+**The `sensor average` cell is the one worth dwelling on in front of a class.**
+It runs, prints a number, and the number is wrong — it divides by 6 when it
+should divide by 5. There is no traceback to paste, so the assistant has to
+reason about what the code was *meant* to do. That is the failure mode that
+quietly survives into a student's homework.
+
+> **What to expect during the demo.** Asked to fix a cell, Jupyter AI often
+> offers more than one correction — a loop and a one-liner, say — and both will
+> be right. That is worth naming rather than glossing over: the assistant
+> proposes, and the student still has to read the proposal and choose.
 
 ## What to take away
 
@@ -125,8 +248,11 @@ that quietly survives into a student's homework.
   `base_url` change.
 - On a hub you run, the token is an environment variable *you* set once, so no
   student ever handles a credential.
+- **Magics are the seam** between a notebook and everything else — the shell,
+  the profiler, the debugger, and the model.
 - An assistant sitting inside JupyterLab changes what a stuck student does at
-  2am.
+  2am — but only the `%%ai` magics can see their variables; the chat panel
+  cannot.
 
 ::: callout Next
 Next we deploy a JupyterHub of your own — the image menu, resource limits and
