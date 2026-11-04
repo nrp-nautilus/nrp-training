@@ -1,0 +1,11 @@
+title: "NAIRR AI Education Webinar Series: Prototype National Research Platform Classroom"
+subtitle: Get access to NRP, see the resources on offer, and watch a multi-user JupyterHub classroom deployed with a notebook and Kubernetes
+length: 1 hour
+date: 2026-11-13
+published: true
+materials_branch: materials/nairr-classroom
+facilitators:
+  - Daniel Diaz
+lessons:
+  - 1_intro
+  - 2_custom_jupyterhub
