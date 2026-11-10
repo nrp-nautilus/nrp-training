@@ -29,7 +29,8 @@ TRAINING = HERE.parent
 IMG = HERE / "assets" / "images"
 TPL = HERE / "assets" / "template"
 OUT = TRAINING / "slides" / "ucla-health-nrp.html"
-PPTX = TRAINING / "slides" / "ucla-health-nrp.pptx"
+PPTX = HERE / "presenter" / "ucla-health-nrp.pptx"     # the copy with speaker notes, from build_deck.py
+PRESENTER_OUT = HERE / "presenter" / "ucla-health-nrp.html"
 
 PX = 144                      # pixels per inch on the 1920x1080 stage (13.333 in wide), so 1 pt = 2 px
 
@@ -328,6 +329,17 @@ slide("What NRP Is For", spec, steps=2)
 
 section("Getting Access")
 
+ga = at(X0, TOP + 0.15, 6.3, 5.1, '<div class="steps">'
+        '<p class="sh">1.&nbsp; Log in at <b>nrp.ai</b></p><p class="sd">Log In → CILogon → choose <b>UCLA</b> → your UCLA login</p>'
+        '<p class="sh">2.&nbsp; Get into a namespace</p><p class="sd">Request one at <b>get-started.nrp-nautilus.io</b><br>'
+        'Or ask an existing namespace admin to add you</p>'
+        '<p class="sh">3.&nbsp; Start working</p><p class="sd">JupyterHub, kubectl, or an LLM token from <b>nrp.ai/llmtoken</b></p>'
+        '<p class="sd" style="margin-top:44px"><b>Who can request a namespace:</b> faculty, staff, postdocs and research '
+        'scientists. <b>Students:</b> your PI or instructor requests it and adds you.</p></div>', "stagger")
+ga += at(7.2, TOP + 0.05, 5.53, 0.3, link("https://get-started.nrp-nautilus.io", size=14, align="right"))
+ga += at(7.2, TOP + 0.42, 5.53, 4.8, img(IMG / "namespace_form.png", "framed", fit="contain"), "pop")
+slide("Getting Access", ga)
+
 ns = at(X0, TOP + 0.15, 4.75, 5.1, ul([
     "Your group's workspace on the cluster",
     "One per lab, project or course; the PI or instructor is its admin and adds members",
@@ -343,17 +355,6 @@ for i, (name, people, inside, st) in enumerate(spaces):
 inner += "</div>"
 ns += at(5.7, TOP + 0.1, 7.03, 5.1, inner, "nsd")
 slide("What is a Namespace?", ns)
-
-ga = at(X0, TOP + 0.15, 6.3, 5.1, '<div class="steps">'
-        '<p class="sh">1.&nbsp; Log in at <b>nrp.ai</b></p><p class="sd">Log In → CILogon → choose <b>UCLA</b> → your UCLA login</p>'
-        '<p class="sh">2.&nbsp; Get into a namespace</p><p class="sd">Request one at <b>get-started.nrp-nautilus.io</b><br>'
-        'Or ask an existing namespace admin to add you</p>'
-        '<p class="sh">3.&nbsp; Start working</p><p class="sd">JupyterHub, kubectl, or an LLM token from <b>nrp.ai/llmtoken</b></p>'
-        '<p class="sd" style="margin-top:44px"><b>Who can request a namespace:</b> faculty, staff, postdocs and research '
-        'scientists. <b>Students:</b> your PI or instructor requests it and adds you.</p></div>', "stagger")
-ga += at(7.2, TOP + 0.05, 5.53, 0.3, link("https://get-started.nrp-nautilus.io", size=14, align="right"))
-ga += at(7.2, TOP + 0.42, 5.53, 4.8, img(IMG / "namespace_form.png", "framed", fit="contain"), "pop")
-slide("Getting Access", ga)
 
 tc = ""
 chain = [("Your laptop", "`kubectl` + `~/.kube/config`"), ("CILogon", "your UCLA login, once"),
@@ -467,6 +468,50 @@ g += f'<span class="nowl" style="--t0:{T0:.2f}s;--du:{SWEEP_T * UNIT:.2f}s"></sp
 g += f'<span class="tax" style="top:{70 + 4 * (LH + LG) - 4}px"></span><span class="tlab" style="top:{70 + 4 * (LH + LG)}px">time</span>'
 rw += at(6.55, TOP + 1.95, 6.18, 2.95, f'<div class="gantt">{g}</div>', step=3)
 rw += at(6.55, TOP + 4.85, 6.18, 0.55, f'<p class="cap" style="font-size:27px">{escape(RUN_CAPTION)}</p>', step=3)
+# steps 0-2: what each way looks like (right, top), and what happens to its GPU or node over time (right, bottom)
+LCT = 3.6                                 # seconds for a timeline to play
+
+
+def lifecycle(k, lane, segs, marks):
+    """A timeline that draws itself on step k: segs (start, end, kind, text) and marks (pos, text, kind, place, align)
+    in fractions of the track."""
+    h = f'<span class="lcl">{lane}</span><span class="trk" style="top:40px"></span>'
+    for t0, t1, kind, text in segs:
+        w = (t1 - t0) * TW - 4
+        h += (f'<span class="sg {kind}" style="left:{LX + t0 * TW + 2:.0f}px;--w:{w:.0f}px;--t0:{0.5 + t0 * LCT:.2f}s;'
+              f'--du:{(t1 - t0) * LCT:.2f}s">{escape(text)}</span>')
+    for pos, text, kind, place, align in marks:
+        x = LX + pos * TW
+        tx = {"start": f"left:{x - 2:.0f}px", "center": f"left:{x - 300:.0f}px;width:600px;text-align:center",
+              "end": f"right:{890 - x - 2:.0f}px;text-align:right"}[align]
+        h += (f'<span class="mk {kind}" style="left:{x - 1.5:.0f}px;--t:{0.5 + pos * LCT:.2f}s"></span>'
+              f'<span class="mt {kind}" style="{tx};top:{0 if place == "above" else 110}px;--t:{0.5 + pos * LCT:.2f}s">'
+              f'{escape(text)}</span>')
+    return at(6.55, TOP + 3.35, 6.18, 1.9, f'<div class="lc lc{k}">{h}</div>', only=str(k))
+
+
+rw += at(6.55, TOP + 0.1, 6.18, 3.0, img(IMG / "jupyterlab_gpu.png", "framed"), only="0")
+rw += lifecycle(0, "GPU", [(0, .55, "run", "you work in notebooks"), (.55, .8, "idle", "idle")],
+                [(.55, "you close the browser", "neutral", "above", "center"),
+                 (.8, "1 h later: server stops, GPU back to the pool", "ok", "below", "end")])
+pod_term = ["$ kubectl apply -f pod.yaml", "pod/dev-pod created", "$ kubectl exec -it dev-pod -- bash",
+            "root@dev-pod:/# nvidia-smi -L", "GPU 0: NVIDIA A10 (UUID: GPU-…)", "root@dev-pod:/# python test.py"]
+rw += at(6.55, TOP + 0.3, 6.18, 2.3, '<div class="code kterm podterm" style="font-size:25px"><pre>'
+         + "".join(f'<span class="ln{" cmd" if l.startswith(("$ ", "root@")) else ""}" style="--i:{i}">{escape(l)}</span>'
+                   for i, l in enumerate(pod_term)) + "</pre></div>", only="1")
+rw += lifecycle(1, "GPU", [(0, .8, "run", "dev-pod: a shell, tests, debugging")],
+                [(.8, "6 h: the pod is deleted", "bad", "below", "end")])
+dep = ('<div class="depbox"><p class="dh l" style="font-size:28px">Deployment <code>web-app</code> · 2 replicas</p>'
+       '<div class="dpods"><div class="dpod"><code>web-app-5d59d-x2kqp</code><b>Running</b></div>'
+       '<div class="dpod swapper"><span class="p1"><code>web-app-5d59d-m4q9d</code><b>Running</b></span>'
+       '<span class="p2"><code>web-app-5d59d-m4q9d</code><b>crashed</b></span>'
+       '<span class="p3"><code>web-app-5d59d-c8w3n</code><b>Running</b></span></div></div>'
+       '<p class="cap" style="font-size:26px;margin-top:18px">Kubernetes keeps two copies running; when one crashes, it '
+       'starts a replacement</p></div>')
+rw += at(6.55, TOP + 0.3, 6.18, 2.45, dep, only="2")
+rw += lifecycle(2, "Node", [(0, .42, "run", "web-app"), (.45, .92, "run", "web-app (replacement)")],
+                [(.435, "crash: restarted for you", "bad", "above", "center"),
+                 (.92, "2 weeks: removed, unless admins grant an exception", "neutral", "below", "end")])
 slide("Ways to Run Work", rw, steps=3, cls="runways")
 
 # the GPU job: each part of the YAML lights up with its explanation
@@ -840,6 +885,38 @@ table.tb td.mono { font-family: var(--f-mono); font-weight: 400; font-size: .92e
 @keyframes done { to { background: #8FB0CF; } }
 @keyframes darkt { to { color: var(--navy); } }
 @keyframes sweepnow { 0% { left: 115px; opacity: 1; } 96% { opacity: 1; } 100% { left: 890px; opacity: 0; } }
+/* ways to run work, steps 0-2: a timeline per way, the pod terminal, the deployment replacing a crashed pod */
+.lc { position: absolute; inset: 0; }
+.lc .lcl { position: absolute; left: 0; top: 40px; line-height: 58px; font: 700 24px var(--f-body); color: var(--navy); }
+.lc .trk { position: absolute; left: 115px; width: 775px; height: 58px; background: var(--dim); border-radius: 12px; }
+.lc .sg { position: absolute; top: 44px; height: 50px; width: 0; border-radius: 10px; overflow: hidden; white-space: nowrap; line-height: 50px; text-indent: 16px; font: 600 22px var(--f-body); color: #fff; }
+.lc .sg.run { background: var(--blue); }
+.lc .sg.idle { background: repeating-linear-gradient(45deg, #F2C46D 0 10px, #F8DDA6 10px 20px); color: var(--navy); }
+.lc .mk { position: absolute; top: 30px; width: 3px; height: 78px; opacity: 0; }
+.lc .mt { position: absolute; font: 600 24px var(--f-body); line-height: 30px; white-space: nowrap; opacity: 0; }
+.lc .mk.neutral { background: var(--muted); } .lc .mt.neutral { color: var(--body); }
+.lc .mk.ok { background: #1B7F55; } .lc .mt.ok { color: #1B7F55; }
+.lc .mk.bad { background: #B3261E; } .lc .mt.bad { color: #B3261E; }
+.runways[data-cur="0"] .lc0 .sg { animation: grow var(--du) linear var(--t0) both; }
+.runways[data-cur="0"] .lc0 .mk, .runways[data-cur="0"] .lc0 .mt { animation: show .3s ease var(--t) forwards; }
+.runways[data-cur="1"] .lc1 .sg { animation: grow var(--du) linear var(--t0) both; }
+.runways[data-cur="1"] .lc1 .mk, .runways[data-cur="1"] .lc1 .mt { animation: show .3s ease var(--t) forwards; }
+.runways[data-cur="2"] .lc2 .sg { animation: grow var(--du) linear var(--t0) both; }
+.runways[data-cur="2"] .lc2 .mk, .runways[data-cur="2"] .lc2 .mt { animation: show .3s ease var(--t) forwards; }
+.podterm .ln { opacity: 0; }
+.runways[data-cur="1"] .podterm .ln { animation: show .01s linear calc(.3s + var(--i) * .4s) forwards; }
+.depbox { width: 100%; height: 100%; border: 3px dashed #B9C7D8; border-radius: 14px; padding: 22px 26px; }
+.dpods { display: flex; gap: 20px; margin-top: 22px; }
+.dpod { flex: 1; height: 110px; border-radius: 12px; background: var(--card); border: 2px solid #C9D4E3; display: flex; flex-direction: column; justify-content: center; padding: 0 18px; position: relative; }
+.dpod code, .dpod span code { font-size: 21px; color: var(--navy); } .dpod b { font-size: 24px; color: #1B7F55; margin-top: 6px; }
+.dpod.swapper span { position: absolute; left: 18px; right: 18px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+.dpod .p2, .dpod .p3 { opacity: 0; } .dpod .p2 b { color: #B3261E; }
+.runways[data-cur="2"] .dpod .p1 { animation: hide .2s linear 1.95s forwards; }
+.runways[data-cur="2"] .dpod .p2 { animation: show .2s linear 1.95s forwards, hide .3s linear 2.6s forwards; }
+.runways[data-cur="2"] .dpod .p3 { animation: show .4s ease 2.6s forwards; }
+.runways[data-cur="2"] .dpod.swapper { animation: crashbg .9s ease 1.95s; }
+@keyframes hide { from { opacity: 1; } to { opacity: 0; } }
+@keyframes crashbg { 0%, 100% { background: var(--card); } 25%, 75% { background: #F6D6D3; border-color: #B3261E; } }
 /* job output types in, line by line */
 .runjob .ol { display: block; opacity: 0; }
 .runjob[data-cur="1"] .ol { animation: typein .01s forwards; animation-delay: calc(var(--d) * .45s + .3s); }
@@ -923,10 +1000,10 @@ JS = r"""
 """
 
 
-def render(sd):
+def render(sd, with_notes):
     num = f'<span class="num">{sd["n"]}</span>'
     bar = f'<footer class="bar"><img src="{WORDMARK}" alt="San Diego Supercomputer Center">{num}</footer>'
-    notes = f'<div class="notes">{escape(sd["notes"])}</div>'
+    notes = f'<div class="notes">{escape(sd["notes"])}</div>' if with_notes else ""
     if sd["kind"] == "title":
         return (f'<section class="slide title" data-steps="0" style="background-image:url({TITLE_BG})">'
                 '<div class="shade"></div><div class="tt">The National Research Platform<br>for AI-Enabled Research</div>'
@@ -938,18 +1015,23 @@ def render(sd):
             f'</h1>{sd["body"]}{bar}{notes}</section>')
 
 
-html = f"""<!DOCTYPE html>
+def page(with_notes):
+    help_ = "→ next · ← back · N notes · F full screen" if with_notes else "→ next · ← back · F full screen"
+    return f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>GPUs and AI on the National Research Platform</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600&family=Source+Sans+3:wght@400;600;700;900&family=Source+Code+Pro:wght@400;600&display=swap" rel="stylesheet">
 <style>{CSS}</style></head>
-<body><div id="deckStage">{"".join(render(s) for s in SLIDES)}</div>
-<div id="notes"></div><div id="help">→ next · ← back · N notes · F full screen</div>
-<script>{JS}</script></body></html>
+<body><div id="deckStage">{"".join(render(s, with_notes) for s in SLIDES)}</div>
+<div id="notes"></div><div id="help">{help_}</div>
+<script>{JS if with_notes else JS.replace("document.body.classList.toggle('show-notes')", "0")}</script></body></html>
 """
-OUT.write_text(html)
-print(f"{OUT}  ({len(SLIDES)} slides, {OUT.stat().st_size / 1e6:.1f} MB)")
+
+
+OUT.write_text(page(False))                  # the published deck: no speaker notes
+PRESENTER_OUT.write_text(page(True))         # for presenting: N shows the notes; not committed
+print(f"{OUT}  ({len(SLIDES)} slides, {OUT.stat().st_size / 1e6:.1f} MB), notes copy: {PRESENTER_OUT}")
 missing = [s["title"] for s in SLIDES if not s["notes"]]
 if missing:
     print("  no notes for:", ", ".join(missing))
