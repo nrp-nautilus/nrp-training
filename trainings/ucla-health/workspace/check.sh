@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # The National Research Platform (UCLA Health) — check your work.
 #
-#   bash check.sh <section 1-2>
+#   bash check.sh 1   # AI services
+#   bash check.sh 2   # GPUs
 #
 
 EP="$1"
@@ -9,23 +10,13 @@ EP="$1"
 PASS=0; WARN=0; FAIL=0
 
 ok()   { printf '  ✅ %s\n' "$1"; PASS=$((PASS+1)); }
-skip() { printf '  ⚪ %s — not found (not created yet, or already cleaned up)\n' "$1"; WARN=$((WARN+1)); }
+skip() { printf '  ⚪ %s\n' "$1"; WARN=$((WARN+1)); }
 bad()  { printf '  ❌ %s\n     ↳ %s\n' "$1" "$2"; FAIL=$((FAIL+1)); }
 
 case "$EP" in
 
 1)
-  echo "Section 1 — access checks"
-  if kubectl version --client >/dev/null 2>&1; then ok "kubectl installed ($(kubectl version --client 2>/dev/null | head -1 | awk '{print $NF}'))"
-  else bad "kubectl not found" "use the training JupyterHub, or install kubectl and a kubeconfig"; fi
-  if kubectl auth whoami >/dev/null 2>&1; then ok "authenticated to the cluster as $(kubectl auth whoami -o jsonpath='{.status.userInfo.username}' 2>/dev/null)"
-  else bad "not authenticated" "grab your kubeconfig from portal.nrp.ai and put it at ~/.kube/config"; fi
-  if command -v helm >/dev/null 2>&1; then ok "helm installed ($(helm version --short 2>/dev/null))"
-  else skip "helm (optional — only for running your own hub)"; fi
-  ;;
-
-2)
-  echo "Section 2 — AI services"
+  echo "Part 1 — AI services"
   if [ -n "${OPENAI_API_BASE:-}" ]; then ok "OPENAI_API_BASE is set ($OPENAI_API_BASE)"
   else bad "OPENAI_API_BASE is not set" "on the training hub it is exported for you; otherwise export it to https://ellm.nrp-nautilus.io/v1"; fi
   if [ -n "${OPENAI_API_KEY:-}" ]; then ok "OPENAI_API_KEY is set (${OPENAI_API_KEY:0:8}...)"
@@ -48,14 +39,27 @@ case "$EP" in
     else bad "chat/completions did not return choices" "token rejected, or the model is down — see https://nrp.ai/llm-status/"; fi
   fi
 
-  if python3 -c 'import openai' >/dev/null 2>&1; then ok "the openai SDK is importable (section 2 of the notebook)"
+  if python3 -c 'import openai' >/dev/null 2>&1; then ok "the openai SDK is importable"
   else bad "python3 -c 'import openai' failed" "the training hub image ships it; elsewhere: pip install openai"; fi
   ;;
 
+2)
+  echo "Part 2 — GPUs"
+  if kubectl version --client >/dev/null 2>&1; then ok "kubectl installed"
+  else bad "kubectl not found" "use the training JupyterHub, or install kubectl: https://nrp.ai/documentation/userdocs/start/getting-started/"; fi
+  NS="${NS:-nrp-training-k8s}"
+  if [ "$(kubectl auth can-i create jobs -n "$NS" 2>/dev/null)" = yes ]; then ok "you can create jobs in $NS"
+  else bad "cannot create jobs in $NS" "on your own laptop, set NS=<your namespace> and rerun"; fi
+  if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi -L >/dev/null 2>&1; then ok "this session has a GPU: $(nvidia-smi -L | head -1)"
+  else skip "a GPU in this session (only needed for section 2 of the notebook; restart your server with a GPU)"; fi
+  if python3 -c 'import torch' >/dev/null 2>&1; then ok "PyTorch is importable"
+  else skip "PyTorch (only needed for section 2 of the notebook)"; fi
+  ;;
+
 *)
-  echo "usage: bash check.sh <section 1-2>"; exit 1;;
+  echo "usage: bash check.sh <part 1-2>"; exit 1;;
 esac
 
 echo
-printf '%d passed · %d not found · %d need attention\n' "$PASS" "$WARN" "$FAIL"
+printf '%d passed · %d optional · %d need attention\n' "$PASS" "$WARN" "$FAIL"
 if [ "$FAIL" -eq 0 ]; then echo "🎉 Looking good!"; else echo "Stuck? Ask in the NRP support chat: https://nrp.ai/contact/"; fi

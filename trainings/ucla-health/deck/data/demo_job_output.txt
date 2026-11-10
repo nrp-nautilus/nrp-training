@@ -1,0 +1,9 @@
+Running on: NVIDIA A10
+Matrix multiply, 4096 x 4096:
+  CPU (2 cores)  0.09 TFLOP/s
+  GPU            14.0 TFLOP/s  (154x)
+Training on 60,000 images, testing on 10,000
+epoch 1: loss 0.090, accuracy 98.4%, 1.6 s
+epoch 2: loss 0.009, accuracy 98.7%, 1.0 s
+epoch 3: loss 0.033, accuracy 98.7%, 1.1 s
+Done: the job exits and frees the GPU.

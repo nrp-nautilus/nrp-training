@@ -1,0 +1,108 @@
+# A GPU batch job: train a small neural network on one GPU, print the results, exit.
+#
+#   sed "s/<username>/yourname/" gpu-job.yaml | kubectl apply -f -
+#   kubectl logs -f job/gpu-train-yourname -n nrp-training-k8s
+#
+# In your own namespace, change `namespace:` and delete the workshop-only preference below.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gpu-train-<username>
+  namespace: nrp-training-k8s
+spec:
+  backoffLimit: 0                 # don't retry a failed run
+  activeDeadlineSeconds: 1200     # stop after 20 minutes, whatever happens
+  ttlSecondsAfterFinished: 3600   # delete the finished job after an hour
+  template:
+    spec:
+      restartPolicy: Never
+      affinity:
+        nodeAffinity:
+          # Which GPU: more than 20 GB of memory, and Ampere or newer (compute capability 8+),
+          # which current PyTorch builds need. That means A10, L4, RTX 3090/4090, L40, ...
+          # To name exact models instead, use key nvidia.com/gpu.product, operator In,
+          # values ["NVIDIA-A10", "NVIDIA-L4"]; see `kubectl get nodes -L nvidia.com/gpu.product`.
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: nvidia.com/gpu.memory
+                operator: Gt
+                values: ["20000"]   # MiB
+              - key: nvidia.com/gpu.compute.major
+                operator: Gt
+                values: ["7"]
+          # Workshop only: prefer the training nodes (fast network, image often cached).
+          # Delete these six lines in your own namespace.
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+              - {key: nrp-training, operator: In, values: ["true"]}
+      containers:
+      - name: train
+        image: pytorch/pytorch:2.9.0-cuda13.0-cudnn9-runtime   # 3 GB; cached on many GPU nodes
+        env:
+        - name: EPOCHS
+          value: "3"
+        resources:                # what the scheduler reserves for you
+          requests:
+            cpu: "2"
+            memory: 6Gi
+            nvidia.com/gpu: 1
+          limits:
+            cpu: "2"
+            memory: 6Gi
+            nvidia.com/gpu: 1
+        command: ["python", "-u", "-c"]
+        args:
+        - |
+          import contextlib, io, os, time, torch, torch.nn as nn, torch.nn.functional as F
+          from torchvision import datasets
+
+          dev = torch.device("cuda")
+          print("Running on:", torch.cuda.get_device_name(0), flush=True)
+
+          # 1. Raw speed: the same matrix multiply on the 2 CPU cores and on the GPU
+          def tflops(device, n=4096, reps=5):
+              a, b = torch.randn(n, n, device=device), torch.randn(n, n, device=device)
+              a @ b
+              torch.cuda.synchronize()
+              t = time.time()
+              for _ in range(reps):
+                  a @ b
+              torch.cuda.synchronize()
+              return 2 * n**3 * reps / (time.time() - t) / 1e12
+          cpu, gpu = tflops("cpu", reps=2), tflops(dev)
+          print("Matrix multiply, 4096 x 4096:")
+          print(f"  CPU (2 cores) {cpu:5.2f} TFLOP/s")
+          print(f"  GPU           {gpu:5.1f} TFLOP/s  ({gpu / cpu:.0f}x)")
+
+          # 2. Train a small convolutional network on MNIST (handwritten digits)
+          with contextlib.redirect_stderr(io.StringIO()):     # hide download progress bars
+              train = datasets.MNIST("/tmp/data", train=True, download=True)
+              test = datasets.MNIST("/tmp/data", train=False, download=True)
+          X, y = (train.data.float() / 255).unsqueeze(1).to(dev), train.targets.to(dev)
+          Xt, yt = (test.data.float() / 255).unsqueeze(1).to(dev), test.targets.to(dev)
+
+          model = nn.Sequential(
+              nn.Conv2d(1, 32, 3), nn.ReLU(), nn.Conv2d(32, 64, 3), nn.ReLU(), nn.MaxPool2d(2),
+              nn.Flatten(), nn.Linear(9216, 128), nn.ReLU(), nn.Linear(128, 10)).to(dev)
+          opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+          print(f"Training on {len(X):,} images, testing on {len(Xt):,}")
+
+          for epoch in range(1, int(os.environ.get("EPOCHS", 3)) + 1):
+              t = time.time()
+              model.train()
+              for idx in torch.randperm(len(X), device=dev).split(128):
+                  loss = F.cross_entropy(model(X[idx]), y[idx])
+                  opt.zero_grad()
+                  loss.backward()
+                  opt.step()
+              model.eval()
+              with torch.no_grad():
+                  correct = sum((model(xb).argmax(1) == yb).sum().item()
+                                for xb, yb in zip(Xt.split(1000), yt.split(1000)))
+              print(f"epoch {epoch}: loss {loss.item():.3f}, accuracy {correct / len(Xt):.1%}, "
+                    f"{time.time() - t:.1f} s")
+
+          print("Done: the job exits and frees the GPU.")
