@@ -21,8 +21,8 @@ of "What is NRP?" and the policy slide.
 
 Needs Python 3 with `python-pptx`, `Pillow`, `lxml` and `matplotlib`. Then export
 `slides/ucla-health-nrp.pdf` (PowerPoint: File → Export → PDF, or
-`soffice --headless --convert-to pdf`) and run `python3 build_site.py` from the
-repo root, which renders the PDF pages the site shows into `slides/_rendered/`.
+`soffice --headless --convert-to pdf`); the site offers it as a download. The presentation
+page itself shows the animated HTML deck, embedded with an iframe in `lessons/1_presentation.md`.
 
 `build_deck.py` overwrites the `.pptx`. Once you edit the deck in PowerPoint,
 treat the `.pptx` as the source.
