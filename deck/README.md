@@ -123,6 +123,8 @@ which is why the job requires Ampere or newer.
 
 ## The animated HTML version
 
+Speaker notes are not published: `build_deck.py` and `build_html.py` also write copies with notes to `deck/presenter/` (git-ignored), and present from `deck/presenter/ucla-health-nrp.html` if you want them.
+
 `slides/ucla-health-nrp.html` is one self-contained file (images embedded; fonts from Google
 Fonts). Open it in a browser, or on the training site's presentation page.
 
@@ -130,7 +132,7 @@ Fonts). Open it in a browser, or on the training site's presentation page.
 | --- | --- |
 | → ↓ Space PgDn, or a click | next step, then next slide |
 | ← ↑ PgUp, or a click on the left quarter | back |
-| N | speaker notes |
+| N | speaker notes (presenter copy only) |
 | F | full screen |
 
 `#12` in the URL jumps to slide 12 and `#12.3` to its third step. `?print` shows every slide in

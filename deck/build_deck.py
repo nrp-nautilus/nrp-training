@@ -419,11 +419,11 @@ def namespaces():
         s.text(cx + 2.45, y + 0.1, cw - 2.85, 1.07, [P(people, size=15, bold=True, color=nc, line=1.0),
                                                      P(inside, size=14, color=tc, before=4, line=1.0)], anchor="m")
     s.notes("""
-[0:09] The one Kubernetes idea you need today: a namespace. Think of it as your group's workspace on the cluster. A lab, a project or a course gets one; a PI or instructor owns it and adds the members.
+[0:10] The one Kubernetes idea you need today: a namespace. Think of it as your group's workspace on the cluster. A lab, a project or a course gets one; a PI or instructor owns it and adds the members.
 
 You need a namespace to run GPU jobs, to keep data on the cluster, to run your own JupyterHub, and to get API access to the hosted language models; the token page ties your usage to a namespace. You don't need one to chat with the models in the browser.
 
-And it's private: what you create inside, your jobs and your data volumes, is visible only to the namespace's members. Another lab next door can't see into yours, and you can't see into theirs.
+And it's private: what you create inside, your jobs and your data volumes, is visible only to the namespace's members. Another lab next door can't see into yours, and you can't see into theirs. Next: how you talk to your namespace from a laptop.
 """)
 
 
@@ -581,8 +581,7 @@ what_nrp_is_for()
 # ═════════════════════════════════════════════════════════════════════════════════════
 # GETTING ACCESS
 # ═════════════════════════════════════════════════════════════════════════════════════
-section("Getting Access", "[0:09] How you get in. One new word here: namespace.")
-namespaces()
+section("Getting Access", "[0:09] How you get in, and the one new word you need: namespace.")
 
 s = slide("Getting Access")
 s.text(X0, TOP + 0.15, 6.3, 5.1, [
@@ -600,13 +599,14 @@ s.text(X0, TOP + 0.15, 6.3, 5.1, [
 s.link(7.2, TOP + 0.05, 5.53, 0.3, "https://get-started.nrp-nautilus.io", size=14, align="r")
 s.image(IMG / "namespace_form.png", 7.2, TOP + 0.42, 5.53, 4.8, align="r", valign="t", border="DDE8F2")
 s.notes("""
-[0:10] Three steps. First, go to nrp.ai and click Log In. That takes you to CILogon, where you pick UCLA and use your normal UCLA login. That creates your NRP identity; nothing is allocated yet, but everything hangs off that identity. Use the same provider every time.
+[0:09] Three steps. First, go to nrp.ai and click Log In. That takes you to CILogon, where you pick UCLA and use your normal UCLA login. That creates your NRP identity; nothing is allocated yet, but everything hangs off that identity. Use the same provider every time.
 
-Second, get into a namespace. If you're faculty, staff, a postdoc or a research scientist, you can request one with the form on the right, at get-started.nrp-nautilus.io; a person reviews it, usually within a working day. Students go through their PI or instructor, who requests the namespace and adds them. Or, if your group already has one, the admin just adds you.
+Second, get into a namespace; I'll say what that is on the next slide. If you're faculty, staff, a postdoc or a research scientist, you can request one with the form on the right, at get-started.nrp-nautilus.io; a person reviews it, usually within a working day. Students go through their PI or instructor, who requests the namespace and adds them. Or, if your group already has one, the admin just adds you.
 
-Third, start working: JupyterHub, kubectl on your laptop, or a token for the language models. kubectl is the next slide.
+Third, start working: JupyterHub, kubectl on your laptop, or a token for the language models.
 """)
 
+namespaces()
 talking_to_cluster()
 
 # ═════════════════════════════════════════════════════════════════════════════════════
@@ -948,6 +948,12 @@ bullets(s, 7.75, TOP + 0.15, 4.98, 5.1, [
     "%ai list is Jupyter AI's built-in list, not NRP's catalog; the name you type passes through to NRP"], size=16)
 s.notes("Backup: the magics in more detail, as used in the demo notebook.")
 
+PRESENTER = HERE / "presenter"                 # the copy with speaker notes; not committed, not on the site
+PRESENTER.mkdir(exist_ok=True)
+deck.save(PRESENTER / OUT.name)
+for sl in deck.p.slides:                        # the published copy has no speaker notes
+    if sl.has_notes_slide:
+        sl.notes_slide.notes_text_frame.text = ""
 deck.save(OUT)
 from deckkit import CODE_WARNINGS  # noqa: E402
 

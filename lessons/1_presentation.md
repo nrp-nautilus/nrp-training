@@ -21,14 +21,14 @@ keypoints:
 
 **Time:** 00:00–00:30, then the [live demo](2_demo.html).
 
-Click the slides, then use the arrow keys or Space to step through. **N** shows the speaker notes and **F** goes full screen. [Open the slides in their own tab](slides/ucla-health-nrp.html).
+Click the slides, then use the arrow keys or Space to step through. **F** goes full screen. [Open the slides in their own tab](slides/ucla-health-nrp.html).
 
 <div style="position:relative;width:100%;aspect-ratio:16/9;margin:0.5rem 0 0.75rem;">
   <iframe src="slides/ucla-health-nrp.html" title="Slides: GPUs and AI on the National Research Platform" allowfullscreen
           style="position:absolute;inset:0;width:100%;height:100%;border:0;border-radius:6px;"></iframe>
 </div>
 
-Download: [PowerPoint, with speaker notes](slides/ucla-health-nrp.pptx) · [PDF](slides/ucla-health-nrp.pdf)
+Download: [PowerPoint](slides/ucla-health-nrp.pptx) · [PDF](slides/ucla-health-nrp.pdf)
 
 ## Get access
 
