@@ -490,7 +490,15 @@ def lifecycle(k, lane, segs, marks):
     return at(6.55, TOP + 3.35, 6.18, 1.9, f'<div class="lc lc{k}">{h}</div>', only=str(k))
 
 
-rw += at(6.55, TOP + 0.1, 6.18, 3.0, img(IMG / "jupyterlab_gpu.png", "framed"), only="0")
+SPAWNER = IMG / "jhub_spawner.png"         # the hub's server options page, where you pick the GPU
+if SPAWNER.exists():                      # side by side: pick a GPU, then the notebook running on it
+    rw += at(6.55, TOP + 0.05, 2.95, 0.4, '<p class="dh l" style="font-size:26px">1. Pick a GPU</p>', only="0")
+    rw += at(6.55, TOP + 0.45, 2.95, 2.65, img(SPAWNER, "framed"), only="0")
+    rw += at(9.6, TOP + 0.05, 3.13, 0.4, '<p class="dh l" style="font-size:26px">2. Your notebook runs on it</p>',
+             only="0")
+    rw += at(9.6, TOP + 0.45, 3.13, 2.65, img(IMG / "jupyterlab_gpu.png", "framed"), only="0")
+else:
+    rw += at(6.55, TOP + 0.1, 6.18, 3.0, img(IMG / "jupyterlab_gpu.png", "framed"), only="0")
 rw += lifecycle(0, "GPU", [(0, .55, "run", "you work in notebooks"), (.55, .8, "idle", "idle")],
                 [(.55, "you close the browser", "neutral", "above", "center"),
                  (.8, "1 h later: server stops, GPU back to the pool", "ok", "below", "end")])
