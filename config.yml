@@ -1,5 +1,5 @@
 title: "The National Research Platform -- AI-Enabled Scientific Research Computing, and Education"
-subtitle: UCLA Health IT Research Tech Talk — what NRP offers, how to get access, hosted LLMs, and JupyterHub for a lab or classroom
+subtitle: UCLA Health IT Research Tech Talk — what NRP offers for GPUs and AI, how to get access, and a live demo of hosted LLMs in Jupyter and a GPU training job
 length: 1 hour
 date: 2026-11-10
 published: true
@@ -7,7 +7,6 @@ materials_branch: materials/ucla-health
 facilitators:
   - Daniel Diaz
 lessons:
-  - 1_intro
-  - 2_onboarding
-  - 3_ai
-  - 4_jupyterhub
+  - 1_presentation
+  - 2_demo
+closing: "Questions and discussion | 15"

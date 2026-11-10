@@ -2,32 +2,34 @@
 
 UCLA Health IT Research Tech Talk · 10 November 2026 · 12:00–1:00 pm PT · Zoom
 
-NRP pools GPUs, petabyte-scale storage, and hosted open-weight AI models across more than 70 institutions; it is free, funded by the NSF, and sustained by the community that contributes to it. This talk introduces NRP to UCLA Health researchers: what the platform offers,
-how a group gets access (with a live namespace-admin onboarding), hosted LLMs in
-Jupyter notebooks, and a brief look at JupyterHub for a lab or class. Slides
-followed by a live demo; target 40–50 minutes with time held at both ends.
+What NRP offers UCLA researchers, students and instructors for **GPU computing
+and AI**: the platform, how to get access (and what a namespace is), the GPU
+fleet and how to run a GPU job, the hosted open-weight LLMs, and a brief word on
+JupyterHub for labs and classes. About 30 minutes of slides, a 12-minute live
+demo, then questions.
 
 [Event page](https://it.uclahealth.org/events/using-the-national-research-platform-nrp-for-ai-enabled) ·
 [Published materials](https://training.nrp-nautilus.io/ucla-health/)
 
-## Lessons
+## Schedule
 
-| # | Lesson | Time | Covers |
+| # | Page | Time | Covers |
 |---|---|---|---|
-| 1 | [What NRP Offers](lessons/1_intro.md) | 15 min | Platform, potluck model, hardware, three ways in, HIPAA caveat |
-| 2 | [Live Demo: Getting Access](lessons/2_onboarding.md) | 10 min | CILogon, namespaces, admin roles, live onboarding |
-| 3 | [AI-Enabled Research](lessons/3_ai.md) | 15 min | Managed LLM endpoint from Python, Jupyter AI, `%%ai` magics |
-| 4 | [JupyterHub for a Lab or Class](lessons/4_jupyterhub.md) | 7 min | What a hub of your own involves |
-| — | Q&A | 13 min | |
+| 1 | [Presentation](lessons/1_presentation.md) | 30 min | The slide deck, plus access steps, a GPU table and links |
+| 2 | [Live demo](lessons/2_demo.md) | 12 min | Hosted LLMs and Jupyter AI in a notebook; a GPU in JupyterHub and a GPU Job |
+| — | Questions | 15 min | |
 
 ## Layout
 
-- `config.yml` — title, landing-page metadata, and lesson order.
-- `lessons/` — the lesson Markdown files.
-- `workspace/` — the AI notebook and `check.sh`.
-- `images/` — screenshots and diagrams used by the lessons.
+- `config.yml` — title, landing-page metadata, and page order.
+- `lessons/` — the two pages.
+- `slides/` — the deck as `.pptx` (with speaker notes) and `.pdf`, plus the page images the site shows.
+- `workspace/` — the demo notebooks, the GPU job, and `check.sh`.
+- `deck/` — the script that builds the deck from the SDSC template, and the presenter run sheet ([deck/README.md](deck/README.md)).
+- `images/` — older screenshots kept from the first version of this training.
 
 ## Hands-on requirements
 
-None required. Attendees who want to follow the AI demo use the training
-JupyterHub at `jh-training.nrp-nautilus.io`, where the LLM token is preconfigured.
+None. Attendees who want to follow the demo use the training JupyterHub at
+`jh-training.nrp-nautilus.io`, where the LLM token is preset and `kubectl` is
+connected to the `nrp-training-k8s` namespace.
