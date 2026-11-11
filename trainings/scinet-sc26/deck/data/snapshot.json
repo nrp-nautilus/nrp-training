@@ -1,0 +1,1483 @@
+{
+ "date": "2026-11-10",
+ "nodes": 536,
+ "cores": 59352,
+ "gpus": 1460,
+ "gpu_models": 33,
+ "zones": 143,
+ "regions": {
+  "us-west": 289,
+  "us-central": 105,
+  "us-east": 100,
+  "us-mountain": 15,
+  "pacific": 13,
+  "none": 5,
+  "eu": 5,
+  "latin-america": 4
+ },
+ "arch": {
+  "amd64": 533,
+  "arm64": 3
+ },
+ "k8s": "v1.34.11",
+ "fleet": [
+  {
+   "product": "NVIDIA-A10",
+   "gpus": 279,
+   "memory_mib": 23028
+  },
+  {
+   "product": "NVIDIA-GeForce-RTX-3090",
+   "gpus": 207,
+   "memory_mib": 24576
+  },
+  {
+   "product": "NVIDIA-GeForce-RTX-2080-Ti",
+   "gpus": 148,
+   "memory_mib": 11264
+  },
+  {
+   "product": "NVIDIA-A100-SXM4-80GB",
+   "gpus": 118,
+   "memory_mib": 81920
+  },
+  {
+   "product": "NVIDIA-A100-80GB-PCIe-MIG-1g.10gb",
+   "gpus": 105,
+   "memory_mib": 9728
+  },
+  {
+   "product": "NVIDIA-L4",
+   "gpus": 96,
+   "memory_mib": 23034
+  },
+  {
+   "product": "NVIDIA-GeForce-GTX-1080-Ti",
+   "gpus": 80,
+   "memory_mib": 11264
+  },
+  {
+   "product": "Tesla-V100-SXM2-32GB",
+   "gpus": 68,
+   "memory_mib": 32768
+  },
+  {
+   "product": "NVIDIA-L40",
+   "gpus": 68,
+   "memory_mib": 46068
+  },
+  {
+   "product": "NVIDIA-RTX-A6000",
+   "gpus": 50,
+   "memory_mib": 49140
+  },
+  {
+   "product": "Tesla-V100-SXM2-16GB",
+   "gpus": 32,
+   "memory_mib": 16384
+  },
+  {
+   "product": "NVIDIA-RTX-A4000",
+   "gpus": 32,
+   "memory_mib": 16376
+  },
+  {
+   "product": "NVIDIA-H100-80GB-HBM3",
+   "gpus": 24,
+   "memory_mib": 81559
+  },
+  {
+   "product": "NVIDIA-A100-80GB-PCIe",
+   "gpus": 24,
+   "memory_mib": 81920
+  },
+  {
+   "product": "NVIDIA-GeForce-RTX-4090",
+   "gpus": 20,
+   "memory_mib": 24564
+  },
+  {
+   "product": "NVIDIA-TITAN-Xp",
+   "gpus": 17,
+   "memory_mib": 12288
+  },
+  {
+   "product": "NVIDIA-A40",
+   "gpus": 12,
+   "memory_mib": 46068
+  },
+  {
+   "product": "NVIDIA-L40S",
+   "gpus": 12,
+   "memory_mib": 46068
+  },
+  {
+   "product": "NVIDIA-RTX-PRO-6000-Blackwell-Max-Q-Workstation-Edition",
+   "gpus": 10,
+   "memory_mib": 97887
+  },
+  {
+   "product": "NVIDIA-H200-NVL",
+   "gpus": 10,
+   "memory_mib": 143771
+  },
+  {
+   "product": "NVIDIA-A100-PCIE-40GB",
+   "gpus": 9,
+   "memory_mib": 40960
+  },
+  {
+   "product": "NVIDIA-RTX-5000-Ada-Generation",
+   "gpus": 8,
+   "memory_mib": 32760
+  },
+  {
+   "product": "Tesla-V100-PCIE-16GB",
+   "gpus": 6,
+   "memory_mib": 16384
+  },
+  {
+   "product": "NVIDIA-RTX-A5000",
+   "gpus": 6,
+   "memory_mib": 23028
+  },
+  {
+   "product": "NVIDIA-TITAN-RTX",
+   "gpus": 6,
+   "memory_mib": 24576
+  },
+  {
+   "product": "Tesla-T4",
+   "gpus": 3,
+   "memory_mib": 15360
+  },
+  {
+   "product": "NVIDIA-A2",
+   "gpus": 2,
+   "memory_mib": 15356
+  },
+  {
+   "product": "Quadro-RTX-6000",
+   "gpus": 2,
+   "memory_mib": 24576
+  },
+  {
+   "product": "NVIDIA-RTX-4000-Ada-Generation",
+   "gpus": 2,
+   "memory_mib": 20475
+  },
+  {
+   "product": "Quadro-M4000",
+   "gpus": 1,
+   "memory_mib": 8192
+  },
+  {
+   "product": "NVIDIA-GH200-480GB",
+   "gpus": 1,
+   "memory_mib": 97871
+  },
+  {
+   "product": "NVIDIA-TITAN-X-Pascal",
+   "gpus": 1,
+   "memory_mib": 12288
+  },
+  {
+   "product": "Quadro-RTX-8000",
+   "gpus": 1,
+   "memory_mib": 49152
+  }
+ ],
+ "namespaces": 2334,
+ "ingresses": 1006,
+ "httproutes": 33,
+ "node_exporter": 536,
+ "thanos_querier": 14,
+ "netbox_agents": 529,
+ "perfsonar_testpoints": 526,
+ "haproxy_ingress_nodes": 19,
+ "calico_nodes": 536,
+ "calico_ipv6_nodes": 309,
+ "a2a_zones": [
+  "UAH",
+  "alabama",
+  "albany",
+  "amnh",
+  "amsterdam",
+  "ann-arbor",
+  "ashburn",
+  "berkeley",
+  "boston",
+  "brazil",
+  "buffalo",
+  "caltech",
+  "cau",
+  "cenic-la",
+  "cenic-sunnyvale",
+  "ch",
+  "charlotte",
+  "cheyenne",
+  "cheyenne-nwsc",
+  "chico",
+  "clemson",
+  "cpp",
+  "csub",
+  "csumb",
+  "csun",
+  "csus",
+  "csusb",
+  "cwru",
+  "czech",
+  "dsu",
+  "famu",
+  "fresno",
+  "fullerton",
+  "gatech",
+  "guam",
+  "guam-gorex",
+  "hawaii",
+  "humboldt",
+  "kanren",
+  "kennesaw",
+  "korea",
+  "ksu",
+  "laccd",
+  "mghpcc",
+  "mghpcc100",
+  "mghpcc400",
+  "miami",
+  "mizzou",
+  "morehouse",
+  "msu",
+  "njedge",
+  "nmsu",
+  "northwestern",
+  "nysernet",
+  "nyu",
+  "onenet",
+  "oru",
+  "osu",
+  "ou",
+  "pacificwave",
+  "pacificwave-seattle",
+  "ramapo",
+  "sdccd-1",
+  "sdsmt",
+  "sdstate",
+  "sdsu-rci",
+  "singapore",
+  "sox",
+  "sox-nashville",
+  "spelman",
+  "stanford",
+  "suncorridor",
+  "truman",
+  "uams",
+  "uark",
+  "uci",
+  "ucla",
+  "ucmerced",
+  "ucr",
+  "ucsb",
+  "ucsc",
+  "ucsc-wa",
+  "ucsd",
+  "ucsd-nrp",
+  "ucsd-sdsc",
+  "ucsd-sdsc-400g",
+  "ucsd-sdsc-expanse",
+  "ucsd-sdsc-yu",
+  "ucsd-suncave",
+  "ucsd-t2",
+  "udel",
+  "uic",
+  "umich",
+  "university-of-tulsa",
+  "unl",
+  "unm",
+  "usd"
+ ],
+ "i2_nodes": 54,
+ "i2_sites": 51,
+ "runtimeclasses": [
+  "kata",
+  "kata-clh",
+  "kata-clh-azure",
+  "kata-clh-azure-runtime-rs",
+  "kata-clh-runtime-rs",
+  "kata-dragonball",
+  "kata-fc",
+  "kata-openvmm-azure-runtime-rs",
+  "kata-qemu",
+  "kata-qemu-coco-dev",
+  "kata-qemu-coco-dev-runtime-rs",
+  "kata-qemu-nvidia-cpu",
+  "kata-qemu-nvidia-cpu-runtime-rs",
+  "kata-qemu-nvidia-gpu",
+  "kata-qemu-nvidia-gpu-runtime-rs",
+  "kata-qemu-nvidia-gpu-snp",
+  "kata-qemu-nvidia-gpu-snp-runtime-rs",
+  "kata-qemu-nvidia-gpu-tdx",
+  "kata-qemu-nvidia-gpu-tdx-runtime-rs",
+  "kata-qemu-runtime-rs",
+  "kata-qemu-se",
+  "kata-qemu-se-runtime-rs",
+  "kata-qemu-snp",
+  "kata-qemu-snp-runtime-rs",
+  "kata-qemu-tdx",
+  "kata-qemu-tdx-runtime-rs",
+  "nvidia",
+  "runc",
+  "sysbox-runc"
+ ],
+ "device_plugins": [
+  "amdgpu-device-plugin-daemonset",
+  "nvidia-device-plugin-daemonset",
+  "nvidia-device-plugin-daemonset-test",
+  "qaic-device-plugin-daemonset",
+  "smarter-device-manager",
+  "xilinx-device-plugin-daemonset"
+ ],
+ "argo_apps": [
+  {
+   "name": "cve-mitigations",
+   "repo": "https://gitlab.nrp-nautilus.io/prp/cve-mitigations.git",
+   "chart": "",
+   "namespace": "nrp-security",
+   "auto": true,
+   "self_heal": false,
+   "prune": false,
+   "status": "Synced/Progressing"
+  },
+  {
+   "name": "falco",
+   "repo": "https://falcosecurity.github.io/charts",
+   "chart": "falco",
+   "namespace": "falco",
+   "auto": false,
+   "self_heal": false,
+   "prune": false,
+   "status": "OutOfSync/Progressing"
+  },
+  {
+   "name": "falco-talon",
+   "repo": "https://falcosecurity.github.io/charts",
+   "chart": "falco-talon",
+   "namespace": "falco",
+   "auto": true,
+   "self_heal": true,
+   "prune": false,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "gitlab",
+   "repo": "https://github.com/nrp-nautilus/gitlab.git",
+   "chart": "",
+   "namespace": "gitlab",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "gpu-power-management",
+   "repo": "https://github.com/Sam6734/nrp-gpu-operator-tracking.git",
+   "chart": "",
+   "namespace": "operators",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Degraded"
+  },
+  {
+   "name": "grafana",
+   "repo": "https://grafana.github.io/helm-charts",
+   "chart": "grafana",
+   "namespace": "monitoring",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "guestbook",
+   "repo": "https://github.com/argoproj/argocd-example-apps.git",
+   "chart": "",
+   "namespace": "unl-weitzel",
+   "auto": false,
+   "self_heal": false,
+   "prune": false,
+   "status": "OutOfSync/Missing"
+  },
+  {
+   "name": "inspect",
+   "repo": "https://gitlab.nrp-nautilus.io/nrp/inspect.git",
+   "chart": "",
+   "namespace": "inspect",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "kueue",
+   "repo": "https://github.com/nrp-nautilus/kueue-gitops.git",
+   "chart": "",
+   "namespace": "kueue-system",
+   "auto": false,
+   "self_heal": false,
+   "prune": false,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "kured",
+   "repo": "https://kubereboot.github.io",
+   "chart": "charts",
+   "namespace": "operators",
+   "auto": true,
+   "self_heal": false,
+   "prune": true,
+   "status": "OutOfSync/Progressing"
+  },
+  {
+   "name": "netbox",
+   "repo": "https://charts.netbox.oss.netboxlabs.com/",
+   "chart": "netbox",
+   "namespace": "netbox-4",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "netbox-agent",
+   "repo": "https://gitlab.nrp-nautilus.io/nrp/netbox-4.git",
+   "chart": "",
+   "namespace": "netbox-agent",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Progressing"
+  },
+  {
+   "name": "nrp-aime",
+   "repo": "https://github.com/djw8605/nrp-aime.git",
+   "chart": "",
+   "namespace": "access-accounting",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "nrp-clickhouse-deploy",
+   "repo": "https://github.com/djw8605/nrp-clickhouse.git",
+   "chart": "",
+   "namespace": "access-accounting",
+   "auto": true,
+   "self_heal": false,
+   "prune": false,
+   "status": "Synced/Degraded"
+  },
+  {
+   "name": "nrp-onboarding",
+   "repo": "https://gitlab.nrp-nautilus.io/prp/nrp-onboarding.git",
+   "chart": "",
+   "namespace": "nrp-onboarding",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "nrp-ops-bot",
+   "repo": "https://github.com/djw8605/nrp-ops-bot.git",
+   "chart": "",
+   "namespace": "system-nrp-ops-bot",
+   "auto": true,
+   "self_heal": false,
+   "prune": false,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "openwebui",
+   "repo": "https://gitlab.nrp-nautilus.io/nrp/openwebui.git",
+   "chart": "",
+   "namespace": "nrp-llm",
+   "auto": true,
+   "self_heal": false,
+   "prune": false,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "ray",
+   "repo": "https://gitlab.nrp-nautilus.io/prp/ray.git",
+   "chart": "",
+   "namespace": "ray",
+   "auto": false,
+   "self_heal": false,
+   "prune": false,
+   "status": "Synced/Healthy"
+  },
+  {
+   "name": "self-node-remediation",
+   "repo": "https://gitlab.nrp-nautilus.io/nrp/self-node-remediation.git",
+   "chart": "",
+   "namespace": "operators",
+   "auto": false,
+   "self_heal": false,
+   "prune": false,
+   "status": "OutOfSync/Healthy"
+  },
+  {
+   "name": "wazuh",
+   "repo": "https://gitlab.nrp-nautilus.io/nrp/wazuh.git",
+   "chart": "",
+   "namespace": "nrp-security",
+   "auto": true,
+   "self_heal": true,
+   "prune": true,
+   "status": "OutOfSync/Progressing"
+  }
+ ],
+ "gitlab_version": "19.5.4-ee.0",
+ "gitlab_runners": [
+  "gitlab-runner-gitlab",
+  "gitlab-runner-kata",
+  "gitlab-runner-kata-default",
+  "gitlab-runner-sdsc"
+ ],
+ "ceph": [
+  {
+   "name": "rook",
+   "total": 6250901735997440,
+   "used": 4830620988506112
+  },
+  {
+   "name": "rook-haosu",
+   "total": 1972597818392576,
+   "used": 587597796868096
+  },
+  {
+   "name": "rook-central",
+   "total": 1508752498884608,
+   "used": 1008469376442368
+  },
+  {
+   "name": "rook-east",
+   "total": 1484031006867456,
+   "used": 618253459554304
+  },
+  {
+   "name": "rook-fullerton",
+   "total": 1463086346600448,
+   "used": 35255357153280
+  },
+  {
+   "name": "rook-south-east",
+   "total": 893301716680704,
+   "used": 259647504277504
+  },
+  {
+   "name": "rook-tide",
+   "total": 734423854104576,
+   "used": 320040569245696
+  },
+  {
+   "name": "rook-pacific",
+   "total": 369049997410304,
+   "used": 119070334976000
+  },
+  {
+   "name": "rook-ucsd",
+   "total": 268852918763520,
+   "used": 121444251017216
+  }
+ ],
+ "storageclasses": [
+  "ceph.rook.io/bucket",
+  "cvmfs.csi.cern.ch",
+  "kubernetes.io/no-provisioner",
+  "linstor.csi.linbit.com",
+  "rook-ceph.cephfs.csi.ceph.com",
+  "rook-ceph.rbd.csi.ceph.com",
+  "rook-system.cephfs.csi.ceph.com",
+  "rook-system.rbd.csi.ceph.com"
+ ],
+ "llm_routes": [
+  {
+   "route": "envoy-ai-gateway-massedcompute-gemma4",
+   "models": [
+    "gemma-small-e4b"
+   ],
+   "backends": [
+    {
+     "name": "massedcompute-gemma4",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp",
+   "models": [
+    "gpt-oss"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-sdsc-gpt-oss",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp",
+   "models": [
+    "gemma"
+   ],
+   "backends": [
+    {
+     "name": "gemma-4-31b",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp",
+   "models": [
+    "gemma-vl"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-gemma-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp",
+   "models": [
+    "kimi"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-kimi",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp",
+   "models": [
+    "minimax",
+    "minimax-m2"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-minimax",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-deepseek-v4-flash",
+   "models": [
+    "deepseek-v4-flash"
+   ],
+   "backends": [
+    {
+     "name": "deepseek-v4-flash-h100",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-gemma-4-12b",
+   "models": [
+    "gemma-small"
+   ],
+   "backends": [
+    {
+     "name": "gemma-4-12b",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-gemma-4-12b",
+   "models": [
+    "gemma4-small"
+   ],
+   "backends": [
+    {
+     "name": "gemma-4-12b",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-gemma-4-12b",
+   "models": [
+    "gemma4-12b"
+   ],
+   "backends": [
+    {
+     "name": "gemma-4-12b",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-glm",
+   "models": [
+    "glm-5"
+   ],
+   "backends": [
+    {
+     "name": "glm-5",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-qwen",
+   "models": [
+    "qwen3"
+   ],
+   "backends": [
+    {
+     "name": "qwen3",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-qwen",
+   "models": [
+    "qwen3-vl"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-qwen",
+   "models": [
+    "qwen3-embedding"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-embedding",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-qwen",
+   "models": [
+    "qwen3-small"
+   ],
+   "backends": [
+    {
+     "name": "qwen3-small",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-service",
+   "models": [
+    "service"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-minimax",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-gemma-direct",
+     "kind": "AIServiceBackend",
+     "priority": 4
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-gemma-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 5
+    },
+    {
+     "name": "envoy-ai-gateway-sdsc-gpt-oss",
+     "kind": "AIServiceBackend",
+     "priority": 6
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "agents"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-kimi",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "coding"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-gemma-direct",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "general"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-minimax",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "cuda"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-sdsc-gpt-oss",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "massedcompute-gemma4",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "kubernetes"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-kimi",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-gemma-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "long-context"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-gemma-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-kimi",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-minimax",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "reasoning"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-minimax",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-tasks",
+   "models": [
+    "vision"
+   ],
+   "backends": [
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-direct",
+     "kind": "AIServiceBackend",
+     "priority": 0
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-qwen3-small-direct",
+     "kind": "AIServiceBackend",
+     "priority": 1
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-kimi",
+     "kind": "AIServiceBackend",
+     "priority": 2
+    },
+    {
+     "name": "envoy-ai-gateway-nrp-deepseek-v4-flash-direct",
+     "kind": "AIServiceBackend",
+     "priority": 3
+    }
+   ]
+  },
+  {
+   "route": "envoy-ai-gateway-nrp-test-pool",
+   "models": [
+    "qwen3"
+   ],
+   "backends": [
+    {
+     "name": "qwen3",
+     "kind": "InferencePool",
+     "priority": 0
+    }
+   ]
+  }
+ ],
+ "inference_pools": [
+  "deepseek-v4-flash-h100",
+  "gemma-4-12b",
+  "gemma-4-31b",
+  "glm-5",
+  "qwen3",
+  "qwen3-small"
+ ],
+ "llm_servers": [
+  {
+   "name": "deepseek-v41-flash-vllm-inference",
+   "replicas": 2,
+   "gpu": {
+    "nvidia.com/h100": 4
+   },
+   "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+   "tp": 4,
+   "pp": 2,
+   "image": "vllm-openai@sha256:0a3b4cbb676d270c1e8c4",
+   "priority": "owner"
+  },
+  {
+   "name": "deepseek-v41-flash-vllm-worker",
+   "replicas": 2,
+   "gpu": {
+    "nvidia.com/h100": 4
+   },
+   "model": "deepseek-ai/DeepSeek-V4.1-Flash-1017",
+   "tp": 4,
+   "pp": 2,
+   "image": "vllm-openai@sha256:0a3b4cbb676d270c1e8c4",
+   "priority": "owner"
+  },
+  {
+   "name": "gemma-4-12b-a10-vllm-inference",
+   "replicas": 4,
+   "gpu": {
+    "nvidia.com/gpu": 2
+   },
+   "model": "",
+   "tp": 2,
+   "pp": 1,
+   "image": "vllm-openai:v0.26.0",
+   "priority": "owner"
+  },
+  {
+   "name": "gemma-4-31b-a6000-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/rtxa6000": 1
+   },
+   "model": "",
+   "tp": 1,
+   "pp": 1,
+   "image": "vllm-openai:v0.26.0",
+   "priority": "owner"
+  },
+  {
+   "name": "gemma-bw-vllm-inference",
+   "replicas": 2,
+   "gpu": {
+    "nvidia.com/a100": 2
+   },
+   "model": "",
+   "tp": 2,
+   "pp": 1,
+   "image": "vllm-openai:v0.26.0",
+   "priority": "opportunistic"
+  },
+  {
+   "name": "gemma-small-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/gpu": 1
+   },
+   "model": "",
+   "tp": 1,
+   "pp": 1,
+   "image": "vllm-openai:v0.26.0",
+   "priority": "owner"
+  },
+  {
+   "name": "glm-5-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/h200": 4
+   },
+   "model": "Inferact/GLM-5.3-NVFP4",
+   "tp": 4,
+   "pp": 1,
+   "image": "vllm-openai@sha256:0a3b4cbb676d270c1e8c4",
+   "priority": "owner"
+  },
+  {
+   "name": "glm-5-vllm-inference-h100",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/h100": 8
+   },
+   "model": "Inferact/GLM-5.3-NVFP4",
+   "tp": 8,
+   "pp": 1,
+   "image": "vllm-openai@sha256:0a3b4cbb676d270c1e8c4",
+   "priority": "nice"
+  },
+  {
+   "name": "glm-5-vllm-inference-h200-c1109",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/h200": 4
+   },
+   "model": "Inferact/GLM-5.3-NVFP4",
+   "tp": 4,
+   "pp": 1,
+   "image": "vllm-openai@sha256:0a3b4cbb676d270c1e8c4",
+   "priority": "owner"
+  },
+  {
+   "name": "kimi-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/a100": 8
+   },
+   "model": "moonshotai/Kimi-K2.7-Code",
+   "tp": 8,
+   "pp": 1,
+   "image": "vllm-openai:v0.20.2",
+   "priority": "owner"
+  },
+  {
+   "name": "minimax-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/a100": 8
+   },
+   "model": "MiniMaxAI/MiniMax-M3.1-Flash",
+   "tp": 4,
+   "pp": 2,
+   "image": "vllm-openai@sha256:0a3b4cbb676d270c1e8c4",
+   "priority": "owner"
+  },
+  {
+   "name": "qwen3-27b-h200",
+   "replicas": 2,
+   "gpu": {
+    "nvidia.com/h200": 1
+   },
+   "model": "Qwen/Qwen3.8-27B-FP8",
+   "tp": 1,
+   "pp": 1,
+   "image": "vllm-openai:v0.33.0",
+   "priority": "opportunistic"
+  },
+  {
+   "name": "qwen3-embedding-8b-vllm-inference",
+   "replicas": 2,
+   "gpu": {
+    "nvidia.com/gpu": 2
+   },
+   "model": "Qwen/Qwen3-VL-Embedding-8B",
+   "tp": 2,
+   "pp": 1,
+   "image": "vllm-openai:v0.19.1",
+   "priority": "owner"
+  },
+  {
+   "name": "qwen3-small-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/rtxa6000": 4
+   },
+   "model": "Qwen/Qwen3.8-27B-FP8",
+   "tp": 4,
+   "pp": 1,
+   "image": "vllm-openai:v0.33.0",
+   "priority": "owner"
+  },
+  {
+   "name": "qwen38-flash-next-a100",
+   "replicas": 2,
+   "gpu": {
+    "nvidia.com/a100": 4
+   },
+   "model": "Qwen/Qwen3.8-Flash-Next-FP8",
+   "tp": 4,
+   "pp": 1,
+   "image": "vllm-openai:v0.33.0",
+   "priority": "owner"
+  },
+  {
+   "name": "gemma-e4b-vllm",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/rtxa6000": 1
+   },
+   "model": "google/gemma-4-E4B-it",
+   "tp": 1,
+   "pp": 1,
+   "image": "vllm-openai:v0.28.0",
+   "priority": ""
+  },
+  {
+   "name": "gpt-oss-vllm-inference",
+   "replicas": 1,
+   "gpu": {
+    "nvidia.com/rtxa6000": 2
+   },
+   "model": "openai/gpt-oss-120b",
+   "tp": 2,
+   "pp": 1,
+   "image": "vllm-openai:v0.33.0",
+   "priority": "owner"
+  }
+ ],
+ "llm_gpus": 83,
+ "llm_placement": [
+  {
+   "pod": "deepseek-v41-flash-vllm-inference-0",
+   "workload": "deepseek-v41-flash-vllm-inference",
+   "site": "sdsc",
+   "zone": "ucsd-sdsc-expanse",
+   "gpu": "NVIDIA-H100-80GB-HBM3"
+  },
+  {
+   "pod": "deepseek-v41-flash-vllm-inference-1",
+   "workload": "deepseek-v41-flash-vllm-inference",
+   "site": "sdsc",
+   "zone": "ucsd-sdsc-expanse",
+   "gpu": "NVIDIA-H100-80GB-HBM3"
+  },
+  {
+   "pod": "deepseek-v41-flash-vllm-worker-0",
+   "workload": "deepseek-v41-flash-vllm-worker",
+   "site": "sdsc",
+   "zone": "ucsd-sdsc-expanse",
+   "gpu": "NVIDIA-H100-80GB-HBM3"
+  },
+  {
+   "pod": "deepseek-v41-flash-vllm-worker-1",
+   "workload": "deepseek-v41-flash-vllm-worker",
+   "site": "sdsc",
+   "zone": "ucsd-sdsc-expanse",
+   "gpu": "NVIDIA-H100-80GB-HBM3"
+  },
+  {
+   "pod": "gemma-4-12b-a10-vllm-inference-0",
+   "workload": "gemma-4-12b-a10-vllm-inference",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-A10"
+  },
+  {
+   "pod": "gemma-4-12b-a10-vllm-inference-1",
+   "workload": "gemma-4-12b-a10-vllm-inference",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-A10"
+  },
+  {
+   "pod": "gemma-4-12b-a10-vllm-inference-2",
+   "workload": "gemma-4-12b-a10-vllm-inference",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-A10"
+  },
+  {
+   "pod": "gemma-4-12b-a10-vllm-inference-3",
+   "workload": "gemma-4-12b-a10-vllm-inference",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-A10"
+  },
+  {
+   "pod": "gemma-4-31b-a6000-vllm-inference-0",
+   "workload": "gemma-4-31b-a6000-vllm-inference",
+   "site": "unm",
+   "zone": "unm",
+   "gpu": "NVIDIA-RTX-A6000"
+  },
+  {
+   "pod": "gemma-bw-vllm-inference-0",
+   "workload": "gemma-bw-vllm-inference",
+   "site": "sdsu",
+   "zone": "sdsu-rci",
+   "gpu": "NVIDIA-A100-80GB-PCIe"
+  },
+  {
+   "pod": "gemma-bw-vllm-inference-1",
+   "workload": "gemma-bw-vllm-inference",
+   "site": "sdsu",
+   "zone": "sdsu-rci",
+   "gpu": "NVIDIA-A100-80GB-PCIe"
+  },
+  {
+   "pod": "gemma-e4b-vllm-68698cd967-pmldj",
+   "workload": "gemma-e4b-vllm",
+   "site": "csus",
+   "zone": "csus",
+   "gpu": "NVIDIA-RTX-A6000"
+  },
+  {
+   "pod": "gemma-small-vllm-inference-0",
+   "workload": "gemma-small-vllm-inference",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-A10"
+  },
+  {
+   "pod": "glm-5-vllm-inference-0",
+   "workload": "glm-5-vllm-inference",
+   "site": "csus",
+   "zone": "csus",
+   "gpu": "NVIDIA-H200-NVL"
+  },
+  {
+   "pod": "glm-5-vllm-inference-h100-0",
+   "workload": "glm-5-vllm-inference-h100",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-H100-80GB-HBM3"
+  },
+  {
+   "pod": "glm-5-vllm-inference-h200-c1109-0",
+   "workload": "glm-5-vllm-inference-h200-c1109",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-H200-NVL"
+  },
+  {
+   "pod": "kimi-vllm-inference-0",
+   "workload": "kimi-vllm-inference",
+   "site": "sdsc",
+   "zone": "ucsd-nrp",
+   "gpu": "NVIDIA-A100-SXM4-80GB"
+  },
+  {
+   "pod": "minimax-vllm-inference-0",
+   "workload": "minimax-vllm-inference",
+   "site": "sdsc",
+   "zone": "ucsd-nrp",
+   "gpu": "NVIDIA-A100-SXM4-80GB"
+  },
+  {
+   "pod": "qwen3-27b-h200-0",
+   "workload": "qwen3-27b-h200",
+   "site": "fresno",
+   "zone": "fresno",
+   "gpu": "NVIDIA-H200-NVL"
+  },
+  {
+   "pod": "qwen3-27b-h200-1",
+   "workload": "qwen3-27b-h200",
+   "site": "fresno",
+   "zone": "fresno",
+   "gpu": "NVIDIA-H200-NVL"
+  },
+  {
+   "pod": "qwen3-embedding-8b-vllm-inference-0",
+   "workload": "qwen3-embedding-8b-vllm-inference",
+   "site": "sdsu",
+   "zone": "sdsu-rci",
+   "gpu": "NVIDIA-L40"
+  },
+  {
+   "pod": "qwen3-embedding-8b-vllm-inference-1",
+   "workload": "qwen3-embedding-8b-vllm-inference",
+   "site": "humboldt",
+   "zone": "humboldt",
+   "gpu": "Tesla-V100-SXM2-32GB"
+  },
+  {
+   "pod": "qwen3-small-vllm-inference-0",
+   "workload": "qwen3-small-vllm-inference",
+   "site": "csu-chico",
+   "zone": "chico",
+   "gpu": "NVIDIA-RTX-A6000"
+  },
+  {
+   "pod": "qwen38-flash-next-a100-0",
+   "workload": "qwen38-flash-next-a100",
+   "site": "i2-ann-arbor",
+   "zone": "ann-arbor",
+   "gpu": "NVIDIA-A100-SXM4-80GB"
+  },
+  {
+   "pod": "qwen38-flash-next-a100-1",
+   "workload": "qwen38-flash-next-a100",
+   "site": "i2-ann-arbor",
+   "zone": "ann-arbor",
+   "gpu": "NVIDIA-A100-SXM4-80GB"
+  },
+  {
+   "pod": "gpt-oss-vllm-inference-0",
+   "workload": "gpt-oss-vllm-inference",
+   "site": "unl",
+   "zone": "unl",
+   "gpu": "NVIDIA-RTX-A6000"
+  }
+ ]
+}
