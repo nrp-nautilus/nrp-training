@@ -5,6 +5,7 @@ Files for the live demo.
 | Path | What it is |
 |---|---|
 | `notebooks/demo.ipynb` | The demo, on the **Bash** kernel: nodes and GPUs with `kubectl get nodes`, the LLM gateway with `curl` and `jq`, a GPU Job |
+| `notebooks/agent.ipynb` | Part 4, on the **Python 3** kernel: an agent with three read-only tools (DNS, TCP connect, a Job's status) and a 15-line loop, using the `openai` package |
 | `yamls/gpu-job.yaml` | The GPU Job: one GPU with more than 20 GB, Ampere or newer; trains a small CNN on MNIST |
 
 On the training JupyterHub, `kubectl` already points at the `nrp-training-k8s` namespace and

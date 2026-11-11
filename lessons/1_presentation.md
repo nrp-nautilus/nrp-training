@@ -1,6 +1,6 @@
 ---
 title: "Presentation: Inside the National Research Platform"
-teaching: 33
+teaching: 39
 exercises: 0
 questions:
   - How is a Kubernetes cluster spread over a hundred sites built, on the network and in software?
@@ -20,7 +20,7 @@ keypoints:
   - Log in at nrp.ai, request a namespace, and use JupyterHub, Coder, kubectl, GitLab or the LLM API.
 ---
 
-**Time:** about 33 minutes, then the [live demo](2_demo.html).
+**Time:** about 39 minutes, then the [live demo](2_demo.html).
 
 Click the slides, then use the arrow keys or Space to step through. **F** goes full screen. [Open the slides in their own tab](slides/scinet-nrp.html).
 
