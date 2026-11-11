@@ -1,0 +1,12 @@
+title: "Inside the National Research Platform"
+subtitle: "SCinet tutorial at SC26: how NRP is built and run (the network, GitOps, CI in VMs, NetBox, monitoring, the LLM gateway) and how to use it, with a live demo from a terminal"
+length: 1 hour
+# date: YYYY-MM-DD   (the session during the NOC move, SC26 setup week; undated trainings list first)
+published: true
+materials_branch: materials/scinet-sc26
+facilitators:
+  - Daniel Diaz
+lessons:
+  - 1_presentation
+  - 2_demo
+closing: "Questions and discussion | 12"
