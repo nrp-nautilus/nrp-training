@@ -180,9 +180,12 @@ def render_png(g, stage, out, scale=3):
     for pts in g["paths"]:
         ax.add_patch(Polygon(pts, closed=True, facecolor="#E6ECF3", edgecolor="white", linewidth=0.9))
     show = {"ops"} if stage == 0 else {"ops", "other"}
-    order = sorted((p for p in g["pins"] if p["kind"] in show), key=lambda p: {"other": 0, "ops": 1}[p["kind"]])
+    i2 = lambda p: stage > 0 and p.get("name", "").replace(" ", "").lower().startswith("internet2")   # noqa: E731
+    order = sorted((p for p in g["pins"] if p["kind"] in show),
+                   key=lambda p: ({"other": 0, "ops": 1}[p["kind"]], i2(p)))
     for p in order:
         col, r = PIN_STYLE[p["kind"]]
+        col = "#EB6834" if i2(p) else col                   # Internet2's own locations, highlighted
         ax.add_patch(Polygon([(x + p["x"], y + p["y"]) for x, y in pin_points(r)], closed=True, facecolor=col,
                              edgecolor="white", linewidth=0.9))
         ax.add_patch(plt.Circle((p["x"], p["y"] - 1.6 * r), r * 0.38, color="white"))

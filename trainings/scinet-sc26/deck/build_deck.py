@@ -18,7 +18,9 @@ from deckkit import GOLD, SANS_BLACK, WHITE, Deck, P, fill_tf
 
 HERE = Path(__file__).resolve().parent
 TRAINING = HERE.parent
-OUT = TRAINING / "slides" / "scinet-nrp.pptx"
+import os
+_alt = os.environ.get("DECK_OUT")          # DECK_OUT=<dir>: test builds go there, not to slides/ and presenter/
+OUT = Path(_alt) / "scinet-nrp.pptx" if _alt else TRAINING / "slides" / "scinet-nrp.pptx"
 FOOT = "NRP"
 
 deck = Deck(HERE / "assets" / "sdsc_template.pptx")
@@ -76,7 +78,7 @@ for sd in SL.SLIDES:
         if sd.notes:
             s.notes(sd.notes)
 
-PRESENTER = HERE / "presenter"                 # the copy with speaker notes; not committed, not on the site
+PRESENTER = Path(_alt) / "presenter" if _alt else HERE / "presenter"   # with speaker notes; not committed
 PRESENTER.mkdir(exist_ok=True)
 deck.save(PRESENTER / OUT.name)
 for sl in deck.p.slides:                        # the published copy has no speaker notes

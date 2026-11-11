@@ -5,7 +5,8 @@
 The slides come from slides.py, the same definitions build_deck.py turns into the PowerPoint.
 Present from a browser (or the training site):
 
-    → ↓ Space PgDn, or a click   next step, then next slide      ← ↑ PgUp, or a click on the left quarter   back
+    → ↓ Space PgDn   next step, then next slide      ← ↑ PgUp   back      (mouse clicks don't move the
+    slides, so you can point at and select things; on a touch screen, swipe)
     F   full screen      N   speaker notes (presenter copy only)      Home / End   first / last slide
     #12 in the URL jumps to slide 12, #12.3 to its third step; ?print shows every slide in its final state.
 
@@ -22,16 +23,11 @@ import slides as SL
 HERE = Path(__file__).resolve().parent
 TRAINING = HERE.parent
 TPL = HERE / "assets" / "template"
-OUT = TRAINING / "slides" / "scinet-nrp.html"
-PRESENTER_OUT = HERE / "presenter" / "scinet-nrp.html"
-
-# ── per-slide packet paths (inches on the slide), one stop per build step ──────────────
-X0, TOP, RP_Y = SL.X0, SL.TOP, SL.RP_Y
-REQ_STOPS = [(X0 + 1.55, RP_Y), (2.6 + 2.35, RP_Y), (5.5 + 2.25, RP_Y), (10.9 + 1.83, RP_Y + 0.6),
-             (X0 + 1.55, RP_Y)]                 # the top-right corner of each stop, clear of its label
-req_css = "".join(f'.reqpath[data-cur="{k}"] .pkt.rp {{ left:{x * PX - 14:.0f}px; top:{y * PX - 14:.0f}px; }}\n'
-                  for k, (x, y) in enumerate(REQ_STOPS))
-NET_A, NET_C = (SL.cx[0] + 1.04 - 6.15) * PX, (SL.cx[2] + 1.04 - 6.15) * PX
+import os
+# DECK_OUT=<dir> writes both copies there instead (for test builds that shouldn't touch the real files)
+_alt = os.environ.get("DECK_OUT")
+OUT = Path(_alt) / "scinet-nrp.html" if _alt else TRAINING / "slides" / "scinet-nrp.html"
+PRESENTER_OUT = Path(_alt) / "scinet-nrp-notes.html" if _alt else HERE / "presenter" / "scinet-nrp.html"
 
 CSS = """
 :root { --navy:#182B49; --blue:#00629B; --gold:#FFCD00; --orange:#EB6834; --card:#EEF3F8; --card2:#DDE8F2; --body:#2B3648;
@@ -143,10 +139,6 @@ table.tb td.mono { font-family: var(--f-mono); font-weight: 400; font-size: .92e
 .slide.active .usmap.llm .pin { opacity: 1; transform: none; transition-delay: var(--d); }
 /* numbers */
 .numbers .frame { transition: none; }
-/* network underneath: a packet crosses the overlay */
-.netunder .pkt { position: absolute; width: 30px; height: 30px; margin: -15px 0 0 -15px; top: 59px; border-radius: 50%; background: var(--gold); border: 4px solid var(--navy); left: NETApx; }
-.netunder[data-cur="2"] .pkt { animation: netpkt 2.2s cubic-bezier(.45,0,.3,1) .3s infinite; }
-@keyframes netpkt { 0% { left: NETApx; } 70%, 100% { left: NETCpx; } }
 /* bar charts */
 .hbars { width: 100%; }
 .hb { display: flex; align-items: center; height: 69px; font-size: 24px; }
@@ -186,9 +178,6 @@ table.tb td.mono { font-family: var(--f-mono); font-weight: 400; font-size: .92e
 .fairshare[data-cur="2"] .gs.g2 .p, .fairshare[data-cur="2"] .gs.g3 .p { display: none; }
 .fairshare[data-cur="2"] .gs.g2 .x, .fairshare[data-cur="2"] .gs.g3 .x { display: block; }
 @keyframes preempt { 0%, 40% { background: var(--red); } 100% { background: var(--navy); } }
-/* the request path: a packet hops one stop per step */
-.reqpath .pkt.rp { position: absolute; width: 28px; height: 28px; border-radius: 50%; background: var(--gold); border: 4px solid var(--navy); z-index: 5; transition: left .8s cubic-bezier(.45,0,.3,1), top .8s cubic-bezier(.45,0,.3,1); box-shadow: 0 3px 10px rgba(0,0,0,.25); }
-REQCSS
 /* task models: the first choice is ejected */
 .eject { width: 100%; height: 100%; border-radius: 12px; background: #B3261E; color: #fff; font: 700 26px var(--f-body); display: flex; align-items: center; justify-content: center; }
 .scavenge .rep { transition: opacity .6s .9s; } .scavenge[data-cur="1"] .rep.r2 { opacity: .2; }
@@ -263,15 +252,14 @@ body.print { overflow: visible; background: #fff; }
 body.print #deckStage { position: static; transform: none !important; width: auto; height: auto; }
 body.print .slide { position: relative; opacity: 1; visibility: visible; width: 1920px; height: 1080px; page-break-after: always; }
 body.print [data-s], body.print .stagger li, body.print .stagger p, body.print .pop, body.print .rise, body.print .rows tbody tr { opacity: 1 !important; transform: none !important; }
-body.print #help, body.print .pkt, body.print .lldp { display: none; }
+body.print #help, body.print .lldp { display: none; }
 body.print .gantt * { animation: none !important; } body.print .gantt .gb { width: var(--w) !important; background: #8FB0CF; }
 body.print .gantt .gl { opacity: 1; color: var(--navy); width: var(--w); } body.print .usmap .pin, body.print .usmap .pl { opacity: 1; transform: none; }
 body.print .runways .lw { opacity: 1 !important; } body.print .gantt .pc, body.print .gantt .nowl { display: none; }
 body.print .mesh .spokes line { stroke-dashoffset: 0; } body.print .code.typed .ln { opacity: 1; }
 @page { size: 1920px 1080px; margin: 0; }
 """
-CSS = (CSS.replace("LABELpx", f"{LABEL_PX}px").replace("REQCSS", req_css)
-       .replace("NETApx", f"{NET_A:.0f}px").replace("NETCpx", f"{NET_C:.0f}px"))
+CSS = CSS.replace("LABELpx", f"{LABEL_PX}px")
 
 JS = r"""
 (function () {
@@ -320,13 +308,12 @@ JS = r"""
     return;
   }
   document.addEventListener('keydown', e => {
-    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown', 'Enter'].includes(e.key)) { e.preventDefault(); next(); }
-    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].includes(e.key)) { e.preventDefault(); prev(); }
+    if (['ArrowRight', 'ArrowDown', ' ', 'PageDown'].includes(e.key)) { e.preventDefault(); next(); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp'].includes(e.key)) { e.preventDefault(); prev(); }
     else if (e.key === 'Home') show(0); else if (e.key === 'End') show(slides.length - 1);
     else if (e.key === 'n' || e.key === 'N') NOTES_TOGGLE;
     else if (e.key === 'f' || e.key === 'F') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); }
   });
-  document.addEventListener('click', e => { if (e.target.closest('a')) return; (e.clientX < innerWidth / 4 ? prev : next)(); });
   let x0 = null;
   document.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
   document.addEventListener('touchend', e => { if (x0 === null) return; const dx = e.changedTouches[0].clientX - x0; if (Math.abs(dx) > 50) (dx < 0 ? next : prev)(); x0 = null; });
