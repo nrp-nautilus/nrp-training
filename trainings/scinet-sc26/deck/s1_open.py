@@ -168,7 +168,7 @@ add("What is NRP?", [
         ("Hardware from 70+ institutions, on research and education networks", 0, 1),
         (f"Internet2 hosts {S['i2_nodes']} nodes in {S['i2_sites']} of its own locations (orange)", 1, 1),
         ("Today:", 0, 1), (f"{NODES} nodes at {SITES} sites", 1, 1),
-        (f"{GPUS:,} GPUs in {GPU_MODELS} models; {CORES:,} CPU cores", 1, 1),
+        (f"{GPUS:,} GPUs in {GPU_MODELS} models; {CORES:,} CPUs", 1, 1),
         (f"{PB:.0f} PB of raw Ceph storage", 1, 1),
         ("Free for non-commercial research and education", 0, 2),
         ("One team runs it from the OS up; campuses keep priority on what they contribute", 0, 2)], size=18, gap=7),
@@ -176,11 +176,11 @@ add("What is NRP?", [
     Raw(6.55, TOP + 0.45, 6.18, 4.1, I2_CSS + usmap_html(GEO), draw=map_draw),
     Text(6.55, TOP + 4.6, 6.18, 0.5, [T(f"Sites from the NRP dashboard, {SNAP}", size=12, color=MUTED, align="r"),
                                       T(offmap_note(GEO), size=12, color=MUTED, align="r")], step=1),
-    Text(X0, 6.74, 7.0, 0.2, T(f"Nodes, GPUs, cores and storage: cluster snapshot, {SNAP}", size=10, color=MUTED)),
+    Text(X0, 6.74, 7.0, 0.2, T(f"Nodes, GPUs, CPUs (hardware threads) and storage: cluster snapshot, {SNAP}", size=10, color=MUTED)),
 ], steps=2, cls="whatnrp", builds=True, notes=f"""
 [0:02] NRP is one Kubernetes cluster, called Nautilus, for research and education. Three sites operate it: SDSC at UC San Diego, Nebraska, and MGHPCC in Massachusetts, and NSF funds it.
 
-[click] The hardware comes from more than seventy institutions, and it sits on research and education networks. The orange pins are Internet2's own locations: Internet2 hosts {S['i2_nodes']} of our nodes in {S['i2_sites']} of its sites, so the backbone itself is part of the cluster. Every pin is a real site, from the dashboard's own data: {SITES} sites, {NODES} nodes, {GPUS:,} GPUs in {GPU_MODELS} models, about {CORES // 1000}k cores and {PB:.0f} petabytes of raw Ceph. A few more sites are off this map, in Hawaii, Guam, Korea, Brazil and Europe.
+[click] The hardware comes from more than seventy institutions, and it sits on research and education networks. The orange pins are Internet2's own locations: Internet2 hosts {S['i2_nodes']} of our nodes in {S['i2_sites']} of its sites, so the backbone itself is part of the cluster. Every pin is a real site, from the dashboard's own data: {SITES} sites, {NODES} nodes, {GPUS:,} GPUs in {GPU_MODELS} models, about {CORES // 1000} thousand CPUs and {PB:.0f} petabytes of raw Ceph. A few more sites are off this map, in Hawaii, Guam, Korea, Brazil and Europe.
 
 [click] It's free for non-commercial research and education. The model is a potluck: a campus contributes nodes and keeps priority on them, idle capacity is shared, and one team operates the whole stack, so a campus with hardware but no Kubernetes team can still take part.
 """)
@@ -282,7 +282,7 @@ add("From PRP to NRP", tl, steps=3, optional=True, notes="""
 """)
 
 stats = [(NODES, "nodes", 0, ""), (SITES, "sites on the dashboard", 0, ""), (GPUS, f"GPUs in {GPU_MODELS} models", 0, ""),
-         (CORES, "CPU cores", 0, ""), (PB, f"raw Ceph in {len(S['ceph'])} clusters", 1, " PB"),
+         (CORES, "CPUs (hardware threads)", 0, ""), (PB, f"raw Ceph in {len(S['ceph'])} clusters", 1, " PB"),
          (S["namespaces"], "namespaces: labs, courses, services", 0, "")]
 st_els = []
 for i, (v, lab, dec, suf) in enumerate(stats):
@@ -292,5 +292,5 @@ for i, (v, lab, dec, suf) in enumerate(stats):
 st_els.append(Text(X0, 6.25, W, 0.3, T(f"Cluster snapshot, {SNAP} (Kubernetes {S['k8s']}). Sites: the NRP "
                                        f"dashboard.", size=12, color=MUTED)))
 add("NRP in Numbers", st_els, cls="numbers", notes=f"""
-[0:04] The same thing in numbers, from a snapshot I took this week: {NODES} nodes, {SITES} sites, {GPUS:,} GPUs in {GPU_MODELS} different models, which tells you it's built from what campuses buy, not from one procurement. About {CORES // 1000} thousand cores, {PB:.0f} petabytes of raw Ceph across {len(S['ceph'])} clusters, and {S['namespaces']:,} namespaces: every lab, course and service gets its own.
+[0:04] The same thing in numbers, from a snapshot I took this week: {NODES} nodes, {SITES} sites, {GPUS:,} GPUs in {GPU_MODELS} different models, which tells you it's built from what campuses buy, not from one procurement. About {CORES // 1000} thousand CPUs, {PB:.0f} petabytes of raw Ceph across {len(S['ceph'])} clusters, and {S['namespaces']:,} namespaces: every lab, course and service gets its own.
 """)

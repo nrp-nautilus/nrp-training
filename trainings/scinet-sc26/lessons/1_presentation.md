@@ -31,7 +31,7 @@ Click the slides, then use the arrow keys or Space to step through. **F** goes f
 
 Download: [PowerPoint](slides/scinet-nrp.pptx) · [PDF](slides/scinet-nrp.pdf)
 
-The numbers on the slides come from a read-only snapshot of the cluster taken on 10 November 2026: 536 nodes, 1,460 GPUs in 33 models, about 59,000 CPU cores, 14.9 PB of raw Ceph in 9 clusters, and 2,334 namespaces.
+The numbers on the slides come from a read-only snapshot of the cluster taken on 10 November 2026: 534 nodes, 1,460 GPUs in 33 models, about 35,000 CPUs (hardware threads), 14.9 PB of raw Ceph in 9 clusters, and 2,334 namespaces.
 
 ## Get access
 

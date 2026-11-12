@@ -42,7 +42,7 @@ one place, for a firewall-less edge*.
 No to both, strictly.
 
 - **ARM64** is a CPU architecture, the alternative to x86-64 (amd64). The cluster has 3 ARM64 nodes
-  and 533 amd64 nodes. They matter because images must be built for both architectures
+  and 531 amd64 nodes. They matter because images must be built for both architectures
   ("multi-arch") to run there.
 - **ESnet SmartNIC** is a network card with an FPGA on it, which you program to process packets at
   line rate (P4 pipelines). It speeds up networking, not general computation. It's there for network
@@ -192,6 +192,25 @@ Hardware owners don't get a priority class. The mechanism:
 
 ---
 
+### The CPU count: why the deck once said 59,352
+
+The first version of the deck summed `status.capacity.cpu` over every Node object. Two of those
+objects aren't machines: `admiralty-ncmir-mm-expanse-…` and `admiralty-ndp-voyager` are virtual
+nodes from Admiralty, the multicluster scheduler. Each stands in for a remote cluster and reports
+that cluster's capacity as its own: 13,800 and 10,104 CPUs.
+
+| | Nodes | CPUs |
+|---|---|---|
+| Every Node object | 536 | 59,352 |
+| The two Admiralty virtual nodes | 2 | 23,904 |
+| Physical NRP nodes (what the deck shows now) | 534 | 35,448 |
+| Of those, not on dash.nrp-nautilus.io | 21 | 2,096 |
+| The dashboard | 513 | 33,352 |
+
+The 21 nodes missing from the dashboard are mostly Fresno State's new nodes. Both the deck and the
+dashboard count hardware threads; about 77% of them are on nodes with hyperthreading on, so physical
+cores number about 21,800. The 7GRP talk's "35k cores" was the physical-node total.
+
 ## Glossary
 
 Grouped by the part of the talk where the term first shows up; alphabetical within each group.
@@ -207,7 +226,7 @@ Grouped by the part of the talk where the term first shows up; alphabetical with
 | **Job** | A Kubernetes object for batch work: runs pods until they finish successfully, then stops. |
 | **Kubernetes** | Software that runs containers across many machines. You declare what should run; it schedules pods onto nodes and keeps them running. NRP is one cluster, **Nautilus**, on Kubernetes v1.34. |
 | **Namespace** | A named space in the cluster for one group's objects, with its own access rules and quotas. On NRP: one per lab, course or service; 2,334 today. |
-| **Nautilus** | The name of NRP's Kubernetes cluster: 536 nodes, 1,460 GPUs in 33 models, 59,352 CPU cores, 129 dashboard sites. |
+| **Nautilus** | The name of NRP's Kubernetes cluster: 534 nodes, 1,460 GPUs in 33 models, 35,448 CPUs (hardware threads), 129 dashboard sites. |
 | **Node** | One machine in the cluster. |
 | **NSF Category II** | An NSF award type for innovative, experimental computing resources. NRP's 2021 award (OAC-2112167) is one. |
 | **Pod** | The smallest unit Kubernetes runs: one or more containers that share a network address and storage. |
@@ -296,7 +315,7 @@ Grouped by the part of the talk where the term first shows up; alphabetical with
 | **kured** | The Kubernetes reboot daemon: reboots nodes after kernel updates, a few at a time. |
 | **LLDP / lldpd** | The Link Layer Discovery Protocol: switches announce their name and port on each link. lldpd listens, so the NetBox agent learns which switch port each NIC is cabled to. |
 | **NetBox** | The source of truth for network infrastructure: devices, interfaces, IPs, cables, sites. NRP runs NetBox 4; an agent on 529 nodes keeps it current. |
-| **node-exporter** | Prometheus's exporter for host metrics (CPU, memory, disk, network). On all 536 nodes. |
+| **node-exporter** | Prometheus's exporter for host metrics (CPU, memory, disk, network). On every node. |
 | **Nornir** | A Python framework for network automation. |
 | **NRPE / Nagios** | Nagios is a classic monitoring system; NRPE is its agent for running checks on a host. |
 | **OSG / glidein** | The Open Science Grid (OSPool) is a national pool of shared computing. A glidein is a pilot job that joins a node to OSG's pool and pulls work. On NRP, glideins run at opportunistic priority. |

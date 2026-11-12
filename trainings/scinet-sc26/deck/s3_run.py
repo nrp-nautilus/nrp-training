@@ -269,7 +269,7 @@ def panels_png():
 
 
 mon = [Text(SRC_X, TOP + 0.0, SRC_W, 0.4, T("Sources", size=17, bold=True, color=NAVY))]
-srcs = [("node-exporter", f"on all {S['node_exporter']} nodes"), ("kube-state-metrics", "objects and their state"),
+srcs = [("node-exporter", "on every node"), ("kube-state-metrics", "objects and their state"),
         ("DCGM", "GPU use, memory, power"), ("Apps", "Ceph, the ingress, every service")]
 for i, (h, b) in enumerate(srcs):
     mon.append(Box(SRC_X, SRC_Y[i], SRC_W, SRC_H, h, b, head_size=14.5, sub_size=11.5, state="white"))
@@ -292,7 +292,7 @@ mon += [Box(*PROM, "Prometheus", "2 replicas, run by the Prometheus operator", h
         Text(X0, TOP + 4.75, 7.6, 0.5, T("Logs: Elastic collects syslog from every node, SSH logins included.", size=16,
                                          color=BODY))]
 add("Watching the Cluster", mon, steps=2, cls="monitor", secs=60, notes=f"""
-Monitoring is standard Prometheus, at scale. The sources: node-exporter on all {S['node_exporter']} nodes, kube-state-metrics for the Kubernetes objects, DCGM for the GPUs, and the apps themselves: Ceph, the ingress, and the model servers you'll see later.
+Monitoring is standard Prometheus, at scale. The sources: node-exporter on every node, kube-state-metrics for the Kubernetes objects, DCGM for the GPUs, and the apps themselves: Ceph, the ingress, and the model servers you'll see later.
 
 [click] Prometheus, run by the operator, scrapes them, and Thanos sits in front of it: {S['thanos_querier']} querier replicas, plus store and compactor for long-term history.
 
