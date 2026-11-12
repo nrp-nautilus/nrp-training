@@ -1,7 +1,7 @@
 {
  "date": "2026-11-10",
- "nodes": 536,
- "cores": 59352,
+ "nodes": 534,
+ "cores": 35448,
  "gpus": 1460,
  "gpu_models": 33,
  "zones": 143,
@@ -11,12 +11,12 @@
   "us-east": 100,
   "us-mountain": 15,
   "pacific": 13,
-  "none": 5,
+  "none": 3,
   "eu": 5,
   "latin-america": 4
  },
  "arch": {
-  "amd64": 533,
+  "amd64": 531,
   "arm64": 3
  },
  "k8s": "v1.34.11",
@@ -1478,6 +1478,16 @@
    "site": "unl",
    "zone": "unl",
    "gpu": "NVIDIA-RTX-A6000"
+  }
+ ],
+ "virtual_nodes": [
+  {
+   "name": "admiralty-ncmir-mm-expanse-7d43bc97a0",
+   "cpu": 13800
+  },
+  {
+   "name": "admiralty-ndp-voyager",
+   "cpu": 10104
   }
  ]
 }

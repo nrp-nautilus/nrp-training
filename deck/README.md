@@ -29,7 +29,7 @@ build writes a test copy there instead of `slides/` and `presenter/`.
 | `build_deck.py` | The PowerPoint: each slide in its final state; "What is NRP?", "Git Is the Source of Truth" and "A Request, Step by Step" as one copy per step |
 | `deckkit.py` | PowerPoint layout helpers (from the UCLA and HPC-CI decks) |
 | `metrics.py` | Read-only: Thanos time series for the Grafana panels, and the MaDDash grid → `data/metrics.json` |
-| `snapshot.py` | Read-only cluster queries → `data/snapshot.json`: nodes, GPUs, cores, regions, Ceph, Argo CD apps, DaemonSets, AI gateway routes, model servers and where they run |
+| `snapshot.py` | Read-only cluster queries → `data/snapshot.json`: nodes, GPUs, CPUs, regions, Ceph, Argo CD apps, DaemonSets, AI gateway routes, model servers and where they run |
 | `make_map.py` | The site maps: real dashboard coordinates; Fresno State and Internet2 Ann Arbor (not on the dashboard) placed by city |
 | `sweep.py` | Text and schedule for "Ways to Run Work" (from the UCLA deck) |
 | `data/nrp_sites.json` | Sites from dash.nrp-nautilus.io/api/nodes, 10 Nov 2026 |
@@ -65,7 +65,10 @@ To drop one, delete its `add(...)` block in its section file and rebuild, or hid
 
 ## What the numbers are, and what's illustrative
 
-- **From the cluster** (`data/snapshot.json`, 10 Nov 2026): nodes, GPUs, cores, regions, zones,
+- **What's counted:** physical nodes only. The two Admiralty virtual nodes, which stand in for remote
+  clusters and report those clusters' capacity (23,904 CPUs between them), are left out. CPUs are
+  hardware threads, as Kubernetes and the dashboard count them; physical cores are about 60% of that.
+- **From the cluster** (`data/snapshot.json`, 10 Nov 2026): nodes, GPUs, CPUs, regions, zones,
   Ceph capacity, namespaces, Ingress and HTTPRoute counts, DaemonSet sizes (NetBox agent,
   perfSONAR testpoint, node exporter, HAProxy), Argo CD applications, runtime classes, the
   gateway's routes and fallback order, model servers, their GPUs and their sites.

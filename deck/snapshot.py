@@ -38,9 +38,14 @@ def desired(ns, kind, name):
 snap = {"date": str(date.today())}
 
 # ── nodes, cores, GPUs, regions ─────────────────────────────────────────────────────
-nodes = items("nodes")
+# Virtual nodes (Admiralty, virtual-kubelet) stand in for whole remote clusters and report those clusters'
+# capacity as their own, so they're left out of every count: they're not NRP hardware.
+all_nodes = items("nodes")
+nodes = [n for n in all_nodes if n["metadata"]["labels"].get("type") != "virtual-kubelet"]
+snap["virtual_nodes"] = [dict(name=n["metadata"]["name"], cpu=int(n["status"]["capacity"].get("cpu", "0")))
+                         for n in all_nodes if n not in nodes]
 fleet, regions, zones, mem, arch = Counter(), Counter(), set(), {}, Counter()
-cores = 0
+cores = 0                     # logical CPUs (hardware threads), as Kubernetes counts them
 for n in nodes:
     lab = n["metadata"]["labels"]
     cores += int(n["status"]["capacity"].get("cpu", "0"))
@@ -152,6 +157,6 @@ for p in [p for ns in LLM_NS for p in items("pods", "-n", ns)]:
 snap["llm_placement"] = place
 
 OUT.write_text(json.dumps(snap, indent=1))
-print(f"{OUT}: {snap['nodes']} nodes, {snap['gpus']} GPUs in {snap['gpu_models']} models, {snap['cores']} cores, "
+print(f"{OUT}: {snap['nodes']} nodes, {snap['gpus']} GPUs in {snap['gpu_models']} models, {snap["cores"]} CPUs, "
       f"{len(apps)} Argo apps, {len(servers)} vLLM workloads on {snap['llm_gpus']} GPUs, "
       f"{sum(c['total'] for c in snap['ceph']) / 1e15:.1f} PB raw Ceph")
