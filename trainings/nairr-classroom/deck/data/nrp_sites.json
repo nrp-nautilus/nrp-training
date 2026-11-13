@@ -1,0 +1,1167 @@
+{
+ "source": "https://dash.nrp-nautilus.io/api/nodes",
+ "date": "2026-11-10",
+ "sites": [
+  {
+   "name": "Gatech/Sox",
+   "site": "SOX Nashville",
+   "slug": "sox-nashville",
+   "lat": 36.1628,
+   "lon": -86.7786,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "Gatech/Sox",
+   "site": "Gatech",
+   "slug": "gatech",
+   "lat": 33.75543,
+   "lon": -84.39158,
+   "nodes": 8,
+   "gpus": 0
+  },
+  {
+   "name": "California State University, Bakersfield",
+   "site": "csub",
+   "slug": "csub",
+   "lat": 35.348865,
+   "lon": -119.103312,
+   "nodes": 2,
+   "gpus": 12
+  },
+  {
+   "name": "Gatech/Sox",
+   "site": "CAU",
+   "slug": "cau",
+   "lat": 33.747415,
+   "lon": -84.412459,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Cal Poly Pomona",
+   "site": "CPP",
+   "slug": "cpp",
+   "lat": 34.058781,
+   "lon": -117.820019,
+   "nodes": 1,
+   "gpus": 4
+  },
+  {
+   "name": "OneNet",
+   "site": "OneNet OKC",
+   "slug": "onenet-okc",
+   "lat": 35.473011,
+   "lon": -97.503373,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "University of Delaware",
+   "site": "UDel",
+   "slug": "udel",
+   "lat": 39.678044,
+   "lon": -75.750598,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "CSU Chico",
+   "site": "CSU Chico",
+   "slug": "csu-chico",
+   "lat": 39.73553,
+   "lon": -121.85047,
+   "nodes": 5,
+   "gpus": 38
+  },
+  {
+   "name": "University of California, Merced",
+   "site": "UCMerced",
+   "slug": "ucmerced",
+   "lat": 37.3647,
+   "lon": -120.42412,
+   "nodes": 2,
+   "gpus": 16
+  },
+  {
+   "name": "University of California, San Diego",
+   "site": "Atkinson Hall",
+   "slug": "atkinson-hall",
+   "lat": 32.882645,
+   "lon": -117.234768,
+   "nodes": 50,
+   "gpus": 100
+  },
+  {
+   "name": "California State Polytechnic University, Humboldt",
+   "site": "California State Polytechnic University, Humboldt",
+   "slug": "humboldt",
+   "lat": 40.876429,
+   "lon": -124.077165,
+   "nodes": 16,
+   "gpus": 64
+  },
+  {
+   "name": "California State University, San Bernardino",
+   "site": "CSUSB",
+   "slug": "csusb",
+   "lat": 34.18207,
+   "lon": -117.3234,
+   "nodes": 4,
+   "gpus": 19
+  },
+  {
+   "name": "San Diego Community College District",
+   "site": "Miramar College",
+   "slug": "miramar-college",
+   "lat": 32.912078,
+   "lon": -117.118691,
+   "nodes": 1,
+   "gpus": 8
+  },
+  {
+   "name": "Massachusetts Green High Performance Computing Center",
+   "site": "100 Bigelow",
+   "slug": "100-bigelow",
+   "lat": 42.202907,
+   "lon": -72.607309,
+   "nodes": 21,
+   "gpus": 136
+  },
+  {
+   "name": "NJ Edge",
+   "site": "njedge",
+   "slug": "njedge",
+   "lat": 40.16068,
+   "lon": -74.05306,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "Korea Institute of Science and Technology Information",
+   "site": "Kreonet",
+   "slug": "kreonet",
+   "lat": 37.5112,
+   "lon": 126.974098,
+   "nodes": 5,
+   "gpus": 5
+  },
+  {
+   "name": "University of California, Riverside",
+   "site": "UCR",
+   "slug": "ucr",
+   "lat": 33.97368,
+   "lon": -117.32806,
+   "nodes": 4,
+   "gpus": 12
+  },
+  {
+   "name": "Internet2 Boise",
+   "site": "Internet2 Boise",
+   "slug": "i2-boise",
+   "lat": 43.61831,
+   "lon": -116.20379,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Cincinatti",
+   "site": "Internet2 Cincinnati",
+   "slug": "i2-cincinnati",
+   "lat": 39.102389,
+   "lon": -84.502853,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Denver",
+   "site": "Internet2 Denver",
+   "slug": "i2-denver",
+   "lat": 39.745802,
+   "lon": -104.97955,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Houston",
+   "site": "Internet2 Houston",
+   "slug": "i2-houston",
+   "lat": 29.771315,
+   "lon": -95.351,
+   "nodes": 3,
+   "gpus": 1
+  },
+  {
+   "name": "Internet2 Jacksonville",
+   "site": "Internet2 Jacksonville",
+   "slug": "i2-jacksonville",
+   "lat": 30.258798,
+   "lon": -81.610646,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Missouri, Kansas City",
+   "site": "Internet2 Missouri, Kansas City",
+   "slug": "i2-kans",
+   "lat": 39.101078,
+   "lon": -94.582098,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of Sao Paulo",
+   "site": "University of Sao Paulo",
+   "slug": "rnp",
+   "lat": -23.5614,
+   "lon": -46.7308,
+   "nodes": 4,
+   "gpus": 0
+  },
+  {
+   "name": "CERN",
+   "site": "CERN Data Center",
+   "slug": "cern-data-center",
+   "lat": 46.232661,
+   "lon": 6.045924,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "Great Plains Network",
+   "site": "KanREN",
+   "slug": "kanren",
+   "lat": 38.94869,
+   "lon": -95.26681,
+   "nodes": 1,
+   "gpus": 1
+  },
+  {
+   "name": "Clemson University",
+   "site": "Clemson",
+   "slug": "clemson",
+   "lat": 34.677502,
+   "lon": -82.836197,
+   "nodes": 3,
+   "gpus": 12
+  },
+  {
+   "name": "Internet2 Chicago",
+   "site": "UIC",
+   "slug": "uic",
+   "lat": 41.8783,
+   "lon": -87.690697,
+   "nodes": 3,
+   "gpus": 12
+  },
+  {
+   "name": "University of California, San Diego",
+   "site": "SDSC",
+   "slug": "sdsc",
+   "lat": 32.88454,
+   "lon": -117.239103,
+   "nodes": 83,
+   "gpus": 281
+  },
+  {
+   "name": "Florida Agricultural and Mechanical University",
+   "site": "Florida Agricultural and Mechanical University",
+   "slug": "famu",
+   "lat": 30.42272,
+   "lon": -84.28769,
+   "nodes": 1,
+   "gpus": 1
+  },
+  {
+   "name": "University of California, Irvine",
+   "site": "UCI",
+   "slug": "uci",
+   "lat": 33.778301,
+   "lon": -118.026802,
+   "nodes": 3,
+   "gpus": 14
+  },
+  {
+   "name": "CESNET",
+   "site": "Zikova 4",
+   "slug": "zikova-4",
+   "lat": 50.09883,
+   "lon": 14.388636,
+   "nodes": 1,
+   "gpus": 6
+  },
+  {
+   "name": "University of Amsterdam",
+   "site": "UVALight",
+   "slug": "uvalight",
+   "lat": 52.382401,
+   "lon": 4.8995,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Oklahoma State University",
+   "site": "Oklahoma State University",
+   "slug": "osu",
+   "lat": 36.125861,
+   "lon": -97.073982,
+   "nodes": 2,
+   "gpus": 4
+  },
+  {
+   "name": "University of Hawai\u02bbi",
+   "site": "Hawaii",
+   "slug": "hawaii",
+   "lat": 21.289,
+   "lon": -157.802795,
+   "nodes": 3,
+   "gpus": 2
+  },
+  {
+   "name": "University Corporation for Atmospheric Research",
+   "site": "UCAR",
+   "slug": "ucar",
+   "lat": 41.12825,
+   "lon": -104.89782,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "University of Oklahoma",
+   "site": "OU",
+   "slug": "ou",
+   "lat": 35.20579,
+   "lon": -97.44567,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of California, Los Angeles",
+   "site": "UCLA",
+   "slug": "ucla",
+   "lat": 34.06891,
+   "lon": -118.44518,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "University of California, Santa Cruz",
+   "site": "UCSC",
+   "slug": "ucsc",
+   "lat": 37.0313,
+   "lon": -122.119797,
+   "nodes": 8,
+   "gpus": 29
+  },
+  {
+   "name": "Metropolitan Research & Education Network",
+   "site": "MREN",
+   "slug": "mren",
+   "lat": 41.7886,
+   "lon": -87.5987,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of South Dakota",
+   "site": "USD",
+   "slug": "usd",
+   "lat": 42.788741,
+   "lon": -96.92546,
+   "nodes": 4,
+   "gpus": 7
+  },
+  {
+   "name": "Kansas State University",
+   "site": "KSU",
+   "slug": "ksu",
+   "lat": 39.577321,
+   "lon": -96.614302,
+   "nodes": 2,
+   "gpus": 4
+  },
+  {
+   "name": "University of Arkansas for Medical Sciences",
+   "site": "UAMS",
+   "slug": "uams",
+   "lat": 34.746564,
+   "lon": -92.32434,
+   "nodes": 1,
+   "gpus": 4
+  },
+  {
+   "name": "University of Arkansas",
+   "site": "UARK",
+   "slug": "uark",
+   "lat": 36.06869,
+   "lon": -94.17484,
+   "nodes": 2,
+   "gpus": 3
+  },
+  {
+   "name": "University of Missouri, Columbia",
+   "site": "University of Missouri, Columbia",
+   "slug": "mizzou",
+   "lat": 38.940345,
+   "lon": -92.327723,
+   "nodes": 12,
+   "gpus": 31
+  },
+  {
+   "name": "University of Nebraska, Lincoln",
+   "site": "UNL",
+   "slug": "unl",
+   "lat": 40.819759,
+   "lon": -96.705541,
+   "nodes": 42,
+   "gpus": 203
+  },
+  {
+   "name": "StarLight",
+   "site": "Startap",
+   "slug": "startap",
+   "lat": 42.05647,
+   "lon": -87.67528,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "University of Guam",
+   "site": "UOG",
+   "slug": "uog",
+   "lat": 13.432524,
+   "lon": 144.8033,
+   "nodes": 3,
+   "gpus": 1
+  },
+  {
+   "name": "Corporation for Education Network Initiatives in California",
+   "site": "CENIC LA",
+   "slug": "cenic-la",
+   "lat": 33.879806,
+   "lon": -118.02744,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "PNWGP",
+   "site": "Westin Building Exchange",
+   "slug": "westin-building-exchange",
+   "lat": 47.614445,
+   "lon": -122.338835,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Corporation for Education Network Initiatives in California",
+   "site": "CENIC Sunnyvale",
+   "slug": "cenic-sunnyvale",
+   "lat": 37.368741,
+   "lon": -122.034974,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "American Museum of Natural History",
+   "site": "CPW",
+   "slug": "american-museum-of-natural-history",
+   "lat": 40.781436,
+   "lon": -73.973852,
+   "nodes": 3,
+   "gpus": 3
+  },
+  {
+   "name": "Iron Mountain Datacenter",
+   "site": "Iron Mountain Datacenter",
+   "slug": "iron-mountain-datacenter",
+   "lat": 33.45416,
+   "lon": -111.97518,
+   "nodes": 1,
+   "gpus": 2
+  },
+  {
+   "name": "California State University, Sacramento",
+   "site": "csus",
+   "slug": "csus",
+   "lat": 38.560993,
+   "lon": -121.423907,
+   "nodes": 2,
+   "gpus": 12
+  },
+  {
+   "name": "University of New Mexico",
+   "site": "UNM",
+   "slug": "unm",
+   "lat": 35.09013,
+   "lon": -106.63597,
+   "nodes": 1,
+   "gpus": 1
+  },
+  {
+   "name": "FIU-CIARA",
+   "site": "Equinix MI1",
+   "slug": "equinix-mi1",
+   "lat": 25.782432,
+   "lon": -80.193133,
+   "nodes": 4,
+   "gpus": 1
+  },
+  {
+   "name": "California Institute of Technology",
+   "site": "Ultralight",
+   "slug": "ultralight",
+   "lat": 34.1377,
+   "lon": -118.1253,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "University of Michigan",
+   "site": "University of Michigan",
+   "slug": "um",
+   "lat": 42.27656,
+   "lon": -83.74129,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "South Dakota State University",
+   "site": "SDState",
+   "slug": "sdstate",
+   "lat": 44.31909,
+   "lon": -96.78351,
+   "nodes": 3,
+   "gpus": 5
+  },
+  {
+   "name": "Gatech/Sox",
+   "site": "Morehouse",
+   "slug": "morehouse",
+   "lat": 33.748316,
+   "lon": -84.414867,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of Michigan",
+   "site": "Atlas Great Lakes tier 2",
+   "slug": "aglt2",
+   "lat": 42.27778,
+   "lon": -83.75534,
+   "nodes": 3,
+   "gpus": 0
+  },
+  {
+   "name": "California State University",
+   "site": "Fullerton",
+   "slug": "fullerton",
+   "lat": 33.88364,
+   "lon": -117.88513,
+   "nodes": 26,
+   "gpus": 96
+  },
+  {
+   "name": "New York University",
+   "site": "NYU",
+   "slug": "nyu",
+   "lat": 40.729413,
+   "lon": -73.996547,
+   "nodes": 4,
+   "gpus": 3
+  },
+  {
+   "name": "Case Western Reserve University",
+   "site": "CWRU",
+   "slug": "cwru",
+   "lat": 41.50433,
+   "lon": -81.60839,
+   "nodes": 2,
+   "gpus": 2
+  },
+  {
+   "name": "Stanford University",
+   "site": "Stanford",
+   "slug": "stanford",
+   "lat": 37.423,
+   "lon": -122.163902,
+   "nodes": 4,
+   "gpus": 0
+  },
+  {
+   "name": "Purdue",
+   "site": "Rosen Center for Advanced Computing",
+   "slug": "purdue-rcac",
+   "lat": 40.42354,
+   "lon": -86.92644,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "California State University, Monterey Bay",
+   "site": "CSUMB",
+   "slug": "csumb",
+   "lat": 36.65379,
+   "lon": -121.798957,
+   "nodes": 1,
+   "gpus": 8
+  },
+  {
+   "name": "Los Angeles Community College District",
+   "site": "Los Angeles Valley College",
+   "slug": "los-angeles-valley-college",
+   "lat": 34.175552,
+   "lon": -118.419024,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "NYSERNet",
+   "site": "NYSERNet",
+   "slug": "nysernet",
+   "lat": 43.049619,
+   "lon": -76.152805,
+   "nodes": 10,
+   "gpus": 7
+  },
+  {
+   "name": "State University of New York",
+   "site": "University at Buffalo",
+   "slug": "buffalo",
+   "lat": 43.002306,
+   "lon": -78.787699,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Massachusetts Green High Performance Computing Center",
+   "site": "mghpcc-umass",
+   "slug": "mghpcc-umass",
+   "lat": 42.202907,
+   "lon": -72.607309,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "Great Plains Network",
+   "site": "Oral Roberts University",
+   "slug": "oru",
+   "lat": 36.05096,
+   "lon": -95.952855,
+   "nodes": 1,
+   "gpus": 1
+  },
+  {
+   "name": "Internet2 Amsterdam",
+   "site": "Internet2 Amsterdam",
+   "slug": "i2-amsterdam",
+   "lat": 52.357063,
+   "lon": 4.957286,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Chicago",
+   "site": "Internet2 Chicago",
+   "slug": "i2-uchicago",
+   "lat": 41.896504,
+   "lon": -87.64306,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 New York",
+   "site": "Internet2 New York",
+   "slug": "i2-ny",
+   "lat": 40.720069,
+   "lon": -74.005199,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Sunnyvale",
+   "site": "Internet2 Sunnyvale",
+   "slug": "i2-sunnyvale",
+   "lat": 37.373779,
+   "lon": -121.987513,
+   "nodes": 1,
+   "gpus": 1
+  },
+  {
+   "name": "Kennesaw State University",
+   "site": "Kennesaw State University",
+   "slug": "kennesaw",
+   "lat": 34.02348,
+   "lon": -84.58891,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Albany",
+   "site": "Internet2 Albany",
+   "slug": "i2-albany",
+   "lat": 42.65942,
+   "lon": -73.75772,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Ashburn",
+   "site": "Internet2 Ashburn",
+   "slug": "i2-ashburn",
+   "lat": 39.03957,
+   "lon": -77.48161,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Boise",
+   "site": "Internet2 Boise 2",
+   "slug": "i2-boise-2",
+   "lat": 43.56061,
+   "lon": -116.21984,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Boston",
+   "site": "Internet2 Boston",
+   "slug": "i2-boston",
+   "lat": 42.354328,
+   "lon": -71.065498,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Charlotte",
+   "site": "Internet2 Charlotte",
+   "slug": "i2-charlotte",
+   "lat": 35.171,
+   "lon": -80.9151,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Cincinatti",
+   "site": "Internet2 Cincinatti 2",
+   "slug": "i2-cincinnati-2",
+   "lat": 39.10944,
+   "lon": -84.4885,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Cleveland",
+   "site": "Internet2 Cleveland",
+   "slug": "i2-cleveland",
+   "lat": 41.52212,
+   "lon": -81.64442,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Dallas",
+   "site": "Internet2 Dallas",
+   "slug": "i2-dallas",
+   "lat": 32.77991,
+   "lon": -96.80274,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Dallas",
+   "site": "Internet2 Dallas 3",
+   "slug": "i2-dallas3",
+   "lat": 32.78147,
+   "lon": -96.82147,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Denver",
+   "site": "Internet2 Denver 2",
+   "slug": "i2-denver-2",
+   "lat": 39.73203,
+   "lon": -104.98247,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 El Paso",
+   "site": "Internet2 El Paso",
+   "slug": "i2-el-paso",
+   "lat": 31.763,
+   "lon": -106.48564,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Chicago",
+   "site": "Internet2 Chicago eqch",
+   "slug": "i2_chicago_eqch",
+   "lat": 41.84582,
+   "lon": -87.62474,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Hartford",
+   "site": "Internet2 Hartford",
+   "slug": "i2-hartford",
+   "lat": 41.74022,
+   "lon": -72.6749,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Holyoke",
+   "site": "Internet2 Holyoke",
+   "slug": "i2-holyoke",
+   "lat": 42.170765,
+   "lon": -72.662838,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Houston",
+   "site": "Internet2 Houston 2",
+   "slug": "i2-houstonh",
+   "lat": 29.771315,
+   "lon": -95.351,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Indianapolis",
+   "site": "Internet2 Indianapolis",
+   "slug": "i2-indianapolis",
+   "lat": 39.7446,
+   "lon": -86.16906,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Jackson",
+   "site": "Internet2 Jackson",
+   "slug": "i2-jackson",
+   "lat": 32.28889,
+   "lon": -90.18432,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Las Vegas",
+   "site": "Internet2 Las Vegas",
+   "slug": "i2-las-vegas",
+   "lat": 36.21423,
+   "lon": -115.12927,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Los Angeles",
+   "site": "Internet2 Los Angeles",
+   "slug": "i2-los-angeles",
+   "lat": 34.05285,
+   "lon": -118.26486,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Los Angeles",
+   "site": "Internet2 Los Angeles 2",
+   "slug": "i2-los-angeles-2",
+   "lat": 34.04613,
+   "lon": -118.254224,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Minneapolis",
+   "site": "Internet2 Minneapolis",
+   "slug": "i2-minneapolis",
+   "lat": 44.97231,
+   "lon": -93.25477,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet 2 Missoula",
+   "site": "Internet 2 Missoula",
+   "slug": "i2-missoula",
+   "lat": 46.99115,
+   "lon": -113.86993,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 New York",
+   "site": "Internet2 New York 2",
+   "slug": "i2-ny-2",
+   "lat": 40.72045,
+   "lon": -74.00597,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Pensacola",
+   "site": "Internet2 Pensacola",
+   "slug": "i2-pensacola",
+   "lat": 30.41086,
+   "lon": -87.20918,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Philadelphia",
+   "site": "Internet2 Philadelphia",
+   "slug": "i2-philadelphia",
+   "lat": 39.95899,
+   "lon": -75.16134,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Phoenix",
+   "site": "Internet2 Phoenix",
+   "slug": "i2-phoenix",
+   "lat": 33.45199,
+   "lon": -112.072211,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Pittsburgh",
+   "site": "Internet2 Pittsburgh",
+   "slug": "i2-pittsburgh",
+   "lat": 40.45644,
+   "lon": -80.00303,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Portland",
+   "site": "Internet2 Portland",
+   "slug": "i2-portland",
+   "lat": 45.53346,
+   "lon": -122.6815,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Raleigh",
+   "site": "Internet2 Raleigh",
+   "slug": "i2-raleigh",
+   "lat": 35.85549,
+   "lon": -78.5785,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Reno",
+   "site": "Internet2 Reno",
+   "slug": "i2-reno",
+   "lat": 39.54455,
+   "lon": -119.84392,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Sacramento",
+   "site": "Internet2 Sacramento",
+   "slug": "i2-sacramento",
+   "lat": 38.56577,
+   "lon": -121.46882,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Salt Lake City",
+   "site": "Internet2 Salt Lake City",
+   "slug": "i2-saltlake",
+   "lat": 40.74955,
+   "lon": -111.96657,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Seattle",
+   "site": "Internet2 Seattle",
+   "slug": "i2-seattle",
+   "lat": 47.61348,
+   "lon": -122.34738,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Chicago 2",
+   "site": "Internet2 Chicago 2",
+   "slug": "i2-chicago-star",
+   "lat": 41.8957,
+   "lon": -87.61356,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Sunnyvale 2",
+   "site": "Internet2 Sunnyvale 2",
+   "slug": "i2-sunnyvale-2",
+   "lat": 37.36965,
+   "lon": -122.02421,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Toledo",
+   "site": "Internet2 Toledo",
+   "slug": "i2-toledo",
+   "lat": 41.65073,
+   "lon": -83.53667,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Tucson",
+   "site": "Internet2 Tucson",
+   "slug": "i2-tucson",
+   "lat": 32.21787,
+   "lon": -110.96862,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 Oklahoma",
+   "site": "Internet2 Oklahoma",
+   "slug": "i2-oklahoma",
+   "lat": 36.15571,
+   "lon": -95.99407,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Internet2 McLean",
+   "site": "Internet2 Mclean",
+   "slug": "i2-mclean",
+   "lat": 38.95994,
+   "lon": -77.2249,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of California, Santa Barbara",
+   "site": "UCSB",
+   "slug": "ucsb",
+   "lat": 34.4216,
+   "lon": -119.706802,
+   "nodes": 2,
+   "gpus": 4
+  },
+  {
+   "name": "University of California, Santa Cruz",
+   "site": "NTTDATA Western Technology Center",
+   "slug": "ucsc-wa",
+   "lat": 47.243511,
+   "lon": -119.864901,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of South Alabama",
+   "site": "Shelby Hall",
+   "slug": "shelby-hall",
+   "lat": 30.691591,
+   "lon": -88.174933,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "Montana State University",
+   "site": "Montana State University",
+   "slug": "msu",
+   "lat": 45.66607,
+   "lon": -111.04832,
+   "nodes": 1,
+   "gpus": 2
+  },
+  {
+   "name": "San Diego State University",
+   "site": "SDSU",
+   "slug": "sdsu",
+   "lat": 32.77741,
+   "lon": -117.07141,
+   "nodes": 41,
+   "gpus": 189
+  },
+  {
+   "name": "Dakota State University",
+   "site": "Dakota State University",
+   "slug": "dsu",
+   "lat": 44.014747,
+   "lon": -97.110411,
+   "nodes": 1,
+   "gpus": 1
+  },
+  {
+   "name": "South Dakota School of Mines & Technology",
+   "site": "SDSMT",
+   "slug": "sdsmt",
+   "lat": 44.07379,
+   "lon": -103.20609,
+   "nodes": 2,
+   "gpus": 1
+  },
+  {
+   "name": "Gatech/Sox",
+   "site": "Spelman College",
+   "slug": "spelman",
+   "lat": 33.745202,
+   "lon": -84.409349,
+   "nodes": 1,
+   "gpus": 0
+  },
+  {
+   "name": "University of California, Berkeley",
+   "site": "University of California, Berkeley",
+   "slug": "berkeley",
+   "lat": 37.87443,
+   "lon": -122.2568,
+   "nodes": 1,
+   "gpus": 2
+  },
+  {
+   "name": "University of Tulsa",
+   "site": "University of Tulsa",
+   "slug": "university-of-tulsa",
+   "lat": 36.152693,
+   "lon": -95.946053,
+   "nodes": 1,
+   "gpus": 4
+  },
+  {
+   "name": "University of California, San Diego",
+   "site": "UCSD",
+   "slug": "ucsd",
+   "lat": 32.851501,
+   "lon": -117.2798,
+   "nodes": 1,
+   "gpus": 2
+  },
+  {
+   "name": "University of Alabama in Huntsville",
+   "site": "University of Alabama Huntsville",
+   "slug": "uah",
+   "lat": 34.71878,
+   "lon": -86.6464,
+   "nodes": 2,
+   "gpus": 0
+  },
+  {
+   "name": "Truman State University",
+   "site": "Truman State University",
+   "slug": "truman",
+   "lat": 40.183314,
+   "lon": -92.58094,
+   "nodes": 3,
+   "gpus": 0
+  }
+ ]
+}

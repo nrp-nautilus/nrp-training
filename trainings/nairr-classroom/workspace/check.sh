@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # NAIRR Prototype NRP Classroom — check your work.
 #
-#   bash check.sh <section 1-2>
-#
-# Section 2 needs $NRP_NAMESPACE (the namespace you are deploying into).
+#   bash check.sh 1          access: kubectl, cluster login, helm
+#   bash check.sh 2 $NS      your JupyterHub in namespace $NS
 # Resources you already cleaned up show as "not found" — that is fine once
 # you have finished that section.
 
@@ -28,9 +27,9 @@ case "$EP" in
   ;;
 
 2)
-  NSP="${NRP_NAMESPACE:-}"
-  if [ -z "$NSP" ] || [ "$NSP" = changeme ]; then
-    echo "Set your namespace first — re-run the setup cell, or:  export NRP_NAMESPACE=<namespace>"
+  NSP="${2:-}"
+  if [ -z "$NSP" ]; then
+    echo 'Give it your namespace:  bash check.sh 2 $NS'
     exit 1
   fi
   echo "Section 2 — your own JupyterHub (namespace $NSP)"
