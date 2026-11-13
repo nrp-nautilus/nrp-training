@@ -1,6 +1,6 @@
 ---
 title: Deploy a JupyterHub for Your Course
-teaching: 15
+teaching: 20
 exercises: 0
 questions:
   - What does it take to run a JupyterHub for my own course on NRP?
@@ -25,9 +25,9 @@ and the notebook has every command below. We won't be able to stop and help indi
 something goes wrong, keep watching and try it again afterwards.
 :::
 
-**Time:** about 15 minutes.
+**Time:** about 20 minutes.
 
-The live path is steps **1–6** (marked ▶). **After the webinar** has the rest: sizes and GPUs per menu entry, a
+The live path is steps **1–7** (marked ▶). **After the webinar** has the rest: sizes and GPUs per menu entry, a
 folder the whole class shares, real campus logins, and how to take it home.
 
 ::: important This demo hub uses a shared password
@@ -70,7 +70,7 @@ grep -n -E "authenticator_class|admin_users|capacity|display_name|timeout:|hosts
 | `timeout: 3600` | **Idle servers stop** after an hour, so the CPUs and GPUs go back to the pool |
 | `hosts:` | **The web address**: `jhub-<namespace>.nrp-nautilus.io`, with HTTPS already set up |
 
-![One values file stands in for thirteen Kubernetes objects](images/helm-values-funnel.png)
+Step 5 looks at each of these blocks closely, once you've seen the hub running.
 
 ## ▶ 3. Install it (3 min)
 
@@ -113,7 +113,212 @@ Each student's server is a pod of its own, with its own home volume:
 kubectl get pods,pvc -n $NS
 ```
 
-## ▶ 5. Change it: a course menu (2 min)
+## ▶ 5. A closer look: Helm and the values file (5 min)
+
+Your hub is running and you've seen it from a student's side. Now look at what made it.
+
+### 5.1 Helm in one paragraph
+
+Helm is a package manager for Kubernetes: instead of writing every Deployment, Service and ConfigMap by hand, you
+install a **chart** (a reusable bundle of templates) and tune it through a **values file**. The
+[Zero to JupyterHub chart](https://z2jh.jupyter.org) packages the whole hub, proxy and spawner stack; your whole
+deployment is one YAML file of values.
+
+The values file looks long until you see what it stands in for. Its 173 lines render into **thirteen Kubernetes
+objects**, about 1,400 lines of manifests:
+
+<svg viewBox="0 0 720 300" width="100%" role="img" aria-labelledby="helm-dia-t" xmlns="http://www.w3.org/2000/svg" style="max-width:720px;height:auto;display:block;margin:0 auto;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,sans-serif">
+<title id="helm-dia-t">One values file renders into thirteen Kubernetes objects</title>
+<text x="360" y="18" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".75">What Kubernetes actually needs &#8212; 13 objects, ~1,400 lines of YAML</text>
+<rect x="14" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="80" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Deployment</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="154" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="220" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Deployment</tspan><tspan opacity=".65"> &#183; proxy</tspan></text>
+<rect x="294" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="360" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Service</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="434" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="500" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Service</tspan><tspan opacity=".65"> &#183; proxy-api</tspan></text>
+<rect x="574" y="34" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="640" y="53" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Service</tspan><tspan opacity=".65"> &#183; proxy-public</tspan></text>
+<rect x="14" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="80" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Ingress</tspan><tspan opacity=".65"> &#183; jupyterhub</tspan></text>
+<rect x="154" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="220" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">ConfigMap</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="294" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="360" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Secret</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="434" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="500" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">PVC</tspan><tspan opacity=".65"> &#183; hub-db-dir</tspan></text>
+<rect x="574" y="72" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="640" y="91" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">ServiceAccount</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="154" y="110" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="220" y="129" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">Role</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="294" y="110" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="360" y="129" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">RoleBinding</tspan><tspan opacity=".65"> &#183; hub</tspan></text>
+<rect x="434" y="110" width="132" height="30" rx="5" fill="currentColor" fill-opacity=".06" stroke="currentColor" stroke-opacity=".35"/>
+<text x="500" y="129" text-anchor="middle" font-size="10.5" fill="currentColor"><tspan font-weight="600">NetworkPolicy</tspan><tspan opacity=".65"> &#183; proxy</tspan></text>
+<path d="M14 152 L706 152 L442 204 L278 204 Z" fill="currentColor" fill-opacity=".05" stroke="currentColor" stroke-opacity=".3" stroke-dasharray="4 3"/>
+<text x="360" y="176" text-anchor="middle" font-size="12" fill="currentColor" font-weight="600">Helm &#8212; the z2jh chart</text>
+<text x="360" y="192" text-anchor="middle" font-size="10.5" fill="currentColor" opacity=".7">45 templates, rendered and kept in sync</text>
+<path d="M360 204 L360 214" stroke="currentColor" stroke-opacity=".5" stroke-width="1.5" marker-end="url(#helm-dia-a)"/>
+<defs><marker id="helm-dia-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" fill-opacity=".5"/></marker></defs>
+<rect x="250" y="220" width="220" height="40" rx="6" fill="currentColor" fill-opacity=".1" stroke="currentColor" stroke-opacity=".6" stroke-width="1.5"/>
+<text x="360" y="245" text-anchor="middle" font-size="13.5" fill="currentColor" font-weight="700">jhub-values.yaml</text>
+<text x="360" y="278" text-anchor="middle" font-size="12.5" fill="currentColor" opacity=".75">What you write &#8212; 173 lines, six blocks that matter</text>
+</svg>
+
+And they all have to agree with each other. The hub's Deployment carries a checksum of the ConfigMap and the Secret,
+so changing either restarts the hub instead of leaving it running on stale settings. The ServiceAccount needs a Role
+that can create and delete pods and volumes: that is *how* the hub starts a student's server. `proxy-public` has to
+route to the proxy, which has to route to the hub, which has to know its own public address.
+
+Written by hand, changing the students' image means editing several files and rechecking every reference between
+them. With the chart it's one line in one file, and `helm upgrade` works out what has to change, as you'll see in
+step 6.
+
+You can see all thirteen objects yourself; `helm get manifest` prints what Helm rendered for your hub:
+
+```bash
+helm get manifest jhub -n $NS | grep "^kind:" | sort | uniq -c
+```
+
+### 5.2 Who can log in
+
+```yaml
+hub:
+  config:
+    JupyterHub:
+      authenticator_class: dummy
+      admin_access: true
+      admin_users: ["admin", "admin2"]
+    DummyAuthenticator:
+      password: "..."              # the demo password, in the file
+    # Allow all users to sign in (for tutorial purposes)
+    Authenticator:
+      allowed_users: set()
+```
+
+`authenticator_class: dummy` accepts **any** username with the shared password, which is why this is a workshop hub
+and not a course hub. `admin_users` get the admin page: other people's servers, the user list, a stop button. There
+are two of them so you can be two people at once, which is handy for trying the shared folder in
+[B](#b-a-folder-the-whole-class-shares). `allowed_users: set()` is an *empty* allow list, and empty here means "no
+list: let everyone in".
+
+That last line is the first thing to change for a course. With CILogon ([C](#c-real-logins-with-cilogon)) the allow
+list stops being a formality and becomes your class list.
+
+### 5.3 The hub
+
+```yaml
+hub:
+  db:
+    type: sqlite-pvc
+    pvc:
+      accessModes: [ReadWriteOnce]
+      storage: 1Gi
+      storageClassName: rook-ceph-block-east
+  resources:
+    limits: {cpu: "2", memory: 1Gi}
+    requests: {cpu: 100m, memory: 512Mi}
+```
+
+The hub keeps its state (users, running servers, API tokens) in SQLite on its own 1 GB volume, so restarting the hub
+doesn't lose who is logged in. `rook-ceph-block-east` is NRP block storage; `ReadWriteOnce` is all a single database
+pod needs.
+
+### 5.4 The proxy
+
+```yaml
+proxy:
+  # No secretToken here: the chart generates one at install and keeps it on upgrades.
+  service:
+    type: ClusterIP
+```
+
+Every request to a student's server goes through the proxy. The hub reprograms the proxy's routes with a shared
+token, which the chart generates at install and keeps across upgrades, so there is nothing for you to set.
+`ClusterIP` keeps the proxy inside the cluster; the web address ([5.7](#5-7-the-web-address)) is what faces the
+internet.
+
+### 5.5 The students' servers
+
+Shortened to the decisions you'll actually change: the environment, the size and the home folder.
+
+```yaml
+singleuser:
+  image:                                # the default environment
+    name: quay.io/jupyter/scipy-notebook
+    tag: 2024-04-22
+  cpu:                                  # what every server gets
+    limit: 3
+    guarantee: 3
+  memory:
+    limit: 10G
+    guarantee: 10G
+  storage:                              # a private home folder per student
+    type: dynamic
+    capacity: 5Gi
+    homeMountPath: /home/jovyan
+    dynamic:
+      storageClass: rook-ceph-block-east
+      pvcNameTemplate: claim-{username}{servername}
+  defaultUrl: "/lab"
+  profileList:                          # the menu on the start page
+  - display_name: Scipy
+    kubespawner_override:
+      image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
+    default: True
+```
+
+**`image`** is the environment a server starts in: pin the tag, never `latest`. **`cpu`** and **`memory`** apply to
+every server, and setting `guarantee` equal to `limit` sets the resources aside instead of overcommitting them.
+**`storage: dynamic`** gives each student their own volume, named from `pvcNameTemplate` and mounted at
+`homeMountPath`, so `/home/jovyan` survives logouts, restarts and idle shutdowns. **`profileList`** is the menu you
+saw in step 4; each entry's `kubespawner_override` replaces the defaults above. The file ships with fifteen entries,
+one of them shown here; step 6 cuts the menu to three.
+
+### 5.6 Stopping idle servers
+
+```yaml
+cull:
+  enabled: true
+  timeout: 3600
+  every: 600
+```
+
+Every 10 minutes (`every`) the culler shuts down servers idle for more than an hour (`timeout`). Home folders are
+untouched, so a student logs back in and picks up where they left off.
+
+::: callout Why culling isn't optional
+A student who closes their laptop leaves a pod holding CPUs and memory. On shared national infrastructure that's the
+fastest way to make your namespace unpopular, and for a class of 40 it's the difference between a hub that fits its
+allocation and one that doesn't.
+:::
+
+### 5.7 The web address
+
+```yaml
+ingress:
+  enabled: true
+  ingressClassName: haproxy
+  hosts: ["jhub-<namespace>.nrp-nautilus.io"]
+  pathSuffix: ''
+  tls:
+    - hosts:
+      - jhub-<namespace>.nrp-nautilus.io
+```
+
+This is what puts the hub on the public internet, and it's there from the start: no second step to expose it. The
+name has to be unique, which is why the install command in step 3 put your namespace in for `<namespace>`.
+`ingressClassName: haproxy` hands routing to the cluster's HAProxy ingress, and the `tls` block turns on HTTPS. Names
+under `nrp-nautilus.io` use the cluster's wildcard certificate, so there are no certificate files for you to manage.
+
+### The whole file
+
+Those are the blocks worth explaining; the rest is node placement, image pre-pulling and scheduler settings you can
+leave alone. Read it end to end in the workspace at `yamls/jhub-values.yaml`, or
+[on GitHub](https://github.com/nrp-nautilus/nrp-training/blob/materials/nairr-classroom/workspace/yamls/jhub-values.yaml).
+
+## ▶ 6. Change it: a course menu (2 min)
 
 Fifteen environments is a lot for a class. `course-menu.yaml` replaces the menu with three, one of them with a GPU:
 
@@ -148,7 +353,7 @@ gets a GPU for that session and gives it back when the server stops or sits idle
 A list in the new file replaces the whole list, which is why the menu shrinks to three instead of growing to
 eighteen. Settings that are maps merge key by key, so you can change one storage setting without restating the rest.
 
-## ▶ 6. Clean up (1 min)
+## ▶ 7. Clean up (1 min)
 
 A real course hub stays up all term. Today's goes away:
 
@@ -165,7 +370,7 @@ on its own after six hours).
 ## After the webinar
 
 Each of these changes a **running** hub, so install it again (step 3) first. They all follow the pattern from
-step 5: a small file with just the change, applied with `helm upgrade ... --reuse-values -f <file>`. Stack several
+step 6: a small file with just the change, applied with `helm upgrade ... --reuse-values -f <file>`. Stack several
 by running them one after another; each upgrade keeps what came before.
 
 ### A. Sizes, and GPUs, per menu entry

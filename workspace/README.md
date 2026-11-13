@@ -7,7 +7,7 @@ Files for the live demo, a JupyterHub for a course. See the lessons at
 |---|---|
 | `notebooks/2_custom_jupyterhub.ipynb` | The demo, on the **Bash** kernel: steps 1–6 are the 15-minute live path, then "After the webinar" |
 | `yamls/jhub-values.yaml` | The whole hub: who logs in, the image menu, home folders, idle shutdown, the address |
-| `yamls/course-menu.yaml` | A change for step 5: a three-entry course menu, one entry with a GPU |
+| `yamls/course-menu.yaml` | A change for step 6: a three-entry course menu, one entry with a GPU |
 | `yamls/shared-volume.yaml`, `yamls/shared-folder.yaml` | After the webinar: a folder the whole class shares |
 | `yamls/cilogon-jupyterhub-config.yaml` | After the webinar: campus logins through CILogon, for a real course |
 | `check.sh` | Checks your hub: `bash check.sh 1` (access), `bash check.sh 2 $NS` (the hub in your namespace) |
