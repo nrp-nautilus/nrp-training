@@ -1,0 +1,21 @@
+# A course's image menu: replaces the 15-entry list in jhub-values.yaml with three.
+# Apply it on top of the running hub:
+#   helm upgrade jhub jupyterhub/jupyterhub --version 4.4.5 -n $NS --reuse-values -f ../yamls/course-menu.yaml --wait
+# A list in an overlay replaces the whole list, so this is the entire menu.
+singleuser:
+  profileList:
+  - display_name: "Python for data science"
+    description: "pandas, scikit-learn, matplotlib"
+    default: true
+    kubespawner_override:
+      image_spec: quay.io/jupyter/scipy-notebook:2024-04-22
+  - display_name: "R and the tidyverse"
+    description: "R, RStudio packages, ggplot2"
+    kubespawner_override:
+      image_spec: quay.io/jupyter/r-notebook:2024-04-22
+  - display_name: "PyTorch with one GPU"
+    description: "for the deep-learning unit"
+    kubespawner_override:
+      image_spec: quay.io/jupyter/pytorch-notebook:cuda12-2024-04-22
+      extra_resource_limits:
+        nvidia.com/gpu: "1"

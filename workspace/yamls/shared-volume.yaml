@@ -1,0 +1,13 @@
+# One volume for the whole class. CephFS (rook-cephfs) lets many pods mount it at once,
+# unlike the block volumes used for each student's home folder.
+#   kubectl apply -n $NS -f ../yamls/shared-volume.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jupyterhub-shared-volume
+spec:
+  storageClassName: rook-cephfs
+  accessModes: [ReadWriteMany]
+  resources:
+    requests:
+      storage: 5Gi

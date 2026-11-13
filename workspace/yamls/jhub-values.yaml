@@ -34,7 +34,7 @@ hub:
   networkPolicy:
     enabled: false
 proxy:
-  secretToken: 'secret_token'
+  # No secretToken here: the chart generates one at install and keeps it on upgrades.
   service:
     type: ClusterIP
   chp:
@@ -161,13 +161,13 @@ cull:
   concurrency: 10
   maxAge: 0
 
-# Expose the hub on a public hostname. The hostname must be globally unique;
-# your rendered copy in my-yamls/ already has your name filled in.
+# Expose the hub on a public hostname. It must be globally unique, so the install
+# command puts your namespace in for <namespace>: jhub-nrp-training-042.nrp-nautilus.io
 ingress:
   enabled: true
   ingressClassName: haproxy
-  hosts: ["jhub-<username>.nrp-nautilus.io"]
+  hosts: ["jhub-<namespace>.nrp-nautilus.io"]
   pathSuffix: ''
   tls:
     - hosts:
-      - jhub-<username>.nrp-nautilus.io
+      - jhub-<namespace>.nrp-nautilus.io

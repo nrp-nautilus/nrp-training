@@ -1,0 +1,11 @@
+# Mount the class's shared volume (shared-volume.yaml) at /home/shared in every student's server.
+#   helm upgrade jhub jupyterhub/jupyterhub --version 4.4.5 -n $NS --reuse-values -f ../yamls/shared-folder.yaml --wait
+singleuser:
+  storage:
+    extraVolumes:
+      - name: jupyterhub-shared
+        persistentVolumeClaim:
+          claimName: jupyterhub-shared-volume
+    extraVolumeMounts:
+      - name: jupyterhub-shared
+        mountPath: /home/shared
