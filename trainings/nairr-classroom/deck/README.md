@@ -41,7 +41,7 @@ time on how: access, what a course can use, and what an instructor controls in a
 
 ## Timing
 
-About 37 minutes of slides (35 before the demo, 2 after), a 15-minute demo, and about 8 minutes of questions. Start: 12:00 pm Eastern (the Zoom invite). Two slides are optional (From PRP to NRP, A GPU Job) if you run long. The `[h:mm]`
+About 37 minutes of slides (35 before the demo, 2 after), a 20-minute demo, and only a few minutes of questions. To make room, skip the optional slides (From PRP to NRP, A GPU Job) or shorten demo step 5 to 5.1. Start: 12:00 pm Eastern (the Zoom invite). Two slides are optional (From PRP to NRP, A GPU Job) if you run long. The `[h:mm]`
 at the start of each speaker note comes from `secs=` on each `add(...)`.
 
 ## Numbers
@@ -77,14 +77,15 @@ start on a node pulls the scipy image (about a minute); a rehearsal warms only t
 1. Log in at jh-training.nrp-nautilus.io and open the demo notebook through the launch link on the demo page (Bash kernel).
 2. Open the presenter copy of the deck (`deck/presenter/nairr-classroom.html`, **N** for notes) and keep a browser tab ready for the hub's address.
 
-**The demo (about 15 minutes; each step is marked ▶ on the demo page)**
+**The demo (about 20 minutes; each step is marked ▶ on the demo page)**
 
 1. **Get a namespace (1 min):** the claim cell sets `NS`.
 2. **One file holds every decision (3 min):** the `grep` of the six deciding lines in `jhub-values.yaml`.
 3. **Install it (3 min):** `helm repo add` and `update`, then `sed` the namespace into the file and `helm install jhub ... --wait`. About two minutes in testing; talk through the values while it runs.
 4. **Log in like a student (4 min):** `https://jhub-<namespace>.nrp-nautilus.io`, log in as `admin` (the password is under `DummyAuthenticator` in `jhub-values.yaml`), start Scipy, show the admin page.
-5. **Change it (2 min):** `helm upgrade` with `course-menu.yaml`; the menu drops to three entries, one with a GPU. About 80 s; a running server survives it.
-6. **Clean up (1 min):** `helm uninstall`, then delete the leftover pods and volumes together (student pods outlive the release and hold their volumes), then release the namespace.
+5. **A closer look (5 min):** Helm in one paragraph and the 13 objects it renders (`helm get manifest jhub -n $NS | grep "^kind:" | sort | uniq -c`), then each block of the values file with `sed -n`. Short on time: keep 5.1, skip the blocks.
+6. **Change it (2 min):** `helm upgrade` with `course-menu.yaml`; the menu drops to three entries, one with a GPU. About 80 s; a running server survives it.
+7. **Clean up (1 min):** `helm uninstall`, then delete the leftover pods and volumes together (student pods outlive the release and hold their volumes), then release the namespace.
 
 Tested on 12 Nov as the hub's service account (`jupyterhub-sa`) in `nrp-training-001`: install in 129 s,
 login and spawn, the menu change, and full cleanup. Not tested from inside the training hub itself, and

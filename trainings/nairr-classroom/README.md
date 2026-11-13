@@ -15,8 +15,8 @@ and AI belong in the classroom, so this session is about how.
 | # | Lesson | Time | Covers |
 |---|---|---|---|
 | 1 | [Presentation](lessons/1_presentation.md) | 37 min | What NRP is, getting in (CILogon, namespaces, NAIRR Classroom), what a course can use (GPUs, storage, fair sharing), what you control in a JupyterHub for your class, and AI in the classroom |
-| 2 | [Live demo: a class hub from one file](lessons/2_custom_jupyterhub.md) | 15 min | Claim a namespace, `helm install` a JupyterHub, log in, change its menu, remove it |
-| — | Questions | about 8 min | |
+| 2 | [Live demo: a class hub from one file](lessons/2_custom_jupyterhub.md) | 20 min | Claim a namespace, `helm install` a JupyterHub, log in, look closely at Helm and the values file, change its menu, remove it |
+| — | Questions | what's left of the hour | |
 
 ## Layout
 

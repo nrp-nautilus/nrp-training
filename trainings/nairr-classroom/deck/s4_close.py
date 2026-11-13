@@ -5,14 +5,15 @@ and helpers come from common.py; add(..., secs=N) sets the slide's duration for 
 """
 from common import *  # noqa: F401,F403
 
-section("Live Demo", """About fifteen minutes, on jh-training.nrp-nautilus.io, in workspace/notebooks/2_custom_jupyterhub.ipynb (Bash kernel). Run sheet: deck/README.md. Each step is marked ▶ on the demo page.
+section("Live Demo", """About twenty minutes, on jh-training.nrp-nautilus.io, in workspace/notebooks/2_custom_jupyterhub.ipynb (Bash kernel). Run sheet: deck/README.md. Each step is marked ▶ on the demo page.
 
 1. Get a namespace (1 min): NS=$(curl -s ".../claim?user=$JUPYTERHUB_USER").
-2. One file holds every decision (3 min): the grep of the six deciding lines in jhub-values.yaml: who logs in, admins, home folder size, the image menu, the idle timeout, the address.
+2. One file holds every decision (3 min): the grep of the six deciding lines in jhub-values.yaml.
 3. Install it (3 min): helm repo add/update, then sed the namespace into the file and helm install jhub ... --wait. About two minutes; talk through the values while it runs. Then kubectl get pods,pvc,ingress.
 4. Log in like a student (4 min): https://jhub-$NS.nrp-nautilus.io, log in as admin, start Scipy (a first start on a node pulls the image, a minute or two), show the admin page.
-5. Change it (2 min): helm upgrade with course-menu.yaml; the menu drops to three entries, one with a GPU. The running server survives.
-6. Clean up (1 min): helm uninstall, delete the leftover pods and volumes, release the namespace.""", secs=900)
+5. A closer look (5 min): Helm in one paragraph and the 13 objects (helm get manifest | grep kind), then each block of the values file with sed -n: who logs in, the hub, the proxy, the students' servers, idle servers, the web address. Short on time? Do 5.1 and skip the blocks.
+6. Change it (2 min): helm upgrade with course-menu.yaml; the menu drops to three entries, one with a GPU. The running server survives.
+7. Clean up (1 min): helm uninstall, delete the leftover pods and volumes, release the namespace.""", secs=1200)
 
 add("Getting Help", [
     Bullets(X0, TOP + 0.15, 6.3, 5.0, [
